@@ -15,7 +15,7 @@ export function ThemeToggle() {
       variant="outline"
       size="sm"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="gap-2"
+      className="gap-2 rounded-full border-border/70 bg-card/75 px-3 shadow-[0_12px_34px_-30px_color-mix(in_oklch,var(--foreground),transparent_20%)] backdrop-blur"
     >
       {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
       {isDark ? "Light" : "Dark"}
