@@ -14,6 +14,7 @@ type JudgeToolbarProps = {
   isPending: boolean;
   hasOutput: boolean;
   inputLength: number;
+  isOverLimit: boolean;
   errorMessage: string | null;
   onAnalyze: () => void;
   onApplyFix: () => void;
@@ -25,6 +26,7 @@ export function JudgeToolbar({
   isPending,
   hasOutput,
   inputLength,
+  isOverLimit,
   errorMessage,
   onAnalyze,
   onApplyFix,
@@ -46,7 +48,7 @@ export function JudgeToolbar({
           <TooltipTrigger asChild>
             <Button
               onClick={onAnalyze}
-              disabled={isPending || inputLength === 0}
+              disabled={isPending || inputLength === 0 || isOverLimit}
               className="gap-2"
             >
               {isPending ? (
@@ -54,9 +56,9 @@ export function JudgeToolbar({
                   <Loader2 className="size-4 animate-spin" />
                   <span>Judge is thinking</span>
                   <span className="inline-flex gap-0.5">
-                    <span className="inline-block size-1 rounded-full bg-current" style={{ animation: "thinking-dots 1.4s infinite", animationDelay: "0s" }} />
-                    <span className="inline-block size-1 rounded-full bg-current" style={{ animation: "thinking-dots 1.4s infinite", animationDelay: "0.2s" }} />
-                    <span className="inline-block size-1 rounded-full bg-current" style={{ animation: "thinking-dots 1.4s infinite", animationDelay: "0.4s" }} />
+                    <span className="inline-block size-1 rounded-full bg-current animate-thinking-dot-1" />
+                    <span className="inline-block size-1 rounded-full bg-current animate-thinking-dot-2" />
+                    <span className="inline-block size-1 rounded-full bg-current animate-thinking-dot-3" />
                   </span>
                 </>
               ) : (
@@ -101,7 +103,11 @@ export function JudgeToolbar({
         </Tooltip>
       </div>
 
-      {errorMessage ? (
+      {isOverLimit ? (
+        <div className="animate-scale-in rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          Input exceeds 1,000,000 character limit. Reduce content size before analyzing.
+        </div>
+      ) : errorMessage ? (
         <div className="animate-scale-in rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {errorMessage}
         </div>

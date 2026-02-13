@@ -10,12 +10,16 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 
+const MAX_INPUT_CHARS = 1_000_000;
+
 type InputPanelProps = {
   value: string;
   onChange: (value: string) => void;
 };
 
 export function InputPanel({ value, onChange }: InputPanelProps) {
+  const isOverLimit = value.length > MAX_INPUT_CHARS;
+
   return (
     <Card className="panel-glow border-border/50 bg-card/75">
       <CardHeader className="flex flex-row items-start justify-between">
@@ -27,8 +31,11 @@ export function InputPanel({ value, onChange }: InputPanelProps) {
             Paste or edit your artifact content.
           </CardDescription>
         </div>
-        <Badge variant="outline" className="tabular-nums font-mono text-[10px]">
-          {value.length.toLocaleString()} chars
+        <Badge
+          variant={isOverLimit ? "destructive" : "outline"}
+          className="tabular-nums font-mono text-[10px]"
+        >
+          {value.length.toLocaleString()} / {MAX_INPUT_CHARS.toLocaleString()}
         </Badge>
       </CardHeader>
       <CardContent>
