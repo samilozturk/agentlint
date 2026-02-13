@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
 import { z } from "zod";
 
@@ -124,6 +125,43 @@ export async function runAnthropicJudge(input: ProviderInput): Promise<AIJudgeRe
 
   if (raw.length === 0) {
     throw new Error("Anthropic returned empty output");
+  }
+
+  return parseJsonResult(raw);
+}
+
+export async function runGeminiJudge(input: ProviderInput): Promise<AIJudgeResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is missing");
+  }
+
+  const client = new GoogleGenAI({ apiKey });
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+
+  const prompt = [
+    "System Instructions:",
+    input.systemPrompt,
+    "",
+    "Return only valid JSON with keys: score, dimensions, rationale, warnings, refinedContent.",
+    "",
+    buildUserPrompt(input),
+  ].join("\n");
+
+  const response = await client.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      temperature: 0.1,
+      maxOutputTokens: 1600,
+    },
+  });
+
+  const raw = response.text ?? "";
+
+  if (raw.trim().length === 0) {
+    throw new Error("Gemini returned empty output");
   }
 
   return parseJsonResult(raw);

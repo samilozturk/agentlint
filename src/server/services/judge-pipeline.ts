@@ -1,6 +1,10 @@
 import type { ArtifactType } from "@/lib/artifacts";
 import type { JudgeResult } from "@/lib/judge";
-import { runAnthropicJudge, runOpenAIJudge } from "@/server/ai/judge-provider";
+import {
+  runAnthropicJudge,
+  runGeminiJudge,
+  runOpenAIJudge,
+} from "@/server/ai/judge-provider";
 
 import { runMockJudge } from "./mock-judge";
 import { judgeSystemPrompts } from "./prompt-templates";
@@ -10,7 +14,7 @@ type JudgePipelineInput = {
   content: string;
 };
 
-type JudgeProviderName = "mock" | "openai" | "anthropic";
+type JudgeProviderName = "mock" | "openai" | "anthropic" | "gemini";
 
 export type JudgePipelineOutput = {
   provider: JudgeProviderName;
@@ -77,6 +81,36 @@ export async function runJudgePipeline(
           ...fallback,
           warnings: [
             "Anthropic judge failed. Falling back to Mock Judge.",
+            ...fallback.warnings,
+          ],
+        },
+      };
+    }
+  }
+
+  if (provider === "gemini") {
+    try {
+      const result = await runGeminiJudge({
+        type: input.type,
+        content: input.content,
+        systemPrompt,
+      });
+
+      return {
+        provider: "gemini",
+        systemPrompt,
+        result,
+      };
+    } catch {
+      const fallback = runMockJudge(input);
+
+      return {
+        provider: "mock",
+        systemPrompt,
+        result: {
+          ...fallback,
+          warnings: [
+            "Gemini judge failed. Falling back to Mock Judge.",
             ...fallback.warnings,
           ],
         },
