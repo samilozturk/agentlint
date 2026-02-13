@@ -8,6 +8,7 @@ export const artifacts = sqliteTable("artifacts", {
   type: text("type", { enum: artifactTypeValues }).notNull(),
   originalContent: text("original_content").notNull(),
   refinedContent: text("refined_content"),
+  analysisJson: text("analysis_json"),
   score: integer("score"),
   userId: text("user_id"),
   createdAt: text("created_at")

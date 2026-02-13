@@ -1,0 +1,347 @@
+Yapay Zeka Kodlama Ajanları İçin Bağlam Dosyaları ve Komut Mühendisliği: Kapsamlı Standartlar ve Değerlendirici Model Tasarım Raporu
+
+Giriş ve Teorik Çerçeve: Sezgisel Kodlamadan Ajansal Mühendisliğe Geçiş
+
+Yazılım geliştirme ekosistemi, Büyük Dil Modellerinin (LLM) otonom yeteneklerinin artmasıyla birlikte temel bir paradigma değişiminden geçmektedir. Bu değişimin merkezinde, "sezgisel kodlama" (vibe coding) olarak adlandırılan ve "ajansal mühendislik" (agentic engineering) olarak olgunlaşan iki farklı metodoloji yer almaktadır. Andrej Karpathy tarafından literatüre kazandırılan "sezgisel kodlama" kavramı, başlangıçta geliştiricilerin koda doğrudan müdahale etmeden, sadece doğal dille komutlar vererek ve hata mesajlarını sisteme geri besleyerek hızlı prototipler oluşturduğu bir süreci tanımlamıştır.[1] Bu yöntem, özellikle sıfırdan oluşturulan minimum uygulanabilir ürünler (MVP) veya tek kullanımlık betikler için devrim niteliğinde bir hız sağlamasına rağmen, üretim ortamı kalitesinde yazılım geliştirme söz konusu olduğunda ciddi yapısal sorunlar ortaya çıkarmaktadır.[1]
+
+Sezgisel kodlamanın temel başarısızlık noktası, sistemin büyümesiyle birlikte kodun sürdürülebilirliğinin kaybolması ve mimari bütünlüğün bozulmasıdır. Geliştiriciler, yapay zeka tarafından üretilen kodun tam olarak ne yaptığını anlamakta zorlanmakta ve bu durum "mühendislik değil, umut etme" olarak nitelendirilmektedir.[1] Mimari kararların uygulama genelinde tutarsız olması, güvenlik açıklarının gözden kaçması, veri katmanları arasındaki zayıf entegrasyon ve tekrarlanabilirliğin olmaması, kontrolsüz sezgisel kodlamanın en belirgin yan etkileridir.[2] Bu sorunları aşmak için endüstri, "Ajansal Mühendislik" ve "Bağlam Mühendisliği" (Context Engineering) kavramlarına yönelmiştir.
+
+Ajansal mühendislik, dil modelini (LLM) bir Merkezi İşlem Birimi (CPU) olarak konumlandırırken, modele sağlanan bağlamı (context) Rastgele Erişimli Bellek (RAM) olarak kabul eder.[3] Tıpkı geleneksel bilgisayar mimarilerinde olduğu gibi, modelin yeteneği ne kadar yüksek olursa olsun, belleğe (bağlam penceresine) yüklenen verilerin kalitesi ve organizasyonu sistemin nihai performansını belirler.[3] Ajanların uzun bağlam pencerelerini işleme yeteneği gelişmiş olsa da (örneğin pozisyon kodlama interpolasyonu teknikleri ile), bilgi yoğunluğunun artması, bilginin geri çağrılmasında (retrieval) hassasiyet kaybına ve uzun menzilli muhakeme yeteneğinde azalmaya yol açmaktadır.[4]
+
+Bu nedenle, Claude Code, Cursor, Windsurf, Roo Code ve Codex gibi yapay zeka kodlama asistanlarının performansını en üst düzeye çıkarmak için, bağlam penceresini gereksiz bilgilerle doldurmayan, ancak ajanın ihtiyaç duyduğu anda doğru bilgiye ulaşmasını sağlayan "yardımcı bağlam dosyaları" geliştirilmiştir. Bu rapor, yazılım geliştirme bağlamında kullanılan beş temel yardımcı artefaktı (Yetenekler, AGENTS.md, Kurallar, İş Akışları ve Planlar) detaylı bir şekilde incelemekte ve bu belgelerin kusursuz bir şekilde oluşturulmasını sağlayacak bir "Değerlendirici Dil Modeli" (Judge LLM) aracının algoritmik mantığını ve kural setlerini tanımlamaktadır.
+
+Kategori 1: Yetenekler (Skills) ve Otonom Görev Kapsamlandırması
+
+Yetenekler (Skills), yapay zeka kodlama ajanlarının tek boyutlu bir komut-yanıt döngüsünden çıkarak, karmaşık ve çok adımlı mühendislik görevlerini tutarlı bir şekilde yürütmesini sağlayan uzmanlaşmış araç kümeleridir.[5] Geleneksel sistem komutlarından farklı olarak yetenekler, sadece bir metin dosyasından ibaret değildir; referans komut dosyalarını, mimari şablonları, dağıtım (deployment) kontrol listelerini ve diğer yapılandırma dosyalarını içeren, ajanın çağırabileceği ve okuyabileceği klasör yapılarından oluşur.[5, 6]
+
+Mimari Yapı ve Kapsam Alanları
+
+Yetenek mimarisi, "Aşamalı Bilgi Sunumu" (Progressive Disclosure) ilkesine sıkı sıkıya bağlıdır. Bu ilke, ajana potansiyel olarak ihtiyaç duyabileceği her bilgiyi tek seferde vermek yerine, ona kritik bilgileri nasıl bulacağını öğretmeyi amaçlar.[7, 8, 9] Örneğin, bir dağıtım sürecinde ajan tüm bulut mimarisi dokümantasyonunu belleğe yüklemek yerine, sadece dağıtım yeteneğinin tetikleyicisini belleğinde tutar ve ancak dağıtım başlatıldığında ilgili kontrol listelerine erişir.[5]
+
+Yetenekler genellikle iki farklı kapsamda (scope) tanımlanır:
+
+Çalışma Alanı Yetenekleri (Workspace Skills): Yalnızca belirli bir projeye özgü olan görevler için kullanılır. Bu yetenekler genellikle projenin kök dizininde, .windsurf/skills/<yetenek-adi>/ veya .claude/skills/<yetenek-adi>/ gibi klasörlerde barındırılır.[5, 6] Sürüm kontrol sistemlerine dahil edilerek tüm geliştirme ekibiyle paylaşılırlar.
+
+Küresel Yetenekler (Global Skills): Geliştiricinin tüm projelerinde kullanabileceği evrensel iş akışlarıdır. Kullanıcının ana dizininde (örneğin ~/.codeium/windsurf/skills/) depolanır ve her yeni çalışma alanında otomatik olarak kullanılabilir hale gelir.[5, 6]
+
+SKILL.md Dosyası ve Meta Veri (Frontmatter) Yönetimi
+
+Her yetenek klasörünün kalbinde, ajana metadata (üst veri) sağlayan bir SKILL.md dosyası bulunmak zorundadır.[5] Bu dosyanın en kritik bileşeni, belgenin en üstünde yer alan YAML formatındaki "frontmatter" bloğudur. Bu blok, ajanın "Kademeli Keşif" (progressive disclosure) yeteneğini doğrudan kontrol eder.
+
+Tablo 1: SKILL.md Frontmatter Gereksinimleri
+
+Frontmatter Alanı
+
+Özellikler ve Kısıtlar
+
+Ajan Davranışına Etkisi
+
+name
+
+Benzersiz bir tanımlayıcı olmalıdır. Sadece küçük harfler, rakamlar ve tire işaretleri içerebilir (örn. deploy-to-production).
+
+Kullanıcının arayüzden @ işaretiyle (örn. @deploy-to-production) yeteneği manuel olarak çağırmasını sağlar.[5]
+
+description
+
+Yeteneğin ne zaman ve neden kullanılacağını açıklayan kısa, bağlamsal ve kesin bir metin olmalıdır.
+
+Ajanın, kullanıcının serbest metinli talebini analiz ederek, doğru yeteneği arka planda otomatik olarak tetiklemesini sağlayan en kritik karar noktasıdır.[5]
+
+Bir yeteneğin SKILL.md içeriği tasarlanırken, Anthropic'in bağlam yönetimi ilkelerine göre dosya gövdesinin 500 satırın altında tutulması, performans optimizasyonu için hayati önem taşır.[8] İçerik bu limite yaklaştığında, yönergeler alt markdown dosyalarına (örn. deployment-checklist.md, rollback-procedure.md) bölünmeli ve SKILL.md sadece bir "içindekiler tablosu" veya orkestrasyon merkezi gibi çalışmalıdır.[5, 8]
+
+Yetenek Oluşturma ve Değerlendirme Metodolojisi
+
+Kullanıcılar için etkili bir yetenek tasarlamak, doğru isimlendirme ve açıklama yapmaktan geçer. Jenerik isimler (örneğin setup1) ajanın bağlamı anlamasını zorlaştırırken, setup-dev-environment gibi eylem odaklı isimler ajanın muhakeme sürecini hızlandırır.[5] Ayrıca, yetenek klasörünün içerisine sadece markdown değil, yapılandırma şablonları (örn. config-template.yaml) gibi ajanın doğrudan okuyup kopyalayabileceği destekleyici artefaktların eklenmesi, otonomi seviyesini dramatik ölçüde artırır.[5]
+
+Kategori 2: AGENTS.md ve CLAUDE.md: Proje Seviyesinde Kılavuz Standartları
+
+Yapay zeka asistanları için tasarlanan AGENTS.md ve CLAUDE.md dosyaları, geleneksel yazılım projelerindeki README.md dosyalarının ajanlar için optimize edilmiş bir eşdeğeridir. Açık kaynak dünyasında 60.000'den fazla proje tarafından benimsenen bu format, Agentic AI Foundation (Linux Vakfı altında tarafsız bir organizasyon) tarafından standartlaştırılmaktadır.[10] Bu standardın amacı, yapay zeka kodlama ajanlarının farklı depolar ve araç zincirleri (toolchains) arasında güvenilir, satıcıdan bağımsız (vendor-neutral) bir kurallar bütünü ile çalışmasını sağlamaktır.[10]
+
+Yerleşim Hiyerarşisi ve Kapsamlandırma Stratejileri
+
+Standart AGENTS.md dosyaları projenin kök (root) dizininde yer alır. Ancak karmaşık mimarilerde, özellikle monorepo (tekil depo) yapılarında, bağlamı daha rafine hale getirmek için hiyerarşik kapsamlandırma (hierarchical scoping) kullanılır.
+
+Ajanlar, depo içerisinde çalışırken, müdahale ettikleri dosyaya dizin ağacında "en yakın" konumda bulunan AGENTS.md veya CLAUDE.md dosyasını referans alırlar.[10, 11] Bu davranış, eski ve yeni kod tabanlarının bir arada yaşadığı projelerde devasa avantajlar sağlar. Örneğin, bir deponun kök dizininde genel güvenlik kuralları yer alırken, packages/legacy-app dizinindeki bir AGENTS.md dosyası ajanı "React 17 kurallarına" uymaya, packages/modern-app dizinindeki dosya ise "React 18 sunucu bileşenleri (RSC) kurallarına" uymaya zorlayabilir.[11] Bu sayede, tek bir devasa dosyada yazılacak karmaşık if-else koşullarından ve bağlam israfından kaçınılmış olur.[4, 11]
+
+Mimari Kısıtlar: Ne Eklenmeli, Ne Eklenmemeli?
+
+Etkili bir AGENTS.md dosyası yazmanın sırrı, neyin dahil edileceğinden çok neyin dışarıda bırakılacağına karar vermektir. Anthropic mühendislerinin yönergelerine göre, bu dosyalar ajanın her oturumunda (session) sürekli olarak bağlama dahil edildiğinden, boyutlarının çok küçük tutulması esastır. Kesin bir sınır olmamakla birlikte, kök dizindeki bir kılavuzun 300 satırın, tercihen 60 satırın altında olması önerilmektedir.[9]
+
+Tablo 2: AGENTS.md Tasarım Kararları
+
+Kategori
+
+Yanlış / Anti-Kalıp (Kaçınılması Gerekenler)
+
+Doğru / En İyi Uygulama (Tavsiye Edilenler)
+
+Mantıksal Gerekçe
+
+Kod Örnekleri
+
+Dosya içine statik, uzun kod parçacıkları (snippets) yazmak.[9]
+
+Referans gösterilecek kodlar için dosya_adi:satir_numarasi şeklinde işaretçiler kullanmak.[9]
+
+Hard-coded örnekler kod tabanı değiştikçe hızla eskir ve ajanları eski API'leri kullanmaya yöneltir (halüsinasyon riski).
+
+Kuralların Dili
+
+"Her zaman X yap", "Asla Y yapma" gibi tamamı büyük harflerle yazılmış agresif ve bağlamsız zorlamalar kullanmak.[7, 12]
+
+"TypeScript mimari tercihleri için docs/TYPESCRIPT.md belgesine bakın" şeklinde aşamalı referanslar vermek.[7]
+
+Modeller agresif kısıtlamaları bazen yanlış yorumlayabilir. Ayrıca dil-spesifik kurallar sadece o dilde çalışılırken yüklenmelidir (token tasarrufu).
+
+Formatlama ve Linting
+
+Dosyayı bir "linter" gibi kullanıp, boşluklar, tırnak işaretleri ve girintilerle ilgili düzinelerce satır kural yazmak.[9, 11]
+
+Kod formatlama işini standart Lint araçlarına bırakıp, AGENTS.md içine sadece pnpm lint --filter <proje> komutunu eklemek.[9, 10, 13]
+
+Yapay zeka ajanları formatlayıcı değildir. Linter'ın saniyeler içinde yapacağı iş için pahalı LLM token'larını harcamak verimsizdir.
+
+Doğrulama ve Test
+
+Test süreçlerinden hiç bahsetmemek veya sadece "kodu test et" gibi belirsiz direktifler vermek.
+
+"Kodu değiştirdikten sonra pnpm vitest run -t "<test adı>" komutuyla ilgili testi çalıştır" şeklinde spesifik komutlar vermek.[10, 13]
+
+Ajanın, işini doğrulaması ve kendi kendini denetlemesi (self-validation) için kesin terminal komutlarına ihtiyacı vardır.[10]
+
+Kategori 3: Bağlamsal Kurallar (Rules) ve Çerçeve Standartları
+
+Yapay zeka destekli entegre geliştirme ortamlarında (IDE - Cursor, Windsurf, Roo Code vb.) kurallar (Rules), projeye veya organizasyona özel geliştirme standartlarını tanımlayan meta-belgelerdir. .cursorrules, .windsurfrules veya .roorules gibi dosya uzantılarıyla bilinirler ve ajanın ürettiği her kod parçasının belirli bir kalibrasyondan geçmesini sağlarlar.[5, 14] Yeteneklerin (Skills) aksine kurallar tetikleme gerektirmez; "her zaman açık" (always-on) durumdadırlar veya ajanın bağlamına otomatik olarak enjekte edilirler.[5]
+
+Küresel ve Çalışma Alanı Kural Hiyerarşisi
+
+Kodlama ajanları, kural yönetimini organizasyonel tutarlılık ve projeye özgü esneklik sağlamak adına iki katmanlı bir yapıda ele alır:
+
+Küresel Kurallar (Global Rules): Bu kurallar, kullanıcının kök dizininde (örneğin ~/.roo/rules/ veya ~/.cursorrules) bulunur. Geliştiricinin her projesinde otomatik olarak geçerli olan bu kurallar; kişisel iletişim tercihleri (örneğin ajanın her zaman Türkçe veya İngilizce yanıt vermesi), evrensel kod standartları veya sık kullanılan araç yapılandırmalarını içerir.[15, 16]
+
+Çalışma Alanı Kuralları (Workspace Rules): Sadece aktif projenin kök dizininde (örneğin .roo/rules/ veya .cursorrules) yer alırlar. Bu dosyalar Git gibi sürüm kontrol sistemlerine dahil edilerek tüm ekibin ajan asistanlarının aynı standartta çalışmasını sağlar.[15, 16]
+
+Bu iki katmanlı yapıda, en temel işletim prensibi önceliklendirmedir (precedence). Eğer küresel bir kural ile çalışma alanı kuralı çatışırsa (örneğin küresel kuralda veri tabanı için "PostgreSQL", proje kuralında "MongoDB" kullanılması isteniyorsa), çalışma alanı kuralı küresel kuralı ezer ve geçerli olur.[15, 16]
+
+Kural Geliştirme Best Practice'leri ve Mimari Desenler
+
+Etkili bir kural dosyası yazmak, sadece teknik tercihlerin sıralanması değil, aynı zamanda dil modelinin anlamsal (semantic) kavrayışını yönlendirme sanatıdır. Sektördeki en iyi açık kaynaklı kural setleri (örneğin cursor.directory deposundan alınan örnekler), yüksek kaliteli kural yazımı için belirli desenler sunar.[17, 18]
+
+1. Çerçeve ve Teknoloji Yığınına Özgü Sınırlar (Tech-Stack Boundaries):
+Bir kural dosyası, projede kullanılan teknolojilerin varsayılan davranışlarını ajana dikte etmelidir. Örneğin, modern bir React/Next.js kural dosyası şu kesin yönergeleri içermelidir:
+
+use client, useEffect ve setState kullanımını en aza indirin; her zaman React Sunucu Bileşenlerini (RSC) tercih edin.[19]
+
+Form doğrulama (validation) işlemleri için her zaman Zod kullanın.[19]
+
+Veri getirme (data fetching) işlemleri için istemci tarafında use client kullanmaktan kaçının; Next.js sunucu tarafı veri getirme mekanizmalarını uygulayın.[19]
+
+2. Anti-Kalıpların (Anti-Patterns) ve Kullanımdan Kaldırılan Yapıların Belirtilmesi:
+Kural dosyalarının en büyük gücü, ajanı "yapmaması" gereken şeyler konusunda eğitebilmesidir. Örneğin, "Eski kod kalıplarını ve kullanımdan kaldırılan (deprecated) fonksiyonları kullanmayın" demek yerine, somut örnekler verilmelidir.[22] "Sunucu eylemlerinde (Server Actions) beklenen hatalar için asla try/catch bloğu kullanmayın. Bunun yerine useActionState kullanarak hataları yakalayın ve istemciye döndürün" şeklinde spesifik kısıtlar, ajanın halüsinasyonlarını sıfıra indirir.[17]
+
+3. XML Etiketleri ile Zihinsel Model Yönlendirmesi (Reasoning Guidance):
+Gelişmiş kural dosyaları, ajanın yanıt formatını ve düşünce sürecini optimize etmek için XML etiketlerinden faydalanır. Örneğin, kural dosyasının sonuna eklenecek bir <THINKING_PROCESS> yapısı, ajanın basit bir kod üreteci olmaktan çıkıp, analitik bir işbirlikçi olmasını sağlar.[23]
+
+<OUTPUT_FORMAT>
+  <CONTEMPLATOR>
+    - Temel gözlemlerle başla.
+    - Alternatifleri araştır.
+  </CONTEMPLATOR>
+  <FINAL_ANSWER>
+    - Açık, özlü ve çalışabilir kod bloğu sun.
+  </FINAL_ANSWER>
+</OUTPUT_FORMAT>
+
+
+Bu tür yapısal etiketler, özellikle o-serisi gibi derin muhakeme yapan modeller yerine standart modellerle (GPT-4o, Claude 3.5 Sonnet) çalışırken modelin mantıksal ilerleyişini garanti altına alır.[23]
+
+Kategori 4: İş Akışları ve Eğik Çizgi Komutları (Workflows and Slash Commands)
+
+İş akışları ve eğik çizgi komutları, geliştiricilerin en sık tekrarladığı karmaşık süreçleri otomatize eden yapılandırılmış markdown komut dosyalarıdır. Windsurf Cascade ortamında "Workflows" olarak geçen bu yapı [24], Roo Code ve GitHub Copilot gibi araçlarda "Slash Commands" (Özel Eğik Çizgi Komutları) olarak isimlendirilir.[25, 26] Bu komutlar, / sembolü ile doğrudan chat arabiriminden çağrılabilir ve ajanı belirli bir amaca yönlendirir.
+
+Metadata Yapılandırması ve Slug Dönüşümü
+
+Kullanıcı bir komut dosyası (örneğin .roo/commands/review-code.md) oluşturduğunda, dosya ismi uzantı olmadan sistem tarafından otomatik olarak bir "slug" değerine (örneğin /review-code) dönüştürülür. Boşluklar tire işaretine çevrilir, özel karakterler temizlenir.[25] Ancak bu komutun sadece isimden ibaret olmaması, ajana doğru bağlamı sağlayacak meta verilere sahip olması gerekir.
+
+Etkili bir iş akışı dosyasında bulunması gereken "Frontmatter" yapılandırması şunları içerir [25]:
+
+description: Komutun menüdeki açıklama metni. Ajanın ve kullanıcının komutun amacını kavramasını sağlar.
+
+argument-hint: Komutun dışarıdan alacağı parametreleri belirten bir arayüz ipucudur. Örneğin <directory_to_analyze> argümanı, komut çağrıldığında kullanıcının bir dizin yolu girmesi gerektiğini belirtir.
+
+mode: Ajanın komutu çalıştırırken hangi operasyonel duruma geçeceğini belirler. Örneğin mimari bir inceleme için mode: architect seçilirken, kod yazımı için mode: code seçilir. Bu, ajanın analiz araçlarını mı yoksa düzenleme araçlarını mı kullanacağını sistem seviyesinde değiştirir.
+
+Kompozit İş Akışları ve Ajan Orkestrasyonu
+
+İş akışlarının en güçlü yanı, birbirlerini çağırabilen (composable) yapılar olmalarıdır. Gelişmiş ajansal mühendislikte tek bir iş akışı, farklı görevleri zincirleme olarak çalıştırabilir. Örneğin, bir /deploy iş akışı dosyası, kendi içeriğinde doğrudan /test-suite ve /build-assets komutlarını barındırabilir.[24] Ajan, ilk komutu tetiklediğinde, sırayla dosya içinde belirtilen diğer iş akışlarını çözümleyerek ardışık bir görev ağacı oluşturur. Bu orkestrasyon mekanizması, çok alt-ajanlı (multi-agent) sistemlerin temel iletişim formunu oluşturur.[27]
+
+Kategori 5: Yürütme Planları (Plans.md ve ExecPlans)
+
+Yapay zeka asistanlarının otonomi kapasitesi, büyük ölçekli ve çok dosyalı projeleri baştan sona yürütebilecek seviyeye (ExecPlans) ulaşmıştır.[28] Ancak, dil modeline sadece "Şu büyük uygulamayı baştan sona yaz" demek, halüsinasyonlara, kodun karmaşıklaşmasına ve ajanın bağlamı kaybetmesine yol açar.[29] Geliştirme sürecindeki bu kopukluğu gidermek için kullanılan en etkili mimari tasarım, "Görev Ayrıştırma" (Task Decomposition) üzerine kurulu "Plan.md" (veya Yürütme Planı) tekniğidir.[28, 30]
+
+ExecPlan Mimarisi ve Yaşayan Doküman (Living Document) Prensibi
+
+Yürütme planları, durağan yapılacaklar listelerinden (to-do lists) temelden farklıdır. OpenAI'nin Codex Yürütme Planları (ExecPlans) yönergelerine göre, bir plan "Kendi Kendine Yeterli" (Self-Contained) ve "Acemi Dostu" (Novice-Friendly) olmalıdır.[28] Yani, projeyi hiç bilmeyen bir ajan (veya insan), sadece bu plana bakarak projenin gereksinimlerini, mimarisini ve hedeflerini anlayabilmeli ve hatasız kod üretebilmelidir.[28]
+
+İdeal bir "Plan.md" dosyasının anatomisi şu yapı taşlarından oluşmalıdır [28]:
+
+Amaç / Büyük Resim (Purpose): Değişikliğin veya projenin kullanıcı perspektifinden neden önemli olduğunun anlatıldığı, eylemin iş değerini açıklayan bölümdür.[28]
+
+Bağlam ve Oryantasyon (Context and Orientation): Temel modüllerin, kullanılacak veri yapılarının, mimari kısıtların ve dosya yollarının (file paths) düz metin olarak ifade edildiği bölümdür.
+
+İlerleme ve Zaman Damgaları (Progress Section): Olayların ve tamamlanan görevlerin [ ] (checkbox) formatında, yanında tamamlanma zamanı ile birlikte (2025-10-01 13:00Z gibi) listelendiği bölümdür.[28] Ajanlar yapısal olarak markdown işaretli kutucukları çok iyi algılar ve tamamlanan işleri işaretleyerek ilerler.[31]
+
+Sürprizler ve Keşifler (Surprises & Discoveries): Ajanın kodu yazarken karşılaştığı beklenmedik API hatalarının, performans düşüşlerinin veya tutarsızlıkların loglandığı yerdir. Bu bölüm ajanın "kendi kendini düzeltme" (self-correction) yapmasını sağlar.[28]
+
+Karar Günlüğü (Decision Log): Mimaride neden X kütüphanesi yerine Y kütüphanesinin kullanıldığının kaydedildiği kronolojik kayıt alanıdır.[28]
+
+Uygulama Adımları ve Doğrulama (Concrete Steps & Validation): Ajanın çalıştıracağı kesin terminal komutları, hangi dizinde çalışacağı ve "N sayıda testin başarıyla geçtiği" gibi açık kabul kriterlerinin (acceptance criteria) belirtildiği operasyonel kısımdır.[28]
+
+Sistem Mimarisi: Değerlendirici Dil Modeli (Judge LLM) İçin Tasarım ve Sistem Komutları
+
+Bu raporun nihai hedefi olan "Prompt Mükemmelleştirme Aracı", geliştiricilerin ajanlar için oluşturduğu bağlam dosyalarını (Yetenekler, AGENTS.md, Kurallar, İş Akışları, Planlar) en iyi uygulamalara göre otomatik olarak düzelten bir Değerlendirici Dil Modeli (Judge LLM) sistemi tasarlamaktır.
+
+Değerlendirici LLM İçin Temel Komut Mühendisliği (Prompt Engineering) Prensipleri
+
+Judge LLM'nin arka planındaki sistem komutu, modern dil modellerini güçlendiren şu spesifik tekniklerle donatılmalıdır [34]:
+
+S.C.A.F.F Çerçevesi Zorunluluğu: Değerlendirici model, her kullanıcı komutunu şu 5 parametreye göre test etmelidir: Sistem Bağlamı (Context), Temel Hedef (Objective), Teknik Kısıtlamalar (Technical Parameters), Çıktı ve Yapı Kalitesi (Quality Expectations).[36]
+
+K-Shot Prompting (Örneklemeli Öğrenme): Kullanıcı "Bana bir React kural dosyası yaz" dediğinde, Değerlendirici LLM doğrudan kendi veritabanındaki (örneğin cursor.directory standartları) en iyi örnekleri baz alarak çıktı vermelidir.[19, 34]
+
+Negatif Prompting ve Sınır Çizme: "Modelin ne yapması gerektiği kadar, ne yapmaması gerektiğini de açıkça belirt" kuralı, tüm sistem yönergelerinde ana çerçeve olmalıdır.[22]
+
+Belge Türüne Göre Karar Ağaçları ve Değerlendirme Çerçeveleri
+
+Araç arayüzünde kullanıcı 5 farklı belge türünden birini seçtiğinde, Değerlendirici LLM aşağıdaki yapılandırılmış matrisleri (Sistem Prompt kurallarını) devreye alarak kullanıcının taslağını optimize etmelidir.
+
+1. Yetenekler (Skills) Değerlendirme Matrisi
+
+Kontrol Edilecek Kural
+
+Kullanıcının Orijinal Hatalı Girdisi
+
+Judge LLM'nin Sistematik Düzenlemesi ve Önerisi
+
+Zorunlu Frontmatter
+
+Sadece markdown metni girilmiş.
+
+"Yetenek dosyalarının otomatik tetiklenmesi için YAML frontmatter şarttır." LLM otomatik olarak name ve description alanlarını ekler.[5]
+
+Açıklama Kalibrasyonu
+
+"Bu bir kod dağıtım yeteneğidir."
+
+LLM, tetikleyiciyi keskinleştirir: description: Üretim ortamına dağıtım sürecini güvenlik adımları ve test kontrolleriyle birlikte yürütür. [5]
+
+Boyut ve Aşamalı Referans
+
+Kullanıcı 1000 satırlık bir konfigürasyon dosyası metni yapıştırmış.
+
+LLM, metni 500 satırın altında tutacak şekilde özetler ve detaylı kod bloklarını dışarıdaki deploy-config.yml gibi sanal dosyalara referans vererek Aşamalı Bilgi Sunumunu (Progressive Disclosure) uygular.[5, 8]
+
+2. AGENTS.md / CLAUDE.md Değerlendirme Matrisi
+
+Kontrol Edilecek Kural
+
+Kullanıcının Orijinal Hatalı Girdisi
+
+Judge LLM'nin Sistematik Düzenlemesi ve Önerisi
+
+Statik Kod Engellemesi
+
+"Veritabanı bağlantısını her zaman şu kodla yap: db.connect(...)"
+
+LLM kodu siler ve referansa çevirir: "Kod blokları AGENTS.md içinde hızla eskir. Bunun yerine: 'Veritabanı bağlantısı için daima src/db/connection.ts dosyasındaki patterni referans al' şekline dönüştürüldü".[9]
+
+Linter Ayrışması
+
+"Tırnak işaretlerini tek yap, satır sonuna noktalı virgül koy."
+
+LLM bu kuralları kaldırır: "Ajan bir formatlayıcı değildir. Bunun yerine dosya sonuna 'Kodu yazdıktan sonra pnpm lint --fix çalıştır' direktifi eklendi".[9]
+
+Kesin Doğrulama
+
+"Kodu test et."
+
+LLM komutu kesinleştirir: "Ajanların doğrulanabilir komutlara ihtiyacı vardır: 'Testleri pnpm vitest run -t "<test_name>" ile çalıştır.'" [10, 13]
+
+3. Kurallar (.cursorrules /.windsurfrules) Değerlendirme Matrisi
+
+Kontrol Edilecek Kural
+
+Kullanıcının Orijinal Hatalı Girdisi
+
+Judge LLM'nin Sistematik Düzenlemesi ve Önerisi
+
+Spesifik Teknoloji Sınırları
+
+"Next.js projesi için kurallar yaz."
+
+LLM endüstri standartlarını ekler: "React Sunucu Bileşenlerini (RSC) önceliklendir. use client kullanımını sadece API istekleriyle sınırla. Form doğrulama için Zod kullan".[17, 19]
+
+Kullanımdan Kaldırılan Kalıplar
+
+Girdi yok (Kullanıcı belirtmemiş).
+
+LLM kullanıcıyı uyarır ve kurala ekler: "Server Actions içindeki hatalar için try/catch yerine useActionState kullan gibi negatif kurallar mimariyi korur".[17, 22]
+
+Muhakeme (Reasoning) Etiketleri
+
+Sadece düz metin.
+
+LLM kuralın sonuna XML çıktı etiketleri ekler: <OUTPUT_FORMAT> <CONTEMPLATOR> Alternatifleri düşün </CONTEMPLATOR> <FINAL_ANSWER> Kodu üret </FINAL_ANSWER> </OUTPUT_FORMAT>.[23]
+
+4. İş Akışları ve Slash Komutları Değerlendirme Matrisi
+
+Kontrol Edilecek Kural
+
+Kullanıcının Orijinal Hatalı Girdisi
+
+Judge LLM'nin Sistematik Düzenlemesi ve Önerisi
+
+Zorunlu Argüman İpuçları
+
+"Bir klasörü incele."
+
+LLM gerekli meta veriyi oluşturur: "Ajanın hangi klasörü inceleyeceğini bilmesi için argument-hint: <directory_to_analyze> eklendi".[25]
+
+Mod (Mode) Belirleme
+
+(Mode belirtilmemiş)
+
+LLM işlemi analiz eder. "Bu mimari bir inceleme olduğundan mode: architect olarak belirlendi. Kod değişikliği istenseydi mode: code olurdu".[25]
+
+5. Planlar (Plans.md / ExecPlans) Değerlendirme Matrisi
+
+Kontrol Edilecek Kural
+
+Kullanıcının Orijinal Hatalı Girdisi
+
+Judge LLM'nin Sistematik Düzenlemesi ve Önerisi
+
+Zorunlu İskelet Entegrasyonu
+
+1. Frontend yap. 2. Backend yap.
+
+LLM planı Codex ExecPlan formatına çevirir. Amaç, Bağlam, Sürprizler ve Keşifler, Karar Günlüğü başlıklarını zorunlu olarak şablona yerleştirir.[28]
+
+İzlenebilirlik (Checkboxes)
+
+Adımları madde imiyle yazmış.
+
+LLM tüm eylemleri - [ ] Görev adı (Zaman Damgası) formatına çevirir. "Ajanların ilerlemeyi takip etmesi için işaretlenebilir onay kutuları zorunludur" der.[28, 31]
+
+Bağımsızlık Testi
+
+"Kullanıcı tablosunu oluştur."
+
+LLM emri kesinleştirir: "Projeye yabancı bir ajanın (novice) bile anlayabilmesi için tam dosya yolları (src/db/schema.ts) ve doğrulama çıktıları plana dahil edilmelidir".[28]
+
+Sonuç
+
+Yazılım geliştirme süreçlerinde yapay zeka ajanlarının kullanımı, "kodu yaz ve çalıştır" şeklindeki sezgisel kodlama yaklaşımından, titiz bir mimari tasarım gerektiren "Ajansal Mühendislik" disiplinine doğru hızla evrilmektedir. Araştırmalar açıkça göstermektedir ki, en zeki dil modelleri bile yapılandırılmamış, yoğun ve plansız bir bağlam penceresiyle karşılaştıklarında halüsinasyon görmekte ve mimari bütünlüğü bozmaktadır. Bu sorunun nihai çözümü; Yetenekler, AGENTS.md, Kurallar, İş Akışları ve Yürütme Planları gibi yardımcı artefaktların, "Aşamalı Bilgi Sunumu", "Görev Ayrıştırma" ve "Kendi Kendine Doğrulama" prensiplerine sadık kalarak inşa edilmesidir.
+
+Tasarlanan Değerlendirici Dil Modeli (Judge LLM) sistemi, bu kompleks mühendislik disiplinini son kullanıcı için erişilebilir hale getirmektedir. Araç; kullanıcının hatalı ve bağlamsız komutlarını alıp, S.C.A.F.F. çerçevesi, negatif kısıtlamalar, YAML meta verileri ve XML yönlendirme etiketleriyle donatılmış, makine-okunabilir, kusursuz bağlam dosyalarına dönüştürecektir. Doğru tasarlanmış bu bağlam ekosistemi sayesinde yapay zeka kodlama ajanları; neyin yapılmaması gerektiğini bilen, kendi işini test eden, mimari kuralları ihlal etmeyen ve binlerce satırlık projeleri otonom olarak uçtan uca yönetebilen gerçek birer mühendislik işbirlikçisine dönüşecektir.

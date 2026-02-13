@@ -1,0 +1,1 @@
+ALTER TABLE `artifacts` ADD `analysis_json` text;
