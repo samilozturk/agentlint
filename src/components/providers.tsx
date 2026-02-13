@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { TRPCReactProvider } from "@/trpc/react";
 
 type ProvidersProps = {
@@ -11,11 +12,13 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
     >
-      <TRPCReactProvider>{children}</TRPCReactProvider>
+      <TooltipProvider delayDuration={300}>
+        <TRPCReactProvider>{children}</TRPCReactProvider>
+      </TooltipProvider>
     </ThemeProvider>
   );
 }
