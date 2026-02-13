@@ -9,7 +9,7 @@ type MockJudgeInput = {
   content: string;
 };
 
-const dangerousPattern = /force\s+push|rm\s+-rf|del\s+\/f\s+\/q|--no-verify/gi;
+const dangerousPattern = /force\s+push|rm\s+-rf|del\s+\/f\s+\/q|--no-verify/i;
 
 function clampScore(score: number) {
   if (score < 0) {
