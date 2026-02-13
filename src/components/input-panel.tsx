@@ -24,7 +24,7 @@ export function InputPanel({ value, onChange }: InputPanelProps) {
     <Card className="panel-glow border-border/50 bg-card/75">
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
-          <CardTitle className="text-sm font-semibold uppercase tracking-[0.1em] font-[family-name:var(--font-display)]">
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
             Input
           </CardTitle>
           <CardDescription className="text-xs">

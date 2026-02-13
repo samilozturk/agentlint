@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { ArtifactSelector } from "@/components/artifact-selector";
+import { AnalysisDashboard } from "@/components/analysis-dashboard";
 import { DiffViewer } from "@/components/diff-viewer";
 import { InputPanel } from "@/components/input-panel";
 import { JudgeToolbar } from "@/components/judge-toolbar";
@@ -129,11 +130,13 @@ export function EditorWorkbench() {
       }
     : null;
 
+  const analysis = analyzeMutation.data?.result.analysis ?? null;
+
   return (
     <div className="flex flex-col gap-5">
       <Card className="panel-glow border-border/50 bg-card/75">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold uppercase tracking-[0.1em] font-[family-name:var(--font-display)]">
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
             Artifact Type
           </CardTitle>
           <CardDescription className="text-xs">
@@ -152,7 +155,7 @@ export function EditorWorkbench() {
 
       <Card className="panel-glow border-border/50 bg-card/75">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold uppercase tracking-[0.1em] font-[family-name:var(--font-display)]">
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
             Judge & Actions
           </CardTitle>
           <CardDescription className="text-xs">
@@ -163,7 +166,7 @@ export function EditorWorkbench() {
           <JudgeToolbar
             isPending={analyzeMutation.isPending}
             hasOutput={output.length > 0}
-            inputLength={input.length}
+            inputLength={input.trim().length}
             isOverLimit={input.length > 1_000_000}
             errorMessage={analyzeMutation.error?.message ?? null}
             onAnalyze={onAnalyze}
@@ -177,6 +180,8 @@ export function EditorWorkbench() {
       </Card>
 
       <DiffViewer original={input} refined={output} />
+
+      <AnalysisDashboard analysis={analysis} />
 
       <RecentScans
         scans={recentScans.data}

@@ -71,7 +71,7 @@ export default function LandingPage() {
                 <ThemeToggle />
               </div>
 
-              <h1 className="mt-8 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl font-[family-name:var(--font-display)]">
+              <h1 className="mt-8 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl font-display">
                 Give every coding agent a{" "}
                 <span className="text-primary">cleaner, safer</span>{" "}
                 operating manual.
@@ -106,7 +106,7 @@ export default function LandingPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
               Capabilities
             </p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl font-[family-name:var(--font-display)]">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl font-display">
               Everything you need to lint agent context.
             </h2>
           </div>
@@ -124,7 +124,7 @@ export default function LandingPage() {
                   <span className="mb-3 inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
                     <Icon className="size-4" />
                   </span>
-                  <h3 className="text-sm font-semibold font-[family-name:var(--font-display)]">
+                  <h3 className="text-sm font-semibold font-display">
                     {feature.title}
                   </h3>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -142,7 +142,7 @@ export default function LandingPage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
               Workflow
             </p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl font-[family-name:var(--font-display)]">
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl font-display">
               Three steps to perfection.
             </h2>
           </div>
@@ -157,7 +157,7 @@ export default function LandingPage() {
                 <span className="mb-3 inline-flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 font-mono text-sm font-bold text-primary">
                   {step.number}
                 </span>
-                <h3 className="text-base font-bold font-[family-name:var(--font-display)]">
+                <h3 className="text-base font-bold font-display">
                   {step.title}
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -172,7 +172,7 @@ export default function LandingPage() {
         <section className="animate-rise-delay-3">
           <div className="forge-glow rounded-xl border border-border/50 bg-card/80 p-8 text-center sm:p-12">
             <WandSparkles className="mx-auto mb-4 size-8 text-primary animate-glow-pulse" />
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-[family-name:var(--font-display)]">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-display">
               Ready to lint your agent context?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">

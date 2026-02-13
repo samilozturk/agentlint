@@ -66,7 +66,7 @@ function ScoreGauge({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-3xl font-bold tabular-nums font-[family-name:var(--font-display)] ${scoreColor}`}>
+        <span className={`text-3xl font-bold tabular-nums font-display ${scoreColor}`}>
           {score}
         </span>
         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">

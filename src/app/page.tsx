@@ -42,7 +42,7 @@ export default function Home() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-primary">
                   Agent Lint
                 </p>
-                <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl font-[family-name:var(--font-display)]">
+                <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl font-display">
                   Build instructions
                   <br />
                   <span className="text-primary">agents can trust.</span>
@@ -69,7 +69,7 @@ export default function Home() {
                       <Icon className="size-3.5" />
                     </span>
                     <div>
-                      <h2 className="text-xs font-semibold uppercase tracking-wider font-[family-name:var(--font-display)]">
+                      <h2 className="text-xs font-semibold uppercase tracking-wider font-display">
                         {item.label}
                       </h2>
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

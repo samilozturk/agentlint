@@ -38,7 +38,7 @@ export function DiffViewer({ original, refined }: DiffViewerProps) {
     <Card className="panel-glow border-border/50 bg-card/75">
       <CardHeader className="flex flex-row items-start justify-between gap-2">
         <div>
-          <CardTitle className="text-sm font-semibold uppercase tracking-[0.1em] font-[family-name:var(--font-display)]">
+          <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
             Diff View
           </CardTitle>
           <CardDescription className="text-xs">
