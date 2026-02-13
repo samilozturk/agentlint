@@ -57,12 +57,13 @@ describe("runJudgePipeline", () => {
     expect(mockedOpenAI).not.toHaveBeenCalled();
   });
 
-  it("uses mock provider when LLM_PROVIDER is unset", async () => {
+  it("uses gemini provider when LLM_PROVIDER is unset", async () => {
     delete process.env.LLM_PROVIDER;
+    mockedGemini.mockResolvedValueOnce(mockJudgeResult);
     const output = await runJudgePipeline(input);
 
-    expect(output.provider).toBe("mock");
-    expect(mockedMock).toHaveBeenCalledOnce();
+    expect(output.provider).toBe("gemini");
+    expect(mockedGemini).toHaveBeenCalledOnce();
   });
 
   it("routes to OpenAI when LLM_PROVIDER=openai and succeeds", async () => {

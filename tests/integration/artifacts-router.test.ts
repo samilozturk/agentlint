@@ -93,6 +93,8 @@ describe("artifactsRouter.analyze", () => {
     expect(result.provider).toBe("mock");
     expect(result.result.score).toBe(82);
     expect(result.result.refinedContent).toContain("Refined Artifact");
+    expect(result.result.analysis).toBeTruthy();
+    expect(result.result.analysis?.checklist.length).toBeGreaterThan(0);
   });
 
   it("sanitizes input with script tags and includes warning", async () => {

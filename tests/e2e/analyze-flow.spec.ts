@@ -25,7 +25,9 @@ test.describe("Analyze flow", () => {
 
   test("analyze button is disabled when input is empty", async ({ page }) => {
     const input = page.getByTestId("artifact-input");
-    await input.fill("");
+    await input.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.press("Backspace");
 
     const analyzeBtn = page.getByRole("button", { name: "Analyze" });
     await expect(analyzeBtn).toBeDisabled();

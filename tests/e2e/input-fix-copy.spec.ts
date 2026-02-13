@@ -19,7 +19,9 @@ test("input -> fix -> copy flow", async ({ page }) => {
   await expect(output).not.toContainText("Run Analyze to generate the perfected artifact.", {
     timeout: 45_000,
   });
-  await expect(page.getByText("Warnings")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Warnings", { exact: true }).first()).toBeVisible({
+    timeout: 30_000,
+  });
 
   const beforeFix = normalizeMultiline((await output.textContent()) ?? "");
   expect(beforeFix.length).toBeGreaterThan(0);
