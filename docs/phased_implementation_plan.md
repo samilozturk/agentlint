@@ -8,8 +8,8 @@ Ana baglam:
 - `AGENTS.md`
 
 Execution snapshot (2026-02-14):
-- Completed: Faz 0, Faz 1, Faz 2, Faz 3, Faz 4 (v1), Faz 5 (v1)
-- Pending: Faz 6, Faz 7, Faz 8
+- Completed: Faz 0, Faz 1, Faz 2, Faz 3, Faz 4 (v1), Faz 5 (v1), Faz 6
+- Pending: Faz 7, Faz 8
 
 ---
 
@@ -252,11 +252,27 @@ Exit kriter:
 Amac:
 - Araci IDE/agent akisina dogrudan baglamak
 
-Planlanan yeni dosyalar:
+Uygulanan dosyalar:
+- `src/mcp/core/create-server.ts`
 - `src/mcp/server.ts`
+- `src/mcp/stdio.ts`
+- `src/mcp/http/server.ts`
+- `src/mcp/http/session-store.ts`
+- `src/mcp/http/auth.ts`
+- `src/mcp/http/oauth-metadata.ts`
+- `src/mcp/types.ts`
 - `src/mcp/tools/analyze-artifact.ts`
 - `src/mcp/tools/analyze-context-bundle.ts`
+- `src/mcp/tools/suggest-patch.ts`
+- `src/mcp/tools/validate-export.ts`
+- `src/mcp/tools/index.ts`
+- `src/server/services/context-bundle.ts`
+- `src/server/services/analyze-artifact-core.ts`
 - `src/cli/index.ts`
+- `tests/integration/mcp-stdio.test.ts`
+- `tests/integration/mcp-http.test.ts`
+- `tests/integration/mcp-auth.test.ts`
+- `tests/integration/cli-smoke.test.ts`
 
 Context7 referanslari:
 - MCP SDK: `/modelcontextprotocol/typescript-sdk`
@@ -268,21 +284,25 @@ MCP tool set:
 - `validate_export`
 
 Adimlar:
-1. MCP server bootstrap (once stdio)
-2. Tool wrapper'larini mevcut servis katmanina bagla
-3. Ihtiyaca gore streamable HTTP endpoint ekle
-4. CLI komutlarini MCP veya dogrudan servis katmani ile bagla
+1. MCP server bootstrap (stdio) tamamlandi.
+2. Tool wrapper'lari ortak servis katmanina baglandi.
+3. Streamable HTTP endpoint + session store + health/readiness tamamlandi.
+4. Bearer auth + scope enforcement + rate limit + timeout/concurrency/body guard tamamlandi.
+5. CLI komutlari (`analyze`, `fix`, `score`) ortak tool katmanina baglandi.
 
 Guvenlik:
-- Varsayilan read-only
-- Dosya degisikligi/icra adimlari icin explicit confirm
+- Varsayilan auth-required remote mod (`MCP_REQUIRE_AUTH=true`)
+- Tool bazli scope enforcement (`analyze`, `validate`, `patch`)
+- Session TTL cleanup + DNS rebinding protection (`createMcpExpressApp`)
+- OAuth metadata endpointleri ile production auth migration yolu
 
 Test:
 - MCP tool call contract testleri
 - CLI smoke testleri
 
 Exit kriter:
-- IDE agent araci call edip sonuc alabiliyor
+- IDE/agent tarafi local stdio ve remote streamable-http ile tool call edebiliyor
+- CLI komutlari ortak business logic ile stabil calisiyor
 
 ---
 

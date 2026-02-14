@@ -14,6 +14,12 @@ Bu dizindeki yol haritasi dokumanlari:
 4. `docs/agent_execution_backlog.md`
    - Coding assistant icin sirali task listesi ve DoD kriterleri
 
+5. `docs/mcp_phase6_contract.md`
+   - Faz 6 transport/auth/tool/CLI teknik kontrati
+
+6. `docs/mcp_remote_runbook.md`
+   - Public remote MCP deploy ve go-live runbook
+
 Temel kaynaklar:
 - `AGENTS.md`
 - `docs/PRD.md`

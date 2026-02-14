@@ -42,7 +42,7 @@ Tamamlananlar:
 - [x] Task 4.4 - E2E streaming test
 
 Devam edenler:
-- [ ] Faz 6 - MCP ve CLI backlog tasklari
+- [x] Faz 6 - MCP ve CLI backlog tasklari
 - [ ] Faz 7 - Dynamic template, URL import, house rules backlog tasklari
 - [ ] Faz 8 - Refactor ve CI backlog tasklari
 
@@ -293,44 +293,72 @@ DoD:
 ## Faz 6 Backlog - MCP ve CLI
 
 ### Task 6.1 - MCP server bootstrap
-Planlanan yeni dosyalar:
+Durum: [x] Completed
+
+Uygulanan dosyalar:
+- `src/mcp/core/create-server.ts`
 - `src/mcp/server.ts`
+- `src/mcp/stdio.ts`
 
-Yapilacak:
-- MCP server init, tool registration
-- Once stdio transport
-
-DoD:
-- MCP server baslatilip tool listesi aliniyor
+Sonuc:
+- MCP server init + tool registration tamamlandi.
+- Local `stdio` transport ile listTools/callTool akisi aktif.
 
 ### Task 6.2 - MCP tools implementation
-Planlanan yeni dosyalar:
+Durum: [x] Completed
+
+Uygulanan dosyalar:
 - `src/mcp/tools/analyze-artifact.ts`
 - `src/mcp/tools/analyze-context-bundle.ts`
 - `src/mcp/tools/suggest-patch.ts`
 - `src/mcp/tools/validate-export.ts`
+- `src/mcp/tools/index.ts`
+- `src/mcp/types.ts`
 
-DoD:
-- Tum tool call'lari beklenen JSON contract ile donuyor
+Sonuc:
+- Tum tool call'lari typed input contract ile calisiyor.
+- `structuredContent` tabanli JSON cikti donuluyor.
 
-### Task 6.3 - CLI wrapper
-Planlanan yeni dosyalar:
+### Task 6.3 - Remote streamable HTTP + auth/session
+Durum: [x] Completed
+
+Uygulanan dosyalar:
+- `src/mcp/http/server.ts`
+- `src/mcp/http/session-store.ts`
+- `src/mcp/http/auth.ts`
+- `src/mcp/http/oauth-metadata.ts`
+
+Sonuc:
+- Public-ready streamable HTTP endpoint (`/mcp`) eklendi.
+- Session store + TTL cleanup + health/readiness endpointleri aktif.
+- Bearer auth + scope kontrolu + rate limit + concurrency/body/timeout guardlari eklendi.
+
+### Task 6.4 - CLI wrapper
+Durum: [x] Completed
+
+Uygulanan dosyalar:
 - `src/cli/index.ts`
 
-Yapilacak:
+Sonuc:
 - `agentlint analyze`
 - `agentlint fix`
 - `agentlint score`
+- CLI smoke testleri geciyor.
 
-DoD:
-- CLI smoke test geciyor
+### Task 6.5 - Dokuman ve ops
+Durum: [x] Completed
 
-### Task 6.4 - Dokuman
-Dosyalar:
+Uygulanan dosyalar:
 - `README.md`
+- `docs/mcp_phase6_contract.md`
+- `docs/mcp_remote_runbook.md`
+- `.env.example`
+- `Dockerfile.mcp`
+- `server.json`
 
-Yapilacak:
-- MCP ve CLI kullanim adimlari ekle
+Sonuc:
+- Local + remote MCP kurulum adimlari dokumante edildi.
+- Go-live checklist ve registry metadata taslagi eklendi.
 
 ---
 

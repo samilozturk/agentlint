@@ -40,3 +40,4 @@ See `.env.example` for required variables.
 - Implement phases sequentially and run tests after each phase boundary.
 - Keep this file and roadmap docs aligned when execution priorities change.
 - Current execution snapshot is tracked in `docs/agent_execution_backlog.md`.
+- Current status: roadmap implementation is complete through Faz 6 (MCP + CLI).

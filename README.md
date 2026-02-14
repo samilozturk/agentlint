@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agent Lint
 
-## Getting Started
+Agent Lint evaluates and improves AI coding agent context artifacts:
 
-First, run the development server:
+- skills
+- AGENTS.md / CLAUDE.md
+- rules
+- workflows
+- plans
+
+## Stack
+
+- Next.js App Router + TypeScript
+- Tailwind CSS v4 + shadcn/ui
+- tRPC + React Query
+- Drizzle ORM + SQLite
+- MCP server + CLI tooling
+
+## Quick Start
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Configure env vars:
+
+```bash
+cp .env.example .env
+```
+
+3. Start web app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev` - start Next.js app
+- `npm run lint` - run ESLint
+- `npm run test` - run Vitest unit/integration tests
+- `npm run test:e2e` - run Playwright tests
+- `npm run build` - production build
+- `npm run cli` - Agent Lint CLI entrypoint
+- `npm run mcp:stdio` - local MCP stdio server
+- `npm run mcp:http` - Streamable HTTP MCP server
+- `npm run mcp:inspector` - launch MCP inspector against stdio server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## CLI
 
-## Learn More
+Examples:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run cli -- analyze --type agents --file AGENTS.md --json
+npm run cli -- fix --type rules --file docs/rules.md
+npm run cli -- score --type workflows --content "# Workflow\n\n1. Run lint" --json
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## MCP Server
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Local stdio
 
-## Deploy on Vercel
+Run:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run mcp:stdio
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Use this in local desktop/IDE integrations that spawn a process (Claude Desktop, Cursor, etc).
+
+### Remote streamable HTTP
+
+Run:
+
+```bash
+npm run mcp:http
+```
+
+Default endpoint: `http://127.0.0.1:3333/mcp`
+
+Health endpoints:
+
+- `GET /healthz`
+- `GET /readyz`
+
+OAuth metadata endpoints:
+
+- `GET /.well-known/oauth-protected-resource`
+- `GET /.well-known/oauth-authorization-server` (enabled when OAuth env vars are set)
+
+### Remote auth model (beta)
+
+- Bearer token auth is enabled by default (`MCP_REQUIRE_AUTH=true`)
+- Configure tokens with scope mappings via `MCP_BEARER_TOKENS`
+- Example:
+
+```env
+MCP_BEARER_TOKENS=friend1=my-token-1:*;friend2=my-token-2:analyze,validate
+```
+
+## Public Deployment
+
+Use `Dockerfile.mcp` for remote deployment. Minimum required env vars:
+
+- `MCP_REQUIRE_AUTH=true`
+- `MCP_BEARER_TOKENS=...`
+- `MCP_PUBLIC_BASE_URL=https://your-domain.example.com`
+
+Optional MCP registry metadata template is provided at `server.json`.
+
+See `docs/mcp_remote_runbook.md` for a complete go-live checklist.

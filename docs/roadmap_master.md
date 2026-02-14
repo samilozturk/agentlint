@@ -256,9 +256,9 @@ Tamamlanan fazlar:
 - Faz 3 - Provider dayanıklilik/seffaflik (fallback reason + confidence + env config)
 - Faz 4 - Streaming UX v1 (SSE stage stream + client stage progress)
 - Faz 5 - Explainable diff + selective apply (ilk surum)
+- Faz 6 - MCP + CLI (stdio + streamable-http + auth/session + CLI)
 
 Bekleyen ana bloklar:
 - Faz 4 advanced telemetry alignment (stage events'in gercek runtime adimlariyla 1:1 baglanmasi)
-- Faz 6 MCP server + CLI
 - Faz 7 dynamic templates + URL import + house rules
 - Faz 8 analyzer modulerlestirme + CI checklist otomasyonu
