@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ArtifactSelector } from "@/components/artifact-selector";
 import { AnalysisDashboard } from "@/components/analysis-dashboard";
+import {
+  ContextDocumentsPanel,
+  normalizeContextDocuments,
+  type ContextDocumentDraft,
+} from "@/components/context-documents-panel";
 import { DiffViewer } from "@/components/diff-viewer";
 import { InputPanel } from "@/components/input-panel";
 import { JudgeToolbar } from "@/components/judge-toolbar";
@@ -17,9 +22,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import type { ArtifactType } from "@/lib/artifacts";
+import { applySelectedSegments } from "@/lib/selective-diff";
 import { api } from "@/trpc/react";
+
+const analysisStages = [
+  "Sanitizing input",
+  "Running static checks",
+  "Evaluating semantic safety",
+  "Calling judge provider",
+  "Finalizing output",
+];
 
 const starterTemplates: Record<ArtifactType, string> = {
   skills: [
@@ -77,32 +92,127 @@ export function EditorWorkbench() {
   const [artifactType, setArtifactType] = useState<ArtifactType>("agents");
   const [input, setInput] = useState(starterTemplates.agents);
   const [output, setOutput] = useState("");
+  const [contextDocuments, setContextDocuments] = useState<ContextDocumentDraft[]>([]);
+  const [analysisStageIndex, setAnalysisStageIndex] = useState<number | null>(null);
+  const [selectedDiffSegments, setSelectedDiffSegments] = useState<number[]>([]);
+  const stageStreamRef = useRef<EventSource | null>(null);
 
   const recentScans = api.artifacts.listRecent.useQuery();
   const analyzeMutation = api.artifacts.analyze.useMutation({
     onSuccess: async ({ result }) => {
       setOutput(result.refinedContent);
+      setSelectedDiffSegments([]);
       await utils.artifacts.listRecent.invalidate();
     },
   });
 
-  async function onAnalyze() {
-    await analyzeMutation.mutateAsync({
-      type: artifactType,
-      content: input,
+  const analysisStageProgress = useMemo(() => {
+    if (analysisStageIndex === null) {
+      return 0;
+    }
+    return ((analysisStageIndex + 1) / analysisStages.length) * 100;
+  }, [analysisStageIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (stageStreamRef.current) {
+        stageStreamRef.current.close();
+      }
+    };
+  }, []);
+
+  function startStageProgress() {
+    if (stageStreamRef.current) {
+      stageStreamRef.current.close();
+      stageStreamRef.current = null;
+    }
+
+    setAnalysisStageIndex(0);
+
+    if (typeof EventSource === "undefined") {
+      return;
+    }
+
+    const source = new EventSource("/api/analyze/stages");
+
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { index?: number };
+        if (typeof payload.index === "number") {
+          setAnalysisStageIndex(Math.min(payload.index, analysisStages.length - 1));
+        }
+      } catch {
+        // Ignore malformed stream chunks and keep local progress.
+      }
+    };
+
+    source.addEventListener("done", () => {
+      source.close();
+      if (stageStreamRef.current === source) {
+        stageStreamRef.current = null;
+      }
     });
+
+    source.onerror = () => {
+      source.close();
+      if (stageStreamRef.current === source) {
+        stageStreamRef.current = null;
+      }
+    };
+
+    stageStreamRef.current = source;
+  }
+
+  function stopStageProgress() {
+    if (stageStreamRef.current) {
+      stageStreamRef.current.close();
+      stageStreamRef.current = null;
+    }
+    setAnalysisStageIndex(null);
+  }
+
+  async function onAnalyze() {
+    const normalizedContext = normalizeContextDocuments(contextDocuments);
+
+    startStageProgress();
+
+    try {
+      await analyzeMutation.mutateAsync({
+        type: artifactType,
+        content: input,
+        contextDocuments: normalizedContext.length > 0 ? normalizedContext : undefined,
+      });
+    } finally {
+      stopStageProgress();
+    }
   }
 
   function onLoadTemplate(next: ArtifactType) {
     setArtifactType(next);
     setInput(starterTemplates[next]);
     setOutput("");
+    setContextDocuments([]);
   }
 
   function onApplyFix() {
     if (output.length > 0) {
       setInput(output);
+      setSelectedDiffSegments([]);
     }
+  }
+
+  function onApplySelected() {
+    if (!output || selectedDiffSegments.length === 0) {
+      return;
+    }
+
+    const merged = applySelectedSegments({
+      original: input,
+      refined: output,
+      selectedSegmentIndexes: new Set(selectedDiffSegments),
+    });
+
+    setInput(merged);
   }
 
   async function onCopy() {
@@ -125,6 +235,10 @@ export function EditorWorkbench() {
     ? {
         score: analyzeMutation.data.result.score,
         provider: analyzeMutation.data.provider,
+        requestedProvider: analyzeMutation.data.requestedProvider,
+        fallbackUsed: analyzeMutation.data.fallbackUsed,
+        fallbackReason: analyzeMutation.data.fallbackReason,
+        confidence: analyzeMutation.data.confidence,
         dimensions: analyzeMutation.data.result.dimensions,
         warnings: analyzeMutation.data.result.warnings,
       }
@@ -153,6 +267,11 @@ export function EditorWorkbench() {
         <OutputPanel value={output} isLoading={analyzeMutation.isPending} />
       </section>
 
+      <ContextDocumentsPanel
+        documents={contextDocuments}
+        onChange={setContextDocuments}
+      />
+
       <Card className="panel-glow border-border/50 bg-card/75">
         <CardHeader>
           <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
@@ -166,20 +285,39 @@ export function EditorWorkbench() {
           <JudgeToolbar
             isPending={analyzeMutation.isPending}
             hasOutput={output.length > 0}
+            hasSelectedDiff={selectedDiffSegments.length > 0}
             inputLength={input.trim().length}
             isOverLimit={input.length > 1_000_000}
             errorMessage={analyzeMutation.error?.message ?? null}
             onAnalyze={onAnalyze}
             onApplyFix={onApplyFix}
+            onApplySelected={onApplySelected}
             onCopy={onCopy}
             onExport={onExport}
           />
+          {analyzeMutation.isPending && analysisStageIndex !== null ? (
+            <div className="space-y-2 rounded-md border border-border/40 bg-background/45 p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">Pipeline Stage</span>
+                <span className="text-muted-foreground">
+                  {analysisStages[analysisStageIndex]}
+                </span>
+              </div>
+              <Progress value={analysisStageProgress} className="h-1.5" />
+            </div>
+          ) : null}
           <Separator className="bg-border/30" />
           <ScoreDisplay data={scoreData} isLoading={analyzeMutation.isPending} />
         </CardContent>
       </Card>
 
-      <DiffViewer original={input} refined={output} />
+      <DiffViewer
+        original={input}
+        refined={output}
+        selectedSegments={selectedDiffSegments}
+        onSelectedSegmentsChange={setSelectedDiffSegments}
+        reasonHints={(analysis?.missingItems ?? []).map((item) => item.recommendation)}
+      />
 
       <AnalysisDashboard analysis={analysis} />
 

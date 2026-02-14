@@ -22,6 +22,9 @@ describe("buildJudgeAnalysis", () => {
     expect(result.metricExplanations).toHaveLength(12);
     expect(result.bestPracticeHints.length).toBeGreaterThan(0);
     expect(result.promptPack.title).toContain("AGENTS");
+    expect(Array.isArray(result.signals)).toBe(true);
+    expect(Array.isArray(result.validatedFindings)).toBe(true);
+    expect(result.confidence).toBeTypeOf("number");
   });
 
   it("flags missing skill frontmatter as blocking", () => {
@@ -50,5 +53,16 @@ describe("buildJudgeAnalysis", () => {
         (item) => item.id === "dangerous-operations" && item.status === "fail",
       ),
     ).toBe(true);
+  });
+
+  it("does not fail when risky command is explicitly prohibited", () => {
+    const result = buildJudgeAnalysis({
+      type: "workflows",
+      content: "# Safety\n\n1. Do not force push to main.",
+      dimensions: baseDimensions,
+    });
+
+    const dangerousCheck = result.checklist.find((item) => item.id === "dangerous-operations");
+    expect(dangerousCheck?.status).not.toBe("fail");
   });
 });

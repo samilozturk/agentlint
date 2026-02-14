@@ -96,6 +96,7 @@ export function AnalysisDashboard({ analysis }: AnalysisDashboardProps) {
             <TabsList>
               <TabsTrigger value="missing">Missing</TabsTrigger>
               <TabsTrigger value="checklist">Checklist</TabsTrigger>
+              <TabsTrigger value="signals">Signals</TabsTrigger>
               <TabsTrigger value="metrics">Metrics</TabsTrigger>
               <TabsTrigger value="examples">Examples</TabsTrigger>
               <TabsTrigger value="prompt">Prompt Pack</TabsTrigger>
@@ -144,6 +145,70 @@ export function AnalysisDashboard({ analysis }: AnalysisDashboardProps) {
                           <span className="font-medium">Evidence:</span> {item.evidence}
                         </p>
                       ) : null}
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="signals">
+              <div className="max-h-72 overflow-y-auto rounded-lg border border-border/40 bg-background/50 p-3">
+                <div className="mb-3 rounded-md border border-border/40 bg-card/70 p-3 text-xs">
+                  <span className="font-medium">Analyzer confidence:</span> {analysis.confidence}/100
+                </div>
+
+                {analysis.signals.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No static signals detected.</p>
+                ) : (
+                  <div className="grid gap-2">
+                    {analysis.signals.map((signal) => (
+                      <article key={signal.id} className="rounded-md border border-border/40 bg-card/70 p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] font-mono">
+                            {signal.category}
+                          </Badge>
+                          <Badge
+                            className={
+                              signal.severity === "critical"
+                                ? "border-transparent bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                                : signal.severity === "warning"
+                                  ? "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                                  : "border-transparent bg-sky-500/15 text-sky-700 dark:text-sky-300"
+                            }
+                          >
+                            {signal.severity}
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-xs">{signal.message}</p>
+                        <p className="mt-2 text-[11px] text-muted-foreground/85">{signal.evidence}</p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 grid gap-2">
+                  {analysis.validatedFindings.map((finding) => (
+                    <article key={finding.id} className="rounded-md border border-border/40 bg-card/70 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                          {finding.id}
+                        </Badge>
+                        <Badge
+                          className={
+                            finding.decision === "fail"
+                              ? "border-transparent bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                              : finding.decision === "warn"
+                                ? "border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                                : "border-transparent bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          }
+                        >
+                          {finding.decision}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                          confidence {finding.confidence}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-xs">{finding.rationale}</p>
                     </article>
                   ))}
                 </div>

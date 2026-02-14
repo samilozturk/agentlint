@@ -14,11 +14,22 @@ type JudgePipelineInput = {
   content: string;
 };
 
-type JudgeProviderName = "mock" | "openai" | "anthropic" | "gemini";
+export type JudgeProviderName = "mock" | "openai" | "anthropic" | "gemini";
+export type JudgeFallbackReason =
+  | "none"
+  | "quota"
+  | "timeout"
+  | "invalid_output"
+  | "provider_unavailable"
+  | "unknown_provider";
 
 export type JudgePipelineOutput = {
+  requestedProvider: JudgeProviderName;
   provider: JudgeProviderName;
   systemPrompt: string;
+  fallbackUsed: boolean;
+  fallbackReason: JudgeFallbackReason | null;
+  confidence: number;
   result: JudgeResult;
 };
 
@@ -42,15 +53,104 @@ async function withProviderTimeout<T>(promise: Promise<T>, label: string): Promi
   });
 }
 
+function normalizeRequestedProvider(raw: string): JudgeProviderName {
+  if (raw === "openai" || raw === "anthropic" || raw === "gemini" || raw === "mock") {
+    return raw;
+  }
+  return "mock";
+}
+
+function classifyProviderError(error: unknown): JudgeFallbackReason {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (message.includes("timed out")) {
+    return "timeout";
+  }
+  if (message.includes("429") || message.includes("quota") || message.includes("rate limit")) {
+    return "quota";
+  }
+  if (message.includes("parse") && message.includes("json")) {
+    return "invalid_output";
+  }
+
+  return "provider_unavailable";
+}
+
+function buildFallbackOutput(input: {
+  requestedProvider: JudgeProviderName;
+  fallbackReason: JudgeFallbackReason;
+  systemPrompt: string;
+  judgeInput: JudgePipelineInput;
+}): JudgePipelineOutput {
+  const fallback = runMockJudge(input.judgeInput);
+  const providerLabel =
+    input.requestedProvider === "openai"
+      ? "OpenAI"
+      : input.requestedProvider === "anthropic"
+        ? "Anthropic"
+        : input.requestedProvider === "gemini"
+          ? "Gemini"
+          : "Mock";
+
+  return {
+    requestedProvider: input.requestedProvider,
+    provider: "mock",
+    systemPrompt: input.systemPrompt,
+    fallbackUsed: true,
+    fallbackReason: input.fallbackReason,
+    confidence: 62,
+    result: {
+      ...fallback,
+      warnings: [
+        `${providerLabel} judge failed. Falling back to Mock Judge (${input.fallbackReason}).`,
+        ...fallback.warnings,
+      ],
+    },
+  };
+}
+
 export async function runJudgePipeline(
   input: JudgePipelineInput,
 ): Promise<JudgePipelineOutput> {
   const systemPrompt = judgeSystemPrompts[input.type];
-  const provider = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
+  const rawProvider = (process.env.LLM_PROVIDER ?? "gemini").toLowerCase();
+  const provider = normalizeRequestedProvider(rawProvider);
 
   console.info(
     `[JudgePipeline] type=${input.type} provider=${provider} contentChars=${input.content.length}`,
   );
+
+  if (!["openai", "anthropic", "gemini", "mock"].includes(rawProvider)) {
+    const fallback = runMockJudge(input);
+
+    return {
+      requestedProvider: provider,
+      provider: "mock",
+      systemPrompt,
+      fallbackUsed: true,
+      fallbackReason: "unknown_provider",
+      confidence: 55,
+      result: {
+        ...fallback,
+        warnings: [
+          `Unknown LLM_PROVIDER '${rawProvider}'. Mock Judge used.`,
+          ...fallback.warnings,
+        ],
+      },
+    };
+  }
+
+  if (provider === "mock") {
+    return {
+      requestedProvider: "mock",
+      provider: "mock",
+      systemPrompt,
+      fallbackUsed: false,
+      fallbackReason: null,
+      confidence: 55,
+      result: runMockJudge(input),
+    };
+  }
 
   if (provider === "openai") {
     try {
@@ -64,25 +164,22 @@ export async function runJudgePipeline(
       );
 
       return {
+        requestedProvider: "openai",
         provider: "openai",
         systemPrompt,
+        fallbackUsed: false,
+        fallbackReason: null,
+        confidence: 88,
         result,
       };
     } catch (error) {
       console.error("OpenAI judge failed, falling back to mock", error);
-      const fallback = runMockJudge(input);
-
-      return {
-        provider: "mock",
+      return buildFallbackOutput({
+        requestedProvider: "openai",
+        fallbackReason: classifyProviderError(error),
         systemPrompt,
-        result: {
-          ...fallback,
-          warnings: [
-            "OpenAI judge failed. Falling back to Mock Judge.",
-            ...fallback.warnings,
-          ],
-        },
-      };
+        judgeInput: input,
+      });
     }
   }
 
@@ -98,25 +195,22 @@ export async function runJudgePipeline(
       );
 
       return {
+        requestedProvider: "anthropic",
         provider: "anthropic",
         systemPrompt,
+        fallbackUsed: false,
+        fallbackReason: null,
+        confidence: 88,
         result,
       };
     } catch (error) {
       console.error("Anthropic judge failed, falling back to mock", error);
-      const fallback = runMockJudge(input);
-
-      return {
-        provider: "mock",
+      return buildFallbackOutput({
+        requestedProvider: "anthropic",
+        fallbackReason: classifyProviderError(error),
         systemPrompt,
-        result: {
-          ...fallback,
-          warnings: [
-            "Anthropic judge failed. Falling back to Mock Judge.",
-            ...fallback.warnings,
-          ],
-        },
-      };
+        judgeInput: input,
+      });
     }
   }
 
@@ -132,31 +226,32 @@ export async function runJudgePipeline(
       );
 
       return {
+        requestedProvider: "gemini",
         provider: "gemini",
         systemPrompt,
+        fallbackUsed: false,
+        fallbackReason: null,
+        confidence: 86,
         result,
       };
     } catch (error) {
       console.error("Gemini judge failed, falling back to mock", error);
-      const fallback = runMockJudge(input);
-
-      return {
-        provider: "mock",
+      return buildFallbackOutput({
+        requestedProvider: "gemini",
+        fallbackReason: classifyProviderError(error),
         systemPrompt,
-        result: {
-          ...fallback,
-          warnings: [
-            "Gemini judge failed. Falling back to Mock Judge.",
-            ...fallback.warnings,
-          ],
-        },
-      };
+        judgeInput: input,
+      });
     }
   }
 
   return {
+    requestedProvider: "mock",
     provider: "mock",
     systemPrompt,
+    fallbackUsed: true,
+    fallbackReason: "unknown_provider",
+    confidence: 55,
     result: runMockJudge(input),
   };
 }

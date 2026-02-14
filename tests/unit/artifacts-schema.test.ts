@@ -36,6 +36,23 @@ describe("artifactSubmissionSchema", () => {
     expect(result.userId).toBe("user-123");
   });
 
+  it("parses submission with optional context documents", () => {
+    const result = artifactSubmissionSchema.parse({
+      type: "agents",
+      content: "# AGENTS.md",
+      contextDocuments: [
+        {
+          label: "rules",
+          content: "Do not force push.",
+          path: ".windsurf/rules/security.md",
+          priority: 8,
+        },
+      ],
+    });
+
+    expect(result.contextDocuments?.[0]?.label).toBe("rules");
+  });
+
   it("rejects empty content", () => {
     expect(() =>
       artifactSubmissionSchema.parse({

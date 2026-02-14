@@ -40,4 +40,22 @@ test.describe("Diff Viewer", () => {
     await expect(addedBadge).toBeVisible();
     await expect(removedBadge).toBeVisible();
   });
+
+  test("applies selected diff segment", async ({ page }) => {
+    const input = page.getByTestId("artifact-input");
+    const originalValue = await input.inputValue();
+
+    await page.getByRole("button", { name: "Analyze" }).click();
+    await waitForAnalysisResult(page);
+
+    const firstCheckbox = page.locator('input[type="checkbox"]').first();
+    await expect(firstCheckbox).toBeVisible();
+    await firstCheckbox.check();
+
+    await page.getByRole("button", { name: "Apply Selected" }).click();
+
+    const updatedValue = await input.inputValue();
+    expect(updatedValue).not.toBe(originalValue);
+    expect(updatedValue).toContain("Refined Artifact");
+  });
 });

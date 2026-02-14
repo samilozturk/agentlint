@@ -13,11 +13,13 @@ import {
 type JudgeToolbarProps = {
   isPending: boolean;
   hasOutput: boolean;
+  hasSelectedDiff: boolean;
   inputLength: number;
   isOverLimit: boolean;
   errorMessage: string | null;
   onAnalyze: () => void;
   onApplyFix: () => void;
+  onApplySelected: () => void;
   onCopy: () => Promise<void>;
   onExport: () => void;
 };
@@ -25,11 +27,13 @@ type JudgeToolbarProps = {
 export function JudgeToolbar({
   isPending,
   hasOutput,
+  hasSelectedDiff,
   inputLength,
   isOverLimit,
   errorMessage,
   onAnalyze,
   onApplyFix,
+  onApplySelected,
   onCopy,
   onExport,
 }: JudgeToolbarProps) {
@@ -80,6 +84,16 @@ export function JudgeToolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Replace input with the perfected output</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="secondary" onClick={onApplySelected} disabled={!hasSelectedDiff}>
+              <Wrench className="size-4" />
+              Apply Selected
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Apply only selected diff segments</TooltipContent>
         </Tooltip>
 
         <Tooltip>

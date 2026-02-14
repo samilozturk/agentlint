@@ -11,6 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 type ScoreData = {
   score: number;
   provider: string;
+  requestedProvider: string;
+  fallbackUsed: boolean;
+  fallbackReason: string | null;
+  confidence: number;
   dimensions: {
     clarity: number;
     safety: number;
@@ -133,9 +137,24 @@ export function ScoreDisplay({ data, isLoading }: ScoreDisplayProps) {
     <div className="animate-scale-in grid gap-5 sm:grid-cols-[auto_1fr]">
       <div className="flex flex-col items-center gap-2">
         <ScoreGauge score={data.score} />
-        <Badge variant="outline" className="text-[10px] font-mono">
-          {data.provider}
-        </Badge>
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <Badge variant="outline" className="text-[10px] font-mono">
+            {data.provider}
+          </Badge>
+          {data.fallbackUsed ? (
+            <Badge className="border-transparent bg-amber-500/15 text-amber-700 text-[10px] font-mono dark:text-amber-300">
+              fallback: {data.fallbackReason ?? "unknown"}
+            </Badge>
+          ) : null}
+          {data.provider !== data.requestedProvider ? (
+            <Badge variant="outline" className="text-[10px] font-mono">
+              requested: {data.requestedProvider}
+            </Badge>
+          ) : null}
+          <Badge variant="outline" className="text-[10px] font-mono">
+            confidence: {data.confidence}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">

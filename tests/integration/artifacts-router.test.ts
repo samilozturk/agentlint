@@ -13,8 +13,12 @@ const mockJudgeResult: JudgeResult = {
 vi.mock("@/server/services/judge-pipeline", () => ({
   runJudgePipeline: vi.fn(() =>
     Promise.resolve({
+      requestedProvider: "mock" as const,
       provider: "mock" as const,
       systemPrompt: "test prompt",
+      fallbackUsed: false,
+      fallbackReason: null,
+      confidence: 55,
       result: { ...mockJudgeResult },
     }),
   ),
@@ -99,8 +103,12 @@ describe("artifactsRouter.analyze", () => {
 
   it("sanitizes input with script tags and includes warning", async () => {
     mockedPipeline.mockResolvedValueOnce({
+      requestedProvider: "mock",
       provider: "mock",
       systemPrompt: "test",
+      fallbackUsed: false,
+      fallbackReason: null,
+      confidence: 55,
       result: {
         ...mockJudgeResult,
         warnings: [],
@@ -120,8 +128,12 @@ describe("artifactsRouter.analyze", () => {
 
   it("includes export validation warning when refined content has unclosed fence", async () => {
     mockedPipeline.mockResolvedValueOnce({
+      requestedProvider: "mock",
       provider: "mock",
       systemPrompt: "test",
+      fallbackUsed: false,
+      fallbackReason: null,
+      confidence: 55,
       result: {
         ...mockJudgeResult,
         refinedContent: "```js\nunclosed code block",
@@ -141,8 +153,12 @@ describe("artifactsRouter.analyze", () => {
 
   it("falls back to sanitized content when export validation fails", async () => {
     mockedPipeline.mockResolvedValueOnce({
+      requestedProvider: "mock",
       provider: "mock",
       systemPrompt: "test",
+      fallbackUsed: false,
+      fallbackReason: null,
+      confidence: 55,
       result: {
         ...mockJudgeResult,
         refinedContent: "```orphan fence",
@@ -167,6 +183,42 @@ describe("artifactsRouter.analyze", () => {
 
     expect(result.remainingRequests).toBeTypeOf("number");
     expect(result.remainingRequests).toBeGreaterThanOrEqual(0);
+  });
+
+  it("returns standardized telemetry metadata", async () => {
+    const caller = await createCaller();
+    const result = await caller.artifacts.analyze({
+      type: "agents",
+      content: "# Content",
+    });
+
+    expect(result.durationMs).toBeTypeOf("number");
+    expect(result.warnings).toBeTruthy();
+    expect(result.requestedProvider).toBe("mock");
+    expect(result.fallbackUsed).toBe(false);
+    expect(result.confidence).toBeTypeOf("number");
+  });
+
+  it("merges context documents into judge input", async () => {
+    const caller = await createCaller();
+    await caller.artifacts.analyze({
+      type: "agents",
+      content: "# Primary\n\nBase artifact",
+      contextDocuments: [
+        {
+          label: "AGENTS.md",
+          path: "AGENTS.md",
+          content: "# Agent rules\n\nNever force push.",
+          priority: 10,
+        },
+      ],
+    });
+
+    expect(mockedPipeline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining("Context Document 1"),
+      }),
+    );
   });
 });
 

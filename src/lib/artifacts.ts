@@ -50,8 +50,19 @@ export type ArtifactPayload =
   | WorkflowArtifact
   | PlanArtifact;
 
+export const contextDocumentSchema = z.object({
+  label: z.string().min(1).max(120),
+  content: z.string().min(1).max(200_000),
+  path: z.string().min(1).max(512).optional(),
+  type: artifactTypeSchema.optional(),
+  priority: z.number().int().min(0).max(10).optional(),
+});
+
+export type ContextDocumentInput = z.infer<typeof contextDocumentSchema>;
+
 export const artifactSubmissionSchema = z.object({
   type: artifactTypeSchema,
   content: z.string().min(1).max(1_000_000),
+  contextDocuments: z.array(contextDocumentSchema).max(20).optional(),
   userId: z.string().min(1).max(128).optional(),
 });

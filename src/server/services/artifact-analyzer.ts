@@ -1,6 +1,7 @@
 import type { ArtifactType } from "@/lib/artifacts";
 import { parseArtifactContent } from "@/lib/parser";
 import type {
+  AnalyzerSignal,
   BestPracticeHint,
   ChecklistItem,
   JudgeAnalysis,
@@ -9,6 +10,8 @@ import type {
   MissingItem,
   MissingSeverity,
   QualityStatus,
+  ValidatedFinding,
+  ValidatedFindingDecision,
 } from "@/lib/judge";
 
 import { getPromptPack } from "./prompt-pack";
@@ -32,12 +35,148 @@ type MetricMeta = {
   definition: string;
 };
 
-const dangerousCommandPattern = /(force\s+push|rm\s+-rf|--no-verify|del\s+\/f\s+\/q|deploy\s+prod)/i;
 const commandPattern = /\b(npm|pnpm|yarn|bun|vitest|playwright|eslint|next|drizzle-kit|turbo)\b/i;
 const verificationPattern = /(test|lint|typecheck|build|verification|evidence)/i;
 const injectionGuardPattern = /(ignore\s+external\s+instructions|prompt\s+injection|untrusted\s+content)/i;
 const secretGuardPattern = /(secret|token|\.env|api[_\s-]?key)/i;
 const numberedStepsPattern = /(^|\n)\s*\d+[.)]\s+/m;
+const dangerousOperationPattern =
+  /(force\s+push|rm\s+-rf|--no-verify|del\s+\/f\s+\/q|deploy\s+prod)/i;
+const negationGuardPattern =
+  /(do\s+not|don't|never|avoid|forbid|forbidden|prohibit|yasak|yapma|engelle)/i;
+const confirmationGatePattern =
+  /(confirm|confirmation|explicit\s+approval|manual\s+approval|user\s+approval|ask\s+(the\s+)?user|human\s+approval|onay)/i;
+
+type AnalyzableLine = {
+  lineNumber: number;
+  text: string;
+};
+
+type SafetyAssessment = {
+  signals: AnalyzerSignal[];
+  finding: ValidatedFinding;
+  status: QualityStatus;
+  description: string;
+  evidence: string | null;
+  confidence: number;
+};
+
+function collectAnalyzableLines(content: string): AnalyzableLine[] {
+  const lines = content.split("\n");
+  const analyzable: AnalyzableLine[] = [];
+  let insideCodeFence = false;
+
+  for (let index = 0; index < lines.length; index++) {
+    const rawLine = lines[index] ?? "";
+    const trimmed = rawLine.trim();
+
+    if (trimmed.startsWith("```")) {
+      insideCodeFence = !insideCodeFence;
+      continue;
+    }
+
+    if (insideCodeFence) {
+      continue;
+    }
+
+    analyzable.push({
+      lineNumber: index + 1,
+      text: rawLine,
+    });
+  }
+
+  return analyzable;
+}
+
+function findingDecisionToStatus(decision: ValidatedFindingDecision): QualityStatus {
+  if (decision === "pass") {
+    return "pass";
+  }
+  if (decision === "warn") {
+    return "improve";
+  }
+  return "fail";
+}
+
+function buildSafetyAssessment(content: string): SafetyAssessment {
+  const lines = collectAnalyzableLines(content);
+  const riskyMentions = lines.filter((line) => dangerousOperationPattern.test(line.text));
+
+  const signals: AnalyzerSignal[] = riskyMentions.map((line, index) => ({
+    id: `risky-operation-${index + 1}`,
+    category: "safety",
+    severity: "critical",
+    message: `Potentially destructive operation reference on line ${line.lineNumber}.`,
+    evidence: line.text.trim().slice(0, 220),
+  }));
+
+  if (signals.length === 0) {
+    const finding: ValidatedFinding = {
+      id: "dangerous-operations-semantic",
+      decision: "pass",
+      rationale: "No destructive command references were detected outside code fences.",
+      relatedSignalIds: [],
+      confidence: 94,
+    };
+
+    return {
+      signals,
+      finding,
+      status: "pass",
+      description: "No destructive command pattern detected.",
+      evidence: null,
+      confidence: finding.confidence,
+    };
+  }
+
+  const unguardedSignals = signals.filter((signal) => !negationGuardPattern.test(signal.evidence));
+  const hasConfirmationGate = confirmationGatePattern.test(content);
+
+  let finding: ValidatedFinding;
+
+  if (unguardedSignals.length === 0) {
+    finding = {
+      id: "dangerous-operations-semantic",
+      decision: "pass",
+      rationale:
+        "Destructive command mentions appear in prohibitive language (for example: do not / never), so they are treated as guardrails.",
+      relatedSignalIds: signals.map((signal) => signal.id),
+      confidence: 88,
+    };
+  } else if (hasConfirmationGate) {
+    finding = {
+      id: "dangerous-operations-semantic",
+      decision: "warn",
+      rationale:
+        "Destructive commands appear in actionable form, but the document contains explicit confirmation gates. Keep and tighten gating language.",
+      relatedSignalIds: unguardedSignals.map((signal) => signal.id),
+      confidence: 74,
+    };
+  } else {
+    finding = {
+      id: "dangerous-operations-semantic",
+      decision: "fail",
+      rationale:
+        "Destructive commands appear without explicit manual confirmation requirements.",
+      relatedSignalIds: unguardedSignals.map((signal) => signal.id),
+      confidence: 91,
+    };
+  }
+
+  const evidence = riskyMentions
+    .slice(0, 3)
+    .map((line) => `L${line.lineNumber}: ${line.text.trim()}`)
+    .join(" | ");
+
+  return {
+    signals,
+    finding,
+    status: findingDecisionToStatus(finding.decision),
+    description: finding.rationale,
+    evidence,
+    confidence: finding.confidence,
+  };
+}
 
 const metrics: MetricMeta[] = [
   {
@@ -151,7 +290,7 @@ function makeCommonChecks(type: ArtifactType, content: string): RuleCheck[] {
   const hasVerification = verificationPattern.test(content);
   const hasInjectionGuard = injectionGuardPattern.test(content);
   const hasSecretGuard = secretGuardPattern.test(content);
-  const hasDangerousCommand = dangerousCommandPattern.test(content);
+  const safetyAssessment = buildSafetyAssessment(content);
   const tokenLimit = tokenLimitForType(type);
   const overLimit = content.length > tokenLimit;
 
@@ -199,13 +338,11 @@ function makeCommonChecks(type: ArtifactType, content: string): RuleCheck[] {
     label: "Dangerous operations gated",
     metric: "safety",
     requirement: "mandatory",
-    status: hasDangerousCommand ? "fail" : "pass",
-    description: hasDangerousCommand
-      ? "Potentially destructive command pattern detected."
-      : "No destructive command pattern detected.",
+    status: safetyAssessment.status,
+    description: safetyAssessment.description,
     recommendation:
       "Add explicit confirmation gates and prohibit automatic destructive execution.",
-    evidence: hasDangerousCommand ? "Detected risky command pattern." : null,
+    evidence: safetyAssessment.evidence,
   });
 
   checks.push({
@@ -729,6 +866,115 @@ function getBestPracticeHints(type: ArtifactType): BestPracticeHint[] {
   ];
 }
 
+function collectStaticSignals(type: ArtifactType, content: string): AnalyzerSignal[] {
+  const signals: AnalyzerSignal[] = [];
+  const parsed = parseArtifactContent(content);
+  const tokenLimit = tokenLimitForType(type);
+  const safety = buildSafetyAssessment(content);
+
+  if (parsed.parseError) {
+    signals.push({
+      id: "frontmatter-parse-error",
+      category: "structure",
+      severity: "warning",
+      message: "Frontmatter parsing failed. Analyzer is using raw body fallback.",
+      evidence: parsed.parseError,
+    });
+  }
+
+  if (content.length > tokenLimit) {
+    signals.push({
+      id: "content-over-limit",
+      category: "token",
+      severity: "critical",
+      message: `Content exceeds platform-oriented limit (${tokenLimit} chars).`,
+      evidence: `${content.length} chars`,
+    });
+  } else if (content.length > tokenLimit * 0.75) {
+    signals.push({
+      id: "content-near-limit",
+      category: "token",
+      severity: "warning",
+      message: `Content is approaching platform-oriented limit (${tokenLimit} chars).`,
+      evidence: `${content.length} chars`,
+    });
+  }
+
+  if (!injectionGuardPattern.test(content)) {
+    signals.push({
+      id: "missing-injection-guard",
+      category: "compatibility",
+      severity: "warning",
+      message: "No explicit prompt-injection guard phrase detected.",
+      evidence: "Expected terms: ignore external instructions, untrusted content.",
+    });
+  }
+
+  return [...safety.signals, ...signals];
+}
+
+function buildValidatedFindings(type: ArtifactType, content: string): {
+  findings: ValidatedFinding[];
+  confidence: number;
+} {
+  const parsed = parseArtifactContent(content);
+  const safety = buildSafetyAssessment(content);
+  const tokenLimit = tokenLimitForType(type);
+  const findings: ValidatedFinding[] = [safety.finding];
+
+  if (parsed.parseError) {
+    findings.push({
+      id: "frontmatter-parse-validity",
+      decision: "warn",
+      rationale: "Frontmatter parse failed; schema-sensitive checks may be less reliable.",
+      relatedSignalIds: ["frontmatter-parse-error"],
+      confidence: 68,
+    });
+  } else {
+    findings.push({
+      id: "frontmatter-parse-validity",
+      decision: "pass",
+      rationale: "Frontmatter parse completed without errors.",
+      relatedSignalIds: [],
+      confidence: 92,
+    });
+  }
+
+  if (content.length > tokenLimit) {
+    findings.push({
+      id: "token-budget-fit",
+      decision: "fail",
+      rationale: "Content exceeds the expected platform size budget and may be truncated.",
+      relatedSignalIds: ["content-over-limit"],
+      confidence: 95,
+    });
+  } else if (content.length > tokenLimit * 0.75) {
+    findings.push({
+      id: "token-budget-fit",
+      decision: "warn",
+      rationale: "Content is near the limit; splitting and reduction are recommended.",
+      relatedSignalIds: ["content-near-limit"],
+      confidence: 82,
+    });
+  } else {
+    findings.push({
+      id: "token-budget-fit",
+      decision: "pass",
+      rationale: "Content is within expected token/size budget.",
+      relatedSignalIds: [],
+      confidence: 90,
+    });
+  }
+
+  const averageConfidence =
+    findings.reduce((sum, finding) => sum + finding.confidence, 0) / findings.length;
+
+  return {
+    findings,
+    confidence: clampScore(averageConfidence),
+  };
+}
+
 export function buildJudgeAnalysis(input: {
   type: ArtifactType;
   content: string;
@@ -753,6 +999,8 @@ export function buildJudgeAnalysis(input: {
   );
   const bestPracticeHints = getBestPracticeHints(input.type);
   const promptPack = getPromptPack(input.type);
+  const signals = collectStaticSignals(input.type, input.content);
+  const validated = buildValidatedFindings(input.type, input.content);
 
   return {
     checklist,
@@ -760,5 +1008,8 @@ export function buildJudgeAnalysis(input: {
     metricExplanations,
     bestPracticeHints,
     promptPack,
+    signals,
+    validatedFindings: validated.findings,
+    confidence: validated.confidence,
   };
 }

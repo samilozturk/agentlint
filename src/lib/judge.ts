@@ -51,12 +51,35 @@ export type PromptPack = {
   prompt: string;
 };
 
+export type AnalyzerSignalSeverity = "info" | "warning" | "critical";
+
+export type AnalyzerSignal = {
+  id: string;
+  category: "safety" | "structure" | "token" | "compatibility";
+  severity: AnalyzerSignalSeverity;
+  message: string;
+  evidence: string;
+};
+
+export type ValidatedFindingDecision = "pass" | "warn" | "fail";
+
+export type ValidatedFinding = {
+  id: string;
+  decision: ValidatedFindingDecision;
+  rationale: string;
+  relatedSignalIds: string[];
+  confidence: number;
+};
+
 export type JudgeAnalysis = {
   checklist: ChecklistItem[];
   missingItems: MissingItem[];
   metricExplanations: MetricExplanation[];
   bestPracticeHints: BestPracticeHint[];
   promptPack: PromptPack;
+  signals: AnalyzerSignal[];
+  validatedFindings: ValidatedFinding[];
+  confidence: number;
 };
 
 export type JudgeResult = {

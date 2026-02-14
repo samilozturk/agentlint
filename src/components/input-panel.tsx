@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { buildInstantLintSignals } from "@/lib/instant-lint";
 
 const MAX_INPUT_CHARS = 1_000_000;
 
@@ -19,6 +20,10 @@ type InputPanelProps = {
 
 export function InputPanel({ value, onChange }: InputPanelProps) {
   const isOverLimit = value.length > MAX_INPUT_CHARS;
+  const instantSignals = buildInstantLintSignals({
+    content: value,
+    maxChars: MAX_INPUT_CHARS,
+  });
 
   return (
     <Card className="panel-glow border-border/50 bg-card/75">
@@ -46,6 +51,23 @@ export function InputPanel({ value, onChange }: InputPanelProps) {
           className="h-[380px] resize-none rounded-lg border-border/50 bg-background/60 font-mono text-sm leading-relaxed placeholder:text-muted-foreground/50 focus-visible:ring-primary/30"
           placeholder="Paste your artifact content here..."
         />
+
+        <div className="mt-3 grid gap-1.5">
+          {instantSignals.map((signal) => (
+            <div
+              key={signal.id}
+              className={
+                signal.severity === "error"
+                  ? "rounded-md border border-destructive/35 bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"
+                  : signal.severity === "warn"
+                    ? "rounded-md border border-amber-500/35 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-300"
+                    : "rounded-md border border-border/40 bg-background/45 px-2.5 py-1.5 text-xs text-muted-foreground"
+              }
+            >
+              {signal.message}
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

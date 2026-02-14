@@ -38,6 +38,12 @@ test.describe("Analyze flow", () => {
     await expect(page.getByText("Judge is thinking")).toBeVisible();
   });
 
+  test("shows pipeline stage progress while analyzing", async ({ page }) => {
+    await page.getByRole("button", { name: "Analyze" }).click();
+    await expect(page.getByText("Pipeline Stage")).toBeVisible();
+    await expect(page.getByText(/Sanitizing input|Running static checks|Evaluating semantic safety/i)).toBeVisible();
+  });
+
   test("analysis produces output, score, and diff", async ({ page }) => {
     await page.getByRole("button", { name: "Analyze" }).click();
 
@@ -81,8 +87,11 @@ test.describe("Analyze flow", () => {
     await page.getByRole("button", { name: "Analyze" }).click();
     await waitForAnalysisResult(page);
 
+    const exportButton = page.getByRole("button", { name: "Export" });
+    await expect(exportButton).toBeEnabled({ timeout: 30_000 });
+
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Export" }).click();
+    await exportButton.click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/agents-refined\.md/);
   });

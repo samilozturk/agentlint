@@ -73,6 +73,7 @@ describe("runJudgePipeline", () => {
     const output = await runJudgePipeline(input);
 
     expect(output.provider).toBe("openai");
+    expect(output.fallbackUsed).toBe(false);
     expect(output.result.score).toBe(85);
     expect(mockedOpenAI).toHaveBeenCalledOnce();
     expect(mockedMock).not.toHaveBeenCalled();
@@ -85,6 +86,8 @@ describe("runJudgePipeline", () => {
     const output = await runJudgePipeline(input);
 
     expect(output.provider).toBe("mock");
+    expect(output.fallbackUsed).toBe(true);
+    expect(output.fallbackReason).toBeTruthy();
     expect(output.result.warnings).toContainEqual(
       expect.stringContaining("OpenAI judge failed"),
     );
@@ -109,6 +112,7 @@ describe("runJudgePipeline", () => {
     const output = await runJudgePipeline(input);
 
     expect(output.provider).toBe("mock");
+    expect(output.fallbackUsed).toBe(true);
     expect(output.result.warnings).toContainEqual(
       expect.stringContaining("Anthropic judge failed"),
     );
@@ -132,6 +136,7 @@ describe("runJudgePipeline", () => {
     const output = await runJudgePipeline(input);
 
     expect(output.provider).toBe("mock");
+    expect(output.fallbackUsed).toBe(true);
     expect(output.result.warnings).toContainEqual(
       expect.stringContaining("Gemini judge failed"),
     );
@@ -143,6 +148,7 @@ describe("runJudgePipeline", () => {
     const output = await runJudgePipeline(input);
 
     expect(output.provider).toBe("mock");
+    expect(output.fallbackReason).toBe("unknown_provider");
     expect(mockedMock).toHaveBeenCalledOnce();
     expect(mockedOpenAI).not.toHaveBeenCalled();
     expect(mockedAnthropic).not.toHaveBeenCalled();

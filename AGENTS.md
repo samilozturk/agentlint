@@ -30,3 +30,13 @@ Agent Lint evaluates and improves AI coding agent context artifacts:
 
 ## Environment
 See `.env.example` for required variables.
+
+## Roadmap Execution
+- Follow roadmap docs in this order:
+  1. `docs/roadmap_master.md`
+  2. `docs/engineering_guardrails.md`
+  3. `docs/phased_implementation_plan.md`
+  4. `docs/agent_execution_backlog.md`
+- Implement phases sequentially and run tests after each phase boundary.
+- Keep this file and roadmap docs aligned when execution priorities change.
+- Current execution snapshot is tracked in `docs/agent_execution_backlog.md`.

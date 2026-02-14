@@ -26,6 +26,20 @@ type ProviderInput = {
   systemPrompt: string;
 };
 
+function readEnvInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return fallback;
+  }
+
+  return Math.floor(parsed);
+}
+
 function parseJsonResult(raw: string): AIJudgeResult {
   const cleaned = raw
     .replace(/^```json\s*/i, "")
@@ -56,9 +70,9 @@ function parseJsonResult(raw: string): AIJudgeResult {
   throw new Error(`Failed to parse judge JSON response: ${message}`);
 }
 
-const GEMINI_MAX_RETRIES = 3;
-const GEMINI_INITIAL_DELAY_MS = 2_000;
-const GEMINI_MODEL_CACHE_TTL_MS = 10 * 60 * 1000;
+const GEMINI_MAX_RETRIES = readEnvInt("GEMINI_MAX_RETRIES", 3);
+const GEMINI_INITIAL_DELAY_MS = readEnvInt("GEMINI_INITIAL_DELAY_MS", 2_000);
+const GEMINI_MODEL_CACHE_TTL_MS = readEnvInt("GEMINI_MODEL_CACHE_TTL_MS", 10 * 60 * 1000);
 const GEMINI_DEFAULT_MODEL_CHAIN = [
   "gemini-3-flash-preview",
   "gemini-2.5-flash",
