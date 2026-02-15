@@ -4,20 +4,49 @@ import {
   qualityGateArtifactInputSchema,
   type QualityGateArtifactInput,
 } from "@/mcp/types";
+import { CLIENT_LED_REQUIRED_FLOW, buildPolicySnapshot } from "@/mcp/conventions/client-led-scoring";
 
 import { executeAnalyzeArtifactTool } from "./analyze-artifact";
+import { evaluateClientAssessment } from "./client-assessment-evaluator";
 import { executeSuggestPatchTool } from "./suggest-patch";
 import { toToolResult } from "./tool-result";
 import { executeValidateExportTool } from "./validate-export";
 
 const DEFAULT_TARGET_SCORE = 90;
+const DEFAULT_REQUIRE_CLIENT_ASSESSMENT = true;
 
 export type QualityGateArtifactToolOutput = {
+  policySnapshot: {
+    version: string;
+    artifactType: string;
+    defaultTargetScore: number;
+    clientWeightPercent: number;
+    guardrailWeightPercent: number;
+    formula: string;
+    metricWeights: Array<{
+      metric: string;
+      weightPercent: number;
+      importance: string;
+      guidance: string;
+    }>;
+    guardrailNotes: string[];
+    hardFailConditions: string[];
+  };
+  requiredFlow: string[];
+  requireClientAssessment: boolean;
+  enforcement: {
+    clientAssessmentRequired: boolean;
+    clientAssessmentProvided: boolean;
+    violationCode: "CLIENT_ASSESSMENT_REQUIRED" | null;
+  };
   targetScore: number;
   passed: boolean;
   initialScore: number;
   score: number;
+  finalScore: number;
+  scoreModel: "server_deterministic" | "client_weighted_hybrid";
   warnings: string[];
+  hardFailures: string[];
   analysis: {
     provider: string;
     requestedProvider: string;
@@ -42,6 +71,63 @@ export type QualityGateArtifactToolOutput = {
     valid: boolean;
     reason: string | null;
   };
+  clientScoring: {
+    policyVersion: string;
+    clientWeightedScore: number;
+    serverGuardrailScore: number;
+    scoreComposition: {
+      clientWeightPercent: number;
+      guardrailWeightPercent: number;
+      clientContribution: number;
+      guardrailContribution: number;
+    };
+    evidenceCoverage: {
+      requiredMetrics: number;
+      coveredScoreMetrics: number;
+      coveredEvidenceMetrics: number;
+      missingScoreMetrics: string[];
+      missingEvidenceMetrics: string[];
+    };
+    consistency: {
+      reportedWeightedScore: number | null;
+      recomputedWeightedScore: number;
+      delta: number;
+      withinTolerance: boolean;
+      duplicateScoreMetrics: string[];
+      duplicateEvidenceMetrics: string[];
+    };
+    weightedGaps: Array<{
+      metric: string;
+      score: number;
+      weightPercent: number;
+      impact: number;
+    }>;
+    metricBreakdown: Array<{
+      metric: string;
+      score: number;
+      weightPercent: number;
+      weightedContribution: number;
+      evidenceCount: number;
+    }>;
+    finalScoreBreakdown: {
+      formula: string;
+      clientWeightedScore: number;
+      serverGuardrailScore: number;
+      clientWeightPercent: number;
+      guardrailWeightPercent: number;
+      blendedClientContribution: number;
+      blendedGuardrailContribution: number;
+      finalScore: number;
+    };
+  } | null;
+  iteration: {
+    iterationIndex: number;
+    previousScore: number | null;
+    currentScore: number;
+    delta: number | null;
+    remainingGaps: number;
+  };
+  nextBestActions: string[];
   finalContent: string;
 };
 
@@ -49,7 +135,9 @@ export async function executeQualityGateArtifactTool(
   input: QualityGateArtifactInput,
 ): Promise<QualityGateArtifactToolOutput> {
   const targetScore = input.targetScore ?? DEFAULT_TARGET_SCORE;
+  const requireClientAssessment = input.requireClientAssessment ?? DEFAULT_REQUIRE_CLIENT_ASSESSMENT;
   const applyPatchWhenBelowTarget = input.applyPatchWhenBelowTarget ?? true;
+  const policySnapshot = buildPolicySnapshot(input.type);
 
   const initialAnalyzed = await executeAnalyzeArtifactTool({
     type: input.type,
@@ -95,14 +183,86 @@ export async function executeQualityGateArtifactTool(
   const finalContent = finalAnalyzed.refinedContent;
 
   const exportValidation = executeValidateExportTool({ content: finalContent });
-  const passed = finalAnalyzed.score >= targetScore && exportValidation.valid;
+  const iterationIndex = input.iterationIndex ?? 1;
+  const previousScore =
+    typeof input.previousFinalScore === "number" ? Math.round(input.previousFinalScore) : null;
+
+  let scoreModel: QualityGateArtifactToolOutput["scoreModel"] = "server_deterministic";
+  let finalScore = finalAnalyzed.score;
+  let warnings = finalAnalyzed.warnings;
+  let hardFailures: string[] = exportValidation.valid
+    ? []
+    : [`Export validation failed: ${exportValidation.reason ?? "unknown reason"}`];
+  let passed = finalAnalyzed.score >= targetScore && exportValidation.valid;
+  let nextBestActions = finalAnalyzed.warnings.slice(0, 3);
+  let remainingGaps = finalAnalyzed.warnings.length;
+  let clientScoring: QualityGateArtifactToolOutput["clientScoring"] = null;
+  let requiredAssessmentFailure: string | null = null;
+  let violationCode: QualityGateArtifactToolOutput["enforcement"]["violationCode"] = null;
+
+  if (requireClientAssessment && !input.clientAssessment) {
+    requiredAssessmentFailure =
+      "clientAssessment is required for client-led scoring. Run prepare_artifact_fix_context and submit_client_assessment first.";
+    violationCode = "CLIENT_ASSESSMENT_REQUIRED";
+    passed = false;
+    hardFailures = [...hardFailures, requiredAssessmentFailure];
+    nextBestActions = [
+      "Call prepare_artifact_fix_context for policy snapshot and assessment template.",
+      "Compute metricScores + metricEvidence and call submit_client_assessment.",
+      "Re-run quality_gate_artifact with clientAssessment and candidateContent.",
+    ];
+    remainingGaps = Math.max(remainingGaps, 1);
+  } else if (input.clientAssessment) {
+    const evaluation = evaluateClientAssessment({
+      type: input.type,
+      assessment: input.clientAssessment,
+      analysis: finalAnalyzed,
+      exportValidation,
+      targetScore,
+    });
+
+    scoreModel = "client_weighted_hybrid";
+    finalScore = evaluation.finalScore;
+    warnings = [...finalAnalyzed.warnings, ...evaluation.warnings];
+    hardFailures = evaluation.hardFailures;
+    passed = evaluation.passed;
+    nextBestActions = evaluation.nextBestActions;
+    remainingGaps =
+      evaluation.evidenceCoverage.missingScoreMetrics.length +
+      evaluation.evidenceCoverage.missingEvidenceMetrics.length +
+      evaluation.weightedGaps.filter((gap) => gap.score < targetScore).length;
+    clientScoring = {
+      policyVersion: evaluation.policyVersion,
+      clientWeightedScore: evaluation.clientWeightedScore,
+      serverGuardrailScore: evaluation.serverGuardrailScore,
+      scoreComposition: evaluation.scoreComposition,
+      evidenceCoverage: evaluation.evidenceCoverage,
+      consistency: evaluation.consistency,
+      weightedGaps: evaluation.weightedGaps,
+      metricBreakdown: evaluation.metricBreakdown,
+      finalScoreBreakdown: evaluation.finalScoreBreakdown,
+    };
+  }
+
+  const delta = previousScore === null ? null : Math.round((finalScore - previousScore) * 100) / 100;
 
   return {
+    policySnapshot,
+    requiredFlow: [...CLIENT_LED_REQUIRED_FLOW],
+    requireClientAssessment,
+    enforcement: {
+      clientAssessmentRequired: requireClientAssessment,
+      clientAssessmentProvided: Boolean(input.clientAssessment),
+      violationCode,
+    },
     targetScore,
     passed,
     initialScore: initialAnalyzed.score,
     score: finalAnalyzed.score,
-    warnings: finalAnalyzed.warnings,
+    finalScore,
+    scoreModel,
+    warnings,
+    hardFailures,
     analysis: {
       provider: finalAnalyzed.provider,
       requestedProvider: finalAnalyzed.requestedProvider,
@@ -113,6 +273,15 @@ export async function executeQualityGateArtifactTool(
     },
     patch,
     exportValidation,
+    clientScoring,
+    iteration: {
+      iterationIndex,
+      previousScore,
+      currentScore: finalScore,
+      delta,
+      remainingGaps,
+    },
+    nextBestActions,
     finalContent,
   };
 }
@@ -123,7 +292,7 @@ export function registerQualityGateArtifactTool(server: McpServer): void {
     {
       title: "Quality Gate Artifact",
       description:
-        "Default artifact QA pipeline. Use when AGENTS.md/rules/skills/workflows/plans are created or updated. Runs deterministic analyze_artifact and validate_export, optionally merging client-generated candidate content through suggest_patch.",
+        "Default artifact QA gate for client-led workflows. In fix/update flows clientAssessment is required by default; run prepare_artifact_fix_context and submit_client_assessment first, then call this tool with candidateContent + clientAssessment for weighted final scoring.",
       inputSchema: qualityGateArtifactInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -134,8 +303,9 @@ export function registerQualityGateArtifactTool(server: McpServer): void {
     async (args) => {
       try {
         const output = await executeQualityGateArtifactTool(args);
+        const hardFailLabel = output.hardFailures.length > 0 ? ` hardFailures=${output.hardFailures.length}` : "";
         return toToolResult({
-          summary: `passed=${output.passed} score=${output.initialScore}->${output.score} target=${output.targetScore} exportValid=${output.exportValidation.valid}`,
+          summary: `passed=${output.passed} score=${output.initialScore}->${output.score} final=${output.finalScore} model=${output.scoreModel} target=${output.targetScore} exportValid=${output.exportValidation.valid}${hardFailLabel}`,
           structuredContent: output,
         });
       } catch (error) {

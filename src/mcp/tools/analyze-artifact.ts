@@ -1,11 +1,35 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { buildPolicySnapshot } from "@/mcp/conventions/client-led-scoring";
 import { analyzeArtifactMcpCore } from "@/server/services/analyze-artifact-mcp-core";
 
 import { analyzeArtifactInputSchema, type AnalyzeArtifactInput } from "../types";
 import { toToolResult } from "./tool-result";
 
 export type AnalyzeArtifactToolOutput = {
+  policySnapshot: {
+    version: string;
+    artifactType: string;
+    defaultTargetScore: number;
+    clientWeightPercent: number;
+    guardrailWeightPercent: number;
+    formula: string;
+    metricWeights: Array<{
+      metric: string;
+      weightPercent: number;
+      importance: string;
+      guidance: string;
+    }>;
+    guardrailNotes: string[];
+    hardFailConditions: string[];
+  };
+  resourceUris: {
+    scoringPolicy: string;
+    assessmentSchema: string;
+    improvementPlaybook: string;
+    artifactSpec: string;
+    artifactPathHints: string;
+  };
   score: number;
   requestedProvider: string;
   provider: string;
@@ -20,12 +44,31 @@ export type AnalyzeArtifactToolOutput = {
     truncated: number;
     mergedChars: number;
   };
+  advisory: {
+    missingItems: {
+      total: number;
+      blocking: number;
+      important: number;
+      niceToHave: number;
+    };
+    signals: {
+      critical: number;
+      warning: number;
+      info: number;
+    };
+    metricScores: Array<{
+      id: string;
+      score: number;
+      status: string;
+    }>;
+  };
   analysisMode: "deterministic";
 };
 
 export async function executeAnalyzeArtifactTool(
   input: AnalyzeArtifactInput,
 ): Promise<AnalyzeArtifactToolOutput> {
+  const policySnapshot = buildPolicySnapshot(input.type);
   const analyzed = await analyzeArtifactMcpCore({
     type: input.type,
     content: input.content,
@@ -34,6 +77,33 @@ export async function executeAnalyzeArtifactTool(
   });
 
   return {
+    policySnapshot,
+    resourceUris: {
+      scoringPolicy: `agentlint://scoring-policy/${input.type}`,
+      assessmentSchema: `agentlint://assessment-schema/${input.type}`,
+      improvementPlaybook: `agentlint://improvement-playbook/${input.type}`,
+      artifactSpec: `agentlint://artifact-spec/${input.type}`,
+      artifactPathHints: `agentlint://artifact-path-hints/${input.type}`,
+    },
+    advisory: {
+      missingItems: {
+        total: analyzed.result.analysis.missingItems.length,
+        blocking: analyzed.result.analysis.missingItems.filter((item) => item.severity === "blocking").length,
+        important: analyzed.result.analysis.missingItems.filter((item) => item.severity === "important").length,
+        niceToHave: analyzed.result.analysis.missingItems.filter((item) => item.severity === "nice_to_have")
+          .length,
+      },
+      signals: {
+        critical: analyzed.result.analysis.signals.filter((signal) => signal.severity === "critical").length,
+        warning: analyzed.result.analysis.signals.filter((signal) => signal.severity === "warning").length,
+        info: analyzed.result.analysis.signals.filter((signal) => signal.severity === "info").length,
+      },
+      metricScores: analyzed.result.analysis.metricExplanations.map((metric) => ({
+        id: metric.id,
+        score: metric.score,
+        status: metric.status,
+      })),
+    },
     score: analyzed.result.score,
     requestedProvider: analyzed.requestedProvider,
     provider: analyzed.provider,
@@ -53,7 +123,7 @@ export function registerAnalyzeArtifactTool(server: McpServer): void {
     {
       title: "Analyze Artifact",
       description:
-        "Use when AGENTS.md, skills, rules, workflows, or plans are created/edited/reviewed. Runs deterministic quality analysis and returns score, warnings, and sanitized content.",
+        "Advisory deterministic analysis for AGENTS.md/skills/rules/workflows/plans. Returns policy snapshot and resource URIs so client LLM always sees metric weights before rewrite. Not the primary scoring authority.",
       inputSchema: analyzeArtifactInputSchema,
       annotations: {
         readOnlyHint: true,

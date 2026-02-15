@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { buildPolicySnapshot } from "@/mcp/conventions/client-led-scoring";
 import { analyzeArtifactMcpCore } from "@/server/services/analyze-artifact-mcp-core";
 
 import {
@@ -11,6 +12,29 @@ import { toToolResult } from "./tool-result";
 const DEFAULT_PREVIEW_CHARS = 1_500;
 
 export type AnalyzeContextBundleToolOutput = {
+  policySnapshot: {
+    version: string;
+    artifactType: string;
+    defaultTargetScore: number;
+    clientWeightPercent: number;
+    guardrailWeightPercent: number;
+    formula: string;
+    metricWeights: Array<{
+      metric: string;
+      weightPercent: number;
+      importance: string;
+      guidance: string;
+    }>;
+    guardrailNotes: string[];
+    hardFailConditions: string[];
+  };
+  resourceUris: {
+    scoringPolicy: string;
+    assessmentSchema: string;
+    improvementPlaybook: string;
+    artifactSpec: string;
+    artifactPathHints: string;
+  };
   score: number;
   warnings: string[];
   contextSummary: {
@@ -25,6 +49,7 @@ export type AnalyzeContextBundleToolOutput = {
 export async function executeAnalyzeContextBundleTool(
   input: AnalyzeContextBundleInput,
 ): Promise<AnalyzeContextBundleToolOutput> {
+  const policySnapshot = buildPolicySnapshot(input.type);
   const analyzed = await analyzeArtifactMcpCore({
     type: input.type,
     content: input.content,
@@ -33,6 +58,14 @@ export async function executeAnalyzeContextBundleTool(
   });
 
   return {
+    policySnapshot,
+    resourceUris: {
+      scoringPolicy: `agentlint://scoring-policy/${input.type}`,
+      assessmentSchema: `agentlint://assessment-schema/${input.type}`,
+      improvementPlaybook: `agentlint://improvement-playbook/${input.type}`,
+      artifactSpec: `agentlint://artifact-spec/${input.type}`,
+      artifactPathHints: `agentlint://artifact-path-hints/${input.type}`,
+    },
     score: analyzed.result.score,
     warnings: analyzed.warnings,
     contextSummary: analyzed.contextSummary,
@@ -48,7 +81,7 @@ export function registerAnalyzeContextBundleTool(server: McpServer): void {
     {
       title: "Analyze Context Bundle",
       description:
-        "Use when artifact quality depends on multiple docs (for example AGENTS + rules + roadmap). Runs merged context analysis and reports bundle diagnostics.",
+        "Advisory merged-context diagnostics (for example AGENTS + rules + roadmap). Returns policy snapshot and resource URIs so client LLM can continue with submit_client_assessment and quality_gate_artifact.",
       inputSchema: analyzeContextBundleInputSchema,
       annotations: {
         readOnlyHint: true,

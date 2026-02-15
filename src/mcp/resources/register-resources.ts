@@ -3,6 +3,11 @@ import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mc
 import { artifactTypeValues, type ArtifactType } from "@/lib/artifacts";
 import { buildArtifactPathHintsMarkdown } from "@/mcp/conventions/artifact-path-hints";
 import { buildArtifactSpecMarkdown } from "@/mcp/conventions/artifact-specs";
+import {
+  buildAssessmentSchemaMarkdown,
+  buildImprovementPlaybookMarkdown,
+  buildScoringPolicyMarkdown,
+} from "@/mcp/conventions/client-led-scoring";
 import { getPromptPack } from "@/server/services/prompt-pack";
 import { judgeSystemPrompts } from "@/server/services/prompt-templates";
 
@@ -20,9 +25,11 @@ const QUALITY_METRICS_MD = [
   "- injection-resistance, secret-hygiene, platform-fit, maintainability",
   "",
   "Default artifact QA policy:",
-  "1) quality_gate_artifact",
-  "2) if deeper diagnostics are needed -> analyze_artifact or analyze_context_bundle",
-  "3) validate_export before final delivery",
+  "1) prepare_artifact_fix_context",
+  "2) read scoring policy + assessment schema resources",
+  "3) client computes weighted scores + evidence and calls submit_client_assessment",
+  "4) quality_gate_artifact with candidateContent + clientAssessment",
+  "5) validate_export before final delivery",
 ].join("\n");
 
 function asArtifactType(value: string | string[] | undefined): ArtifactType | null {
@@ -81,6 +88,33 @@ function listArtifactSpecResources() {
     uri: `agentlint://artifact-spec/${type}`,
     name: `Agent Lint artifact spec (${type})`,
     description: `Required sections, quality checks, and validation loop for ${type}.`,
+    mimeType: "text/markdown",
+  }));
+}
+
+function listScoringPolicyResources() {
+  return artifactTypeValues.map((type) => ({
+    uri: `agentlint://scoring-policy/${type}`,
+    name: `Agent Lint scoring policy (${type})`,
+    description: `Client-led metric weights and hybrid scoring contract for ${type}.`,
+    mimeType: "text/markdown",
+  }));
+}
+
+function listAssessmentSchemaResources() {
+  return artifactTypeValues.map((type) => ({
+    uri: `agentlint://assessment-schema/${type}`,
+    name: `Agent Lint assessment schema (${type})`,
+    description: `Required client scoring payload format and evidence rules for ${type}.`,
+    mimeType: "text/markdown",
+  }));
+}
+
+function listImprovementPlaybookResources() {
+  return artifactTypeValues.map((type) => ({
+    uri: `agentlint://improvement-playbook/${type}`,
+    name: `Agent Lint improvement playbook (${type})`,
+    description: `Iteration tactics and next-step strategy for improving ${type} artifacts.`,
     mimeType: "text/markdown",
   }));
 }
@@ -291,6 +325,120 @@ export function registerAgentLintResources(server: McpServer): void {
             uri: uri.href,
             mimeType: "text/markdown",
             text: buildArtifactSpecMarkdown(type),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerResource(
+    "agentlint-scoring-policy",
+    new ResourceTemplate("agentlint://scoring-policy/{type}", {
+      list: async () => ({
+        resources: listScoringPolicyResources(),
+      }),
+    }),
+    {
+      title: "Agent Lint Scoring Policy",
+      description: "Client-led metric weighting and hybrid score formula by artifact type.",
+      mimeType: "text/markdown",
+    },
+    async (uri, variables) => {
+      const type = asArtifactType(variables.type);
+      if (!type) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "text/plain",
+              text: `Invalid artifact type. Expected one of: ${artifactTypeValues.join(", ")}.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: "text/markdown",
+            text: buildScoringPolicyMarkdown(type),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerResource(
+    "agentlint-assessment-schema",
+    new ResourceTemplate("agentlint://assessment-schema/{type}", {
+      list: async () => ({
+        resources: listAssessmentSchemaResources(),
+      }),
+    }),
+    {
+      title: "Agent Lint Assessment Schema",
+      description: "Schema guidance for submit_client_assessment payloads.",
+      mimeType: "text/markdown",
+    },
+    async (uri, variables) => {
+      const type = asArtifactType(variables.type);
+      if (!type) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "text/plain",
+              text: `Invalid artifact type. Expected one of: ${artifactTypeValues.join(", ")}.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: "text/markdown",
+            text: buildAssessmentSchemaMarkdown(type),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerResource(
+    "agentlint-improvement-playbook",
+    new ResourceTemplate("agentlint://improvement-playbook/{type}", {
+      list: async () => ({
+        resources: listImprovementPlaybookResources(),
+      }),
+    }),
+    {
+      title: "Agent Lint Improvement Playbook",
+      description: "Iteration guidance for client-driven artifact improvement loops.",
+      mimeType: "text/markdown",
+    },
+    async (uri, variables) => {
+      const type = asArtifactType(variables.type);
+      if (!type) {
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: "text/plain",
+              text: `Invalid artifact type. Expected one of: ${artifactTypeValues.join(", ")}.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        contents: [
+          {
+            uri: uri.href,
+            mimeType: "text/markdown",
+            text: buildImprovementPlaybookMarkdown(type),
           },
         ],
       };

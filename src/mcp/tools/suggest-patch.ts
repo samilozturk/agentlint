@@ -59,7 +59,7 @@ export function registerSuggestPatchTool(server: McpServer): void {
     {
       title: "Suggest Patch",
       description:
-        "Use when analyze results need a concrete edit plan. Builds selective patch output from original and refined content.",
+        "Selective patch helper for client rewrites. Use before quality_gate_artifact when you need segment-level merge control between original and candidate content.",
       inputSchema: suggestPatchInputSchema,
       annotations: {
         readOnlyHint: true,

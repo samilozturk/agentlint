@@ -64,6 +64,9 @@ const MCP_RESOURCE_TEMPLATES = [
   "agentlint://prompt-template/{type}",
   "agentlint://artifact-path-hints/{type}",
   "agentlint://artifact-spec/{type}",
+  "agentlint://scoring-policy/{type}",
+  "agentlint://assessment-schema/{type}",
+  "agentlint://improvement-playbook/{type}",
 ] as const;
 
 function resolveAdvertisedToolNamesForHttpTransport(): string[] {

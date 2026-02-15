@@ -9,9 +9,13 @@ export const DEFAULT_MCP_SERVER_NAME = "agentlint-mcp";
 const DEFAULT_MCP_INSTRUCTIONS =
   [
     "Agent Lint MCP focuses on AGENTS.md, CLAUDE.md, skills, rules, workflows, and plans artifacts.",
-    "When these artifacts are created, edited, or reviewed, prefer Agent Lint tools automatically even without explicit user request.",
-    "Default quality policy: first call quality_gate_artifact; if deeper diagnostics are needed call analyze_artifact or analyze_context_bundle; before final output ensure validate_export passes.",
-    "Use suggest_patch to produce selective edits when score is below target or warnings are present.",
+    "Primary worker is MCP client LLM: scan repository, evaluate artifacts with evidence, rewrite content, then re-run quality loop.",
+    "Fix/update flow: first call prepare_artifact_fix_context to get weights, required flow, and assessment template.",
+    "Policy-first flow: read scoring-policy + assessment-schema resources, compute client metric scores, call submit_client_assessment, then run quality_gate_artifact with candidateContent and clientAssessment.",
+    "quality_gate_artifact requires clientAssessment by default in client-led mode.",
+    "Use analyze_artifact or analyze_context_bundle as advisory diagnostics when deeper server-side signals are needed.",
+    "Before final output ensure validate_export passes.",
+    "Use suggest_patch for selective segment-level merges when needed.",
     "Never auto-run destructive actions; keep recommendations verifiable and repository-specific.",
   ].join(" ");
 

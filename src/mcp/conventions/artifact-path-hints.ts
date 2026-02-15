@@ -131,6 +131,12 @@ export function buildArtifactPathHintsMarkdown(type: ArtifactType): string {
   lines.push("1. Search canonical filenames first.");
   lines.push("2. Search ecosystem-specific hidden folders (.windsurf/.claude/.cursor/.agents).");
   lines.push("3. Fallback to broad pattern matches and validate using content heuristics.");
+  lines.push("");
+  lines.push("## Project signals to inspect before rewriting");
+  lines.push("");
+  lines.push("- package scripts and CI workflows for verification commands.");
+  lines.push("- Security and deployment docs for safety boundaries.");
+  lines.push("- Existing roadmap/backlog docs for project-specific constraints.");
 
   return lines.join("\n");
 }

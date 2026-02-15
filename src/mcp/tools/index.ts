@@ -6,7 +6,9 @@ import {
   registerAnalyzeWorkspaceArtifactsTool,
   type RegisterAnalyzeWorkspaceArtifactsOptions,
 } from "./analyze-workspace-artifacts";
+import { registerPrepareArtifactFixContextTool } from "./prepare-artifact-fix-context";
 import { registerQualityGateArtifactTool } from "./quality-gate-artifact";
+import { registerSubmitClientAssessmentTool } from "./submit-client-assessment";
 import { registerSuggestPatchTool } from "./suggest-patch";
 import { registerValidateExportTool } from "./validate-export";
 
@@ -23,9 +25,17 @@ export {
   type AnalyzeWorkspaceArtifactsToolOutput,
 } from "./analyze-workspace-artifacts";
 export {
+  executePrepareArtifactFixContextTool,
+  type PrepareArtifactFixContextToolOutput,
+} from "./prepare-artifact-fix-context";
+export {
   executeQualityGateArtifactTool,
   type QualityGateArtifactToolOutput,
 } from "./quality-gate-artifact";
+export {
+  executeSubmitClientAssessmentTool,
+  type SubmitClientAssessmentToolOutput,
+} from "./submit-client-assessment";
 export { executeSuggestPatchTool, type SuggestPatchToolOutput } from "./suggest-patch";
 export {
   executeValidateExportTool,
@@ -40,8 +50,10 @@ export function registerAgentLintTools(
   server: McpServer,
   options: RegisterAgentLintToolsOptions,
 ): void {
+  registerPrepareArtifactFixContextTool(server);
   registerAnalyzeArtifactTool(server);
   registerAnalyzeContextBundleTool(server);
+  registerSubmitClientAssessmentTool(server);
   registerQualityGateArtifactTool(server);
   registerSuggestPatchTool(server);
   registerValidateExportTool(server);

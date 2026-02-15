@@ -5,10 +5,13 @@ import {
   contextDocumentSchema,
   type ContextDocumentInput,
 } from "@/lib/artifacts";
+import { clientMetricIds } from "@/mcp/conventions/client-led-scoring";
 
 export const MCP_TOOL_NAMES = [
+  "prepare_artifact_fix_context",
   "analyze_artifact",
   "analyze_context_bundle",
+  "submit_client_assessment",
   "quality_gate_artifact",
   "suggest_patch",
   "validate_export",
@@ -18,13 +21,67 @@ export const MCP_TOOL_NAMES = [
 export type McpToolName = (typeof MCP_TOOL_NAMES)[number];
 
 export const MCP_TOOL_SCOPE_REQUIREMENTS: Record<McpToolName, string> = {
+  prepare_artifact_fix_context: "analyze",
   analyze_artifact: "analyze",
   analyze_context_bundle: "analyze",
+  submit_client_assessment: "analyze",
   quality_gate_artifact: "analyze",
   suggest_patch: "patch",
   validate_export: "validate",
   analyze_workspace_artifacts: "analyze",
 };
+
+export const clientMetricIdSchema = z.enum(clientMetricIds);
+
+export const clientMetricScoreSchema = z.object({
+  metric: clientMetricIdSchema,
+  score: z.number().min(0).max(100),
+});
+
+const evidenceCitationSchema = z.object({
+  filePath: z.string().min(1).max(512).optional(),
+  lineStart: z.number().int().min(1).max(2_000_000).optional(),
+  lineEnd: z.number().int().min(1).max(2_000_000).optional(),
+  snippet: z.string().min(1).max(8_000),
+  rationale: z.string().min(1).max(1_000).optional(),
+});
+
+export const clientMetricEvidenceSchema = z.object({
+  metric: clientMetricIdSchema,
+  summary: z.string().min(1).max(1_000).optional(),
+  citations: z.array(evidenceCitationSchema).min(1).max(10),
+});
+
+export const clientAssessmentSchema = z.object({
+  filePath: z.string().min(1).max(512).optional(),
+  repositoryScanSummary: z
+    .string()
+    .min(1)
+    .max(4_000)
+    .describe("Summary of repository/context scan performed by the client before scoring."),
+  scannedPaths: z.array(z.string().min(1).max(512)).max(200).optional(),
+  metricScores: z
+    .array(clientMetricScoreSchema)
+    .min(1)
+    .max(clientMetricIds.length)
+    .describe("Client-side weighted scoring entries for each quality metric."),
+  metricEvidence: z
+    .array(clientMetricEvidenceSchema)
+    .min(1)
+    .max(clientMetricIds.length)
+    .describe("Evidence citations for each metric score."),
+  weightedScore: z
+    .number()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe("Optional client-reported weighted score before server recomputation."),
+  confidence: z.number().min(0).max(100).optional(),
+  gaps: z.array(z.string().min(1).max(1_000)).max(50).optional(),
+  rewritePlan: z.string().min(1).max(8_000).optional(),
+});
+
+export type ClientAssessmentInput = z.infer<typeof clientAssessmentSchema>;
 
 export const mcpContextDocumentSchema = contextDocumentSchema;
 
@@ -51,6 +108,23 @@ export const analyzeArtifactInputSchema = z.object({
 });
 
 export type AnalyzeArtifactInput = z.infer<typeof analyzeArtifactInputSchema>;
+
+export const prepareArtifactFixContextInputSchema = z.object({
+  type: artifactTypeSchema.describe("Artifact type for preparing client-led fix context."),
+  targetScore: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe("Optional target score override for this fix loop."),
+  includeExamples: z
+    .boolean()
+    .optional()
+    .describe("Include schema examples and flow hints in the response."),
+});
+
+export type PrepareArtifactFixContextInput = z.infer<typeof prepareArtifactFixContextInputSchema>;
 
 export const analyzeContextBundleInputSchema = z.object({
   type: artifactTypeSchema.describe("Primary artifact type for context-aware analysis."),
@@ -93,6 +167,33 @@ export const validateExportInputSchema = z.object({
 
 export type ValidateExportInput = z.infer<typeof validateExportInputSchema>;
 
+export const submitClientAssessmentInputSchema = z.object({
+  type: artifactTypeSchema.describe("Artifact type for policy-weighted client assessment."),
+  content: z
+    .string()
+    .min(1)
+    .max(1_000_000)
+    .describe("Current artifact content being evaluated."),
+  contextDocuments: z
+    .array(mcpContextDocumentSchema)
+    .max(20)
+    .optional()
+    .describe("Optional supporting context documents used during server guardrail checks."),
+  assessment: clientAssessmentSchema.describe(
+    "Client-generated weighted scoring package with metric-level evidence.",
+  ),
+  targetScore: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe("Target score threshold for pass/fail evaluation."),
+  analysisEnabled: z.boolean().optional().describe("Enable enhanced analyzer mode."),
+});
+
+export type SubmitClientAssessmentInput = z.infer<typeof submitClientAssessmentInputSchema>;
+
 export const qualityGateArtifactInputSchema = z.object({
   type: artifactTypeSchema.describe("Artifact type for the quality gate pass."),
   content: z
@@ -112,6 +213,12 @@ export const qualityGateArtifactInputSchema = z.object({
     .max(100)
     .optional()
     .describe("Quality threshold used to determine pass/fail. Patch merge runs only when candidateContent is provided."),
+  requireClientAssessment: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true (default), quality gate requires clientAssessment to enforce client-led weighted scoring.",
+    ),
   applyPatchWhenBelowTarget: z
     .boolean()
     .optional()
@@ -122,10 +229,26 @@ export const qualityGateArtifactInputSchema = z.object({
     .describe(
       "Optional client-generated improved content. When provided and score is below target, suggest_patch can derive a selective merged output.",
     ),
+  clientAssessment: clientAssessmentSchema
+    .optional()
+    .describe("Optional client-led scoring package used for weighted final score and directives."),
   selectedSegmentIndexes: z
     .array(z.number().int().min(0))
     .optional()
     .describe("Optional diff segment selection for patch output."),
+  iterationIndex: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("Optional quality-loop iteration number reported by client."),
+  previousFinalScore: z
+    .number()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe("Optional previous final score to compute score delta across iterations."),
   analysisEnabled: z.boolean().optional().describe("Enable enhanced analyzer mode."),
 });
 
