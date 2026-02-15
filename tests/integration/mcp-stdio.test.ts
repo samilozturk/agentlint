@@ -50,8 +50,10 @@ describe("MCP stdio server", () => {
         expect.arrayContaining([
           "analyze_artifact",
           "analyze_context_bundle",
+          "quality_gate_artifact",
           "suggest_patch",
           "validate_export",
+          "analyze_workspace_artifacts",
         ]),
       );
 
@@ -68,7 +70,79 @@ describe("MCP stdio server", () => {
 
       const structured = result.structuredContent as Record<string, unknown>;
       expect(typeof structured.score).toBe("number");
-      expect(typeof structured.provider).toBe("string");
+      expect(structured.provider).toBe("deterministic");
+      expect(structured.requestedProvider).toBe("deterministic");
+      expect(structured.analysisMode).toBe("deterministic");
+
+      const qualityGateResult = await client.callTool({
+        name: "quality_gate_artifact",
+        arguments: {
+          type: "agents",
+          content: "# AGENTS.md\n\nNever run force push without manual confirmation.",
+          targetScore: 100,
+          candidateContent:
+            "# AGENTS.md\n\nNever run force push without manual confirmation.\n\n## Verification\n- Run lint and tests before merge.\n<script>alert('xss')</script>",
+        },
+      });
+      expect(qualityGateResult.isError).not.toBe(true);
+      const qualityStructured = qualityGateResult.structuredContent as Record<string, unknown>;
+      expect(qualityStructured.analysis).toEqual(
+        expect.objectContaining({
+          provider: "deterministic",
+          requestedProvider: "deterministic",
+        }),
+      );
+      expect(typeof qualityStructured.initialScore).toBe("number");
+      expect(qualityStructured.patch).not.toBeNull();
+      expect(typeof qualityStructured.finalContent).toBe("string");
+      expect(String(qualityStructured.finalContent)).not.toContain("<script>");
+      expect(
+        (qualityStructured.warnings as string[]).some((warning) => warning.includes("Script tags")),
+      ).toBe(true);
+
+      const workspaceScan = await client.callTool({
+        name: "analyze_workspace_artifacts",
+        arguments: {
+          rootPath: process.cwd(),
+          maxFiles: 5,
+          includePatterns: ["AGENTS\\.md$"],
+        },
+      });
+      expect(workspaceScan.isError).not.toBe(true);
+      const workspaceStructured = workspaceScan.structuredContent as Record<string, unknown>;
+      expect(typeof workspaceStructured.analyzedCount).toBe("number");
+
+      const prompts = await client.listPrompts();
+      expect(prompts.prompts.some((prompt) => prompt.name === "artifact_create_prompt")).toBe(true);
+
+      const resources = await client.listResources();
+      expect(resources.resources.some((resource) => resource.uri === "agentlint://prompt-pack/agents")).toBe(
+        true,
+      );
+      expect(
+        resources.resources.some((resource) => resource.uri === "agentlint://artifact-path-hints/agents"),
+      ).toBe(true);
+      expect(resources.resources.some((resource) => resource.uri === "agentlint://artifact-spec/agents")).toBe(
+        true,
+      );
+
+      const promptPack = await client.readResource({
+        uri: "agentlint://prompt-pack/agents",
+      });
+      const firstContent = promptPack.contents[0];
+      if (!firstContent || !("text" in firstContent)) {
+        throw new Error("Expected text resource content for prompt pack");
+      }
+      expect(firstContent.text.toLowerCase()).toContain("agents.md");
+
+      const artifactSpec = await client.readResource({
+        uri: "agentlint://artifact-spec/agents",
+      });
+      const specContent = artifactSpec.contents[0];
+      if (!specContent || !("text" in specContent)) {
+        throw new Error("Expected text resource content for artifact spec");
+      }
+      expect(specContent.text).toContain("Mandatory sections");
     } finally {
       await client.close();
       await transport.close();

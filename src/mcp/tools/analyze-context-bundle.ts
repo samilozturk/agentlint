@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { analyzeArtifactCore } from "@/server/services/analyze-artifact-core";
+import { analyzeArtifactMcpCore } from "@/server/services/analyze-artifact-mcp-core";
 
 import {
   analyzeContextBundleInputSchema,
@@ -25,7 +25,7 @@ export type AnalyzeContextBundleToolOutput = {
 export async function executeAnalyzeContextBundleTool(
   input: AnalyzeContextBundleInput,
 ): Promise<AnalyzeContextBundleToolOutput> {
-  const analyzed = await analyzeArtifactCore({
+  const analyzed = await analyzeArtifactMcpCore({
     type: input.type,
     content: input.content,
     contextDocuments: input.contextDocuments,
@@ -48,7 +48,7 @@ export function registerAnalyzeContextBundleTool(server: McpServer): void {
     {
       title: "Analyze Context Bundle",
       description:
-        "Runs analysis with explicit context documents and returns context bundle diagnostics.",
+        "Use when artifact quality depends on multiple docs (for example AGENTS + rules + roadmap). Runs merged context analysis and reports bundle diagnostics.",
       inputSchema: analyzeContextBundleInputSchema,
       annotations: {
         readOnlyHint: true,

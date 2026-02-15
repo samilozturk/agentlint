@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { analyzeArtifactCore } from "@/server/services/analyze-artifact-core";
+import { analyzeArtifactMcpCore } from "@/server/services/analyze-artifact-mcp-core";
 
 import { analyzeArtifactInputSchema, type AnalyzeArtifactInput } from "../types";
 import { toToolResult } from "./tool-result";
@@ -20,13 +20,13 @@ export type AnalyzeArtifactToolOutput = {
     truncated: number;
     mergedChars: number;
   };
-  analysisMode: "v1" | "v2";
+  analysisMode: "deterministic";
 };
 
 export async function executeAnalyzeArtifactTool(
   input: AnalyzeArtifactInput,
 ): Promise<AnalyzeArtifactToolOutput> {
-  const analyzed = await analyzeArtifactCore({
+  const analyzed = await analyzeArtifactMcpCore({
     type: input.type,
     content: input.content,
     contextDocuments: input.contextDocuments,
@@ -52,7 +52,8 @@ export function registerAnalyzeArtifactTool(server: McpServer): void {
     "analyze_artifact",
     {
       title: "Analyze Artifact",
-      description: "Runs Agent Lint analysis pipeline for a single artifact.",
+      description:
+        "Use when AGENTS.md, skills, rules, workflows, or plans are created/edited/reviewed. Runs deterministic quality analysis and returns score, warnings, and sanitized content.",
       inputSchema: analyzeArtifactInputSchema,
       annotations: {
         readOnlyHint: true,

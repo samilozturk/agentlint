@@ -54,6 +54,16 @@ describe("MCP auth scope enforcement", () => {
           },
         }),
       ).rejects.toBeTruthy();
+
+      await expect(
+        client.callTool({
+          name: "quality_gate_artifact",
+          arguments: {
+            type: "rules",
+            content: "# Rules\n\nNever expose secrets.",
+          },
+        }),
+      ).rejects.toBeTruthy();
     } finally {
       await client.close();
       await transport.close();

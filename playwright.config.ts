@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  workers: process.env.CI ? 1 : process.platform === "win32" ? 1 : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {

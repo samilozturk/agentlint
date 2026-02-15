@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, Server as HttpServer } from "node:http";
 import { fileURLToPath } from "node:url";
@@ -11,6 +12,7 @@ import express, { type Express, type NextFunction, type Request, type Response }
 
 import { createAgentLintMcpServer } from "@/mcp/core/create-server";
 import { logMcp } from "@/mcp/core/logger";
+import { MCP_TOOL_NAMES } from "@/mcp/types";
 
 import {
   createMcpAuthMiddleware,
@@ -27,6 +29,7 @@ import { McpSessionStore } from "./session-store";
 export type McpHttpServerConfig = {
   host: string;
   port: number;
+  statelessMode: boolean;
   maxBodyBytes: number;
   requestTimeoutMs: number;
   maxConcurrentRequests: number;
@@ -48,6 +51,29 @@ export type RunningMcpHttpServer = {
 type McpHttpRequest = IncomingMessage & {
   auth?: AuthInfo;
 };
+
+const MCP_PROMPT_NAMES = [
+  "artifact_create_prompt",
+  "artifact_review_prompt",
+  "artifact_fix_prompt",
+] as const;
+
+const MCP_RESOURCE_TEMPLATES = [
+  "agentlint://quality-metrics/{type}",
+  "agentlint://prompt-pack/{type}",
+  "agentlint://prompt-template/{type}",
+  "agentlint://artifact-path-hints/{type}",
+  "agentlint://artifact-spec/{type}",
+] as const;
+
+function resolveAdvertisedToolNamesForHttpTransport(): string[] {
+  const workspaceScanEnabled = process.env.MCP_ENABLE_WORKSPACE_SCAN === "true";
+  if (workspaceScanEnabled) {
+    return [...MCP_TOOL_NAMES];
+  }
+
+  return MCP_TOOL_NAMES.filter((name) => name !== "analyze_workspace_artifacts");
+}
 
 function parseAllowedHosts(raw: string | undefined): string[] | undefined {
   if (!raw) {
@@ -94,6 +120,7 @@ export function loadMcpHttpConfigFromEnv(): McpHttpServerConfig {
   return {
     host: process.env.MCP_HTTP_HOST ?? "0.0.0.0",
     port: Number(process.env.MCP_HTTP_PORT ?? 3333),
+    statelessMode: process.env.MCP_HTTP_STATELESS === "true",
     maxBodyBytes: Number(process.env.MCP_MAX_BODY_BYTES ?? 1_000_000),
     requestTimeoutMs: Number(process.env.MCP_REQUEST_TIMEOUT_MS ?? 30_000),
     maxConcurrentRequests: Number(process.env.MCP_MAX_CONCURRENT_REQUESTS ?? 64),
@@ -201,7 +228,16 @@ export function createMcpHttpApp(config: McpHttpServerConfig): {
     res.json({
       status: "ready",
       authRequired: config.auth.required,
+      statelessMode: config.statelessMode,
       sessions: sessionStore.size(),
+      capabilities: {
+        tools: true,
+        prompts: true,
+        resources: true,
+      },
+      advertisedToolNames: resolveAdvertisedToolNamesForHttpTransport(),
+      promptNames: MCP_PROMPT_NAMES,
+      resourceTemplates: MCP_RESOURCE_TEMPLATES,
     });
   });
 
@@ -209,6 +245,24 @@ export function createMcpHttpApp(config: McpHttpServerConfig): {
   app.use("/mcp", createMcpAuthMiddleware(config.auth));
 
   let activeRequests = 0;
+
+  async function handleStatelessRequest(req: Request, res: Response): Promise<void> {
+    const server = createAgentLintMcpServer({
+      name: process.env.MCP_SERVER_NAME,
+      version: process.env.MCP_SERVER_VERSION,
+      transportMode: "http",
+    });
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+
+    try {
+      await server.connect(transport);
+      await transport.handleRequest(req as McpHttpRequest, res, req.body);
+    } finally {
+      await Promise.allSettled([transport.close(), server.close()]);
+    }
+  }
 
   app.all("/mcp", async (req, res) => {
     const startedAt = Date.now();
@@ -221,6 +275,11 @@ export function createMcpHttpApp(config: McpHttpServerConfig): {
     activeRequests += 1;
 
     try {
+      if (config.statelessMode) {
+        await handleStatelessRequest(req, res);
+        return;
+      }
+
       if (sessionHeader) {
         const session = sessionStore.get(sessionHeader);
         if (!session) {
@@ -252,6 +311,7 @@ export function createMcpHttpApp(config: McpHttpServerConfig): {
       const server = createAgentLintMcpServer({
         name: process.env.MCP_SERVER_NAME,
         version: process.env.MCP_SERVER_VERSION,
+        transportMode: "http",
       });
       await server.connect(transport);
       await transport.handleRequest(req as McpHttpRequest, res, req.body);
@@ -331,6 +391,7 @@ export async function startMcpHttpServer(
   logMcp("info", "mcp.http.started", {
     host: config.host,
     port,
+    statelessMode: config.statelessMode,
     authRequired: config.auth.required,
     allowedHosts: config.allowedHosts ?? [],
   });

@@ -58,7 +58,8 @@ export function registerSuggestPatchTool(server: McpServer): void {
     "suggest_patch",
     {
       title: "Suggest Patch",
-      description: "Builds selective patch output from original and refined content.",
+      description:
+        "Use when analyze results need a concrete edit plan. Builds selective patch output from original and refined content.",
       inputSchema: suggestPatchInputSchema,
       annotations: {
         readOnlyHint: true,

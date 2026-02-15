@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { createAgentLintMcpServer } from "./core/create-server";
@@ -7,6 +8,7 @@ async function runStdioServer(): Promise<void> {
   const server = createAgentLintMcpServer({
     name: process.env.MCP_SERVER_NAME,
     version: process.env.MCP_SERVER_VERSION,
+    transportMode: "stdio",
   });
 
   const transport = new StdioServerTransport();

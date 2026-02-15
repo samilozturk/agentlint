@@ -19,7 +19,8 @@ export function registerValidateExportTool(server: McpServer): void {
     "validate_export",
     {
       title: "Validate Export",
-      description: "Validates markdown/yaml export safety constraints.",
+      description:
+        "Use before returning final artifact content. Validates markdown/yaml export safety constraints.",
       inputSchema: validateExportInputSchema,
       annotations: {
         readOnlyHint: true,
