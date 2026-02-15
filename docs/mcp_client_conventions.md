@@ -19,14 +19,19 @@ Artifact tipleri: AGENTS.md, CLAUDE.md, skills, rules, workflows, plans.
 
 Default policy:
 
-1. `quality_gate_artifact`
-2. `analyze_artifact` veya `analyze_context_bundle` (detay gerekiyorsa)
-3. `validate_export` (final donus oncesi)
+1. `prepare_artifact_fix_context`
+2. Resource oku: `scoring-policy`, `assessment-schema`, `artifact-spec`, `artifact-path-hints`
+3. Repo tarama + metric evidence cikarma
+4. `submit_client_assessment`
+5. Rewrite + `quality_gate_artifact` (`candidateContent` + `clientAssessment`)
+6. `validate_export` (final donus oncesi)
 
 Patch gerekiyorsa:
 
 - `suggest_patch` ile secmeli duzeltme uygulanir.
 - `quality_gate_artifact` icinde patch merge kullanmak icin `candidateContent` gonderin.
+- Iteration takibi icin `iterationIndex` ve `previousFinalScore` alanlarini quality gate'e gonderin.
+- `quality_gate_artifact` default olarak `clientAssessment` ister (`requireClientAssessment=true`).
 
 ## 4) Prompt and Resource Usage
 
@@ -42,10 +47,15 @@ Client prompt/resource destekliyorsa su endpointleri kullanin:
   - `agentlint://prompt-template/<type>`
   - `agentlint://artifact-path-hints/<type>`
   - `agentlint://artifact-spec/<type>`
+  - `agentlint://scoring-policy/<type>`
+  - `agentlint://assessment-schema/<type>`
+  - `agentlint://improvement-playbook/<type>`
 
-LLM-free MCP notu:
+Client-led scoring notu:
 
-- Agent Lint MCP deterministic analiz/quality gate saglar.
+- Asil puan authority: client weighted score (90%).
+- Server guardrail dusuk agirlikla (10%) final skora etki eder.
+- Export invalid veya kritik safety signal durumlari hard-fail sayilir.
 - Icerik rewrite islemi MCP istemci LLM'i/editoru tarafinda yapilmali, sonra quality gate tekrar calistirilmalidir.
 
 ## 5) Workspace Scan Constraint

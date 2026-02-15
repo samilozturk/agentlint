@@ -8,8 +8,10 @@ Bu dokuman Faz 6 icin teknik kontrati kilitler.
   - local: `stdio`
   - remote: `streamable-http`
 - MCP tools:
+  - `prepare_artifact_fix_context`
   - `analyze_artifact`
   - `analyze_context_bundle`
+  - `submit_client_assessment`
   - `quality_gate_artifact`
   - `suggest_patch`
   - `validate_export`
@@ -68,11 +70,15 @@ Gerekli issuer/token endpoint env degiskenleri eklendiginde metadata endpointi a
 
 ## Auto-Invoke Convention
 
-Server instructions and tool descriptions are intentionally policy-driven:
+Server instructions and tool descriptions are intentionally policy-driven and client-led:
 
-1. `quality_gate_artifact`
-2. `analyze_artifact` / `analyze_context_bundle` (when deeper context diagnostics are needed)
-3. `validate_export`
+1. Read resources (`scoring-policy`, `assessment-schema`, `artifact-spec`, `artifact-path-hints`)
+2. `prepare_artifact_fix_context`
+3. `submit_client_assessment`
+4. `quality_gate_artifact` (`candidateContent` + `clientAssessment`)
+5. `validate_export`
+
+`analyze_artifact` / `analyze_context_bundle` advisory diagnostics olarak korunur.
 
 Prompt and resource capabilities are exposed to improve client-side selection behavior.
 

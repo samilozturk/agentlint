@@ -88,19 +88,23 @@ MCP capabilities now exposed:
 
 - Tools
 - Prompts (`artifact_create_prompt`, `artifact_review_prompt`, `artifact_fix_prompt`)
-- Resources (`agentlint://quality-metrics/<type>`, `agentlint://prompt-pack/<type>`, `agentlint://prompt-template/<type>`, `agentlint://artifact-path-hints/<type>`, `agentlint://artifact-spec/<type>`)
+- Resources (`agentlint://quality-metrics/<type>`, `agentlint://prompt-pack/<type>`, `agentlint://prompt-template/<type>`, `agentlint://artifact-path-hints/<type>`, `agentlint://artifact-spec/<type>`, `agentlint://scoring-policy/<type>`, `agentlint://assessment-schema/<type>`, `agentlint://improvement-playbook/<type>`)
 
 Recommended tool order for artifact tasks:
 
-1. `quality_gate_artifact`
-2. `analyze_artifact` or `analyze_context_bundle` (if additional diagnostics are needed)
-3. `validate_export`
+1. `prepare_artifact_fix_context`
+2. Resource read (`scoring-policy`, `assessment-schema`, `artifact-spec`, `artifact-path-hints`)
+3. `submit_client_assessment`
+4. `quality_gate_artifact` (`candidateContent` + `clientAssessment`)
+5. `validate_export`
 
 LLM-free MCP mode notes:
 
-- `analyze_artifact` and `analyze_context_bundle` are deterministic (no provider call in MCP path).
-- `refinedContent` mirrors sanitized input; final rewrites are expected from the MCP client LLM/editor.
+- `analyze_artifact` and `analyze_context_bundle` are advisory deterministic diagnostics.
+- Final score is hybrid: client weighted score (90%) + server guardrail score (10%).
+- `quality_gate_artifact` requires `clientAssessment` by default in client-led mode.
 - `quality_gate_artifact` only applies patch merge when `candidateContent` is supplied.
+- Hard-fail still applies for export invalidity and critical safety signals.
 
 Note: `analyze_workspace_artifacts` is local-first and disabled in remote transport by default.
 

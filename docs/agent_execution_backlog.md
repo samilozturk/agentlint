@@ -44,6 +44,8 @@ Tamamlananlar:
 Devam edenler:
 - [x] Faz 6 - MCP ve CLI backlog tasklari
 - [x] Faz 6.7 - MCP deterministic LLM-free migration
+- [x] Faz 6.9 - Client-led weighted scoring loop
+- [x] Faz 6.10 - Enforced client-led fix flow
 - [ ] Faz 7 - Dynamic template, URL import, house rules backlog tasklari
 - [ ] Faz 8 - Refactor ve CI backlog tasklari
 
@@ -414,6 +416,47 @@ Sonuc:
 - HTTP stateless compatibility request-bazli runtime ile sabitlendi.
 - `GET /readyz` capability/advertised metadata ile remote debug akisina acik hale getirildi.
 - MCP entrypoint'lerinde `.env` auto-load (`dotenv/config`) aktif edilerek env kaynakli startup hatalari giderildi.
+
+### Task 6.9 - Client-led weighted scoring loop
+Durum: [x] Completed
+
+Uygulanan dosyalar:
+- `src/mcp/conventions/client-led-scoring.ts`
+- `src/mcp/tools/submit-client-assessment.ts`
+- `src/mcp/tools/client-assessment-evaluator.ts`
+- `src/mcp/tools/quality-gate-artifact.ts`
+- `src/mcp/types.ts`
+- `src/mcp/resources/register-resources.ts`
+- `src/mcp/prompts/register-prompts.ts`
+- `tests/unit/client-led-scoring.test.ts`
+- `tests/integration/mcp-stdio.test.ts`
+- `tests/integration/mcp-http.test.ts`
+- `tests/integration/mcp-auth.test.ts`
+
+Sonuc:
+- MCP scoring authority client weighted modele tasindi (90% client + 10% server guardrail).
+- Yeni policy kaynaklari eklendi: `scoring-policy`, `assessment-schema`, `improvement-playbook`.
+- `submit_client_assessment` ile evidence-backed scoring ve sonraki aksiyon direktifleri aktif edildi.
+- `quality_gate_artifact` clientAssessment ile hybrid final score + iteration metadata donuyor.
+
+### Task 6.10 - Enforced client-led fix flow
+Durum: [x] Completed
+
+Uygulanan dosyalar:
+- `src/mcp/tools/prepare-artifact-fix-context.ts`
+- `src/mcp/tools/quality-gate-artifact.ts`
+- `src/mcp/tools/submit-client-assessment.ts`
+- `src/mcp/tools/client-assessment-evaluator.ts`
+- `src/mcp/types.ts`
+- `src/mcp/core/create-server.ts`
+- `src/mcp/prompts/register-prompts.ts`
+- `tests/integration/mcp-stdio.test.ts`
+- `tests/integration/mcp-http.test.ts`
+
+Sonuc:
+- Fix/update akislarinda `prepare_artifact_fix_context` ile policy snapshot ve assessment template zorunlu hale getirildi.
+- `quality_gate_artifact` default olarak `clientAssessment` gerektiriyor (`requireClientAssessment=true`).
+- Output tarafinda policy/metrik agirliklari + formula breakdown + enforcement status alanlari acikca donuyor.
 
 ---
 

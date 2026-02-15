@@ -60,7 +60,7 @@ npm run cli -- score --type workflows --content "# Workflow\n\n1. Run lint" --js
 
 ## MCP Server
 
-MCP analysis path is deterministic and LLM-free. Your MCP client LLM is expected to draft edits, while Agent Lint MCP provides scoring, warnings, patch merge utilities, and quality gates.
+MCP path uses client-led weighted scoring. Your MCP client LLM scans the repository, produces metric scores + evidence, and rewrites artifacts; Agent Lint MCP provides policy/weights, guardrails, and quality-gate orchestration.
 
 ### Local stdio
 
@@ -118,17 +118,24 @@ If your coding agent supports server instructions, prompts, and resources, Agent
   - `agentlint://prompt-template/<type>`
   - `agentlint://artifact-path-hints/<type>`
   - `agentlint://artifact-spec/<type>`
+  - `agentlint://scoring-policy/<type>`
+  - `agentlint://assessment-schema/<type>`
+  - `agentlint://improvement-playbook/<type>`
 
 Recommended default tool order for artifact tasks:
 
-1. `quality_gate_artifact`
-2. `analyze_artifact` or `analyze_context_bundle` (if deeper diagnostics are needed)
-3. `validate_export` before final output
+1. `prepare_artifact_fix_context`
+2. Read resources (`scoring-policy`, `assessment-schema`, `artifact-spec`, `artifact-path-hints`)
+3. `submit_client_assessment`
+4. `quality_gate_artifact` (with `candidateContent` + `clientAssessment`)
+5. `validate_export` before final output
 
 Notes:
 
-- `quality_gate_artifact` only applies `suggest_patch` merge when `candidateContent` is provided by the MCP client.
-- If `candidateContent` is omitted, quality gate validates deterministic analyzed content only.
+- `analyze_artifact` and `analyze_context_bundle` remain advisory diagnostics (not primary score authority).
+- `quality_gate_artifact` requires `clientAssessment` by default in fix/update loops.
+- Final score is hybrid: client weighted score (90%) + server guardrail score (10%).
+- Hard-fail conditions still apply for export validity and critical safety signals.
 
 ## Public Deployment
 

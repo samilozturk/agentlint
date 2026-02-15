@@ -31,10 +31,10 @@ Web/API path:
 
 MCP path (LLM-free):
 1. Sanitize user input.
-2. Run deterministic artifact analyzer + checklist scoring.
-3. Return deterministic score/warnings/spec guidance resources.
-4. Keep refined content equal to sanitized input.
-5. Let MCP client LLM perform revisions, then re-run quality gate.
+2. Expose client-led scoring policy (metrics + weights + evidence schema) and artifact guidance resources.
+3. Start fix loops with `prepare_artifact_fix_context`, then let MCP client LLM scan repository and produce evidence-backed scores.
+4. Run `submit_client_assessment`, then low-weight server guardrails (safety/export/checklist) with hybrid final score.
+5. Iterate rewrite -> `quality_gate_artifact` (clientAssessment required by default) until target score and guardrails pass.
 
 ## Environment
 See `.env.example` for required variables.
@@ -48,4 +48,4 @@ See `.env.example` for required variables.
 - Implement phases sequentially and run tests after each phase boundary.
 - Keep this file and roadmap docs aligned when execution priorities change.
 - Current execution snapshot is tracked in `docs/agent_execution_backlog.md`.
-- Current status: roadmap implementation is complete through Faz 6 (MCP + CLI), with MCP path migrated to deterministic LLM-free mode and remote stateless compatibility hardened.
+- Current status: roadmap implementation is complete through Faz 6 (MCP + CLI), with MCP path in client-led weighted scoring mode and remote stateless compatibility hardened.

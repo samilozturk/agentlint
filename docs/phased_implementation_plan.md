@@ -9,8 +9,9 @@ Ana baglam:
 
 Execution snapshot (2026-02-15):
 - Completed: Faz 0, Faz 1, Faz 2, Faz 3, Faz 4 (v1), Faz 5 (v1), Faz 6
-- MCP path: deterministic LLM-free mode active
+- MCP path: client-led weighted scoring mode active
 - MCP remote transport: stateless compatibility hardening complete
+- MCP fix loop: enforced prepare -> submit -> quality gate flow active
 - Pending: Faz 7, Faz 8
 
 ---
@@ -285,8 +286,10 @@ Context7 referanslari:
 - MCP SDK: `/modelcontextprotocol/typescript-sdk`
 
 MCP tool set:
+- `prepare_artifact_fix_context`
 - `analyze_artifact`
 - `analyze_context_bundle`
+- `submit_client_assessment`
 - `quality_gate_artifact`
 - `suggest_patch`
 - `validate_export`
@@ -300,6 +303,8 @@ Adimlar:
 5. CLI komutlari (`analyze`, `fix`, `score`) ortak tool katmanina baglandi.
 6. Prompt/resource capability eklendi (`registerPrompt`, `registerResource`).
 7. Auto-invoke convention icin policy-first server instructions ve tool aciklamalari guclendirildi.
+8. Client-led weighted scoring contracti eklendi (`scoring-policy`, `assessment-schema`, `submit_client_assessment`).
+9. Fix loop enforcement eklendi (`prepare_artifact_fix_context`, `quality_gate_artifact` strict clientAssessment mode).
 
 Guvenlik:
 - Varsayilan auth-required remote mod (`MCP_REQUIRE_AUTH=true`)
@@ -312,6 +317,7 @@ Test:
 - MCP tool call contract testleri
 - CLI smoke testleri
 - Prompt ve resource list/read akislari
+- Client assessment schema/evidence ve hybrid score akislari
 
 Exit kriter:
 - IDE/agent tarafi local stdio ve remote streamable-http ile tool call edebiliyor
