@@ -49,7 +49,7 @@ type ArtifactSelectorProps = {
 export function ArtifactSelector({ selected, onSelect }: ArtifactSelectorProps) {
   return (
     <div className="relative">
-      <div className="flex gap-1 overflow-x-auto rounded-lg border border-border/40 bg-background/50 p-1 backdrop-blur-sm scrollbar-none">
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-border/40 bg-background/50 p-1 backdrop-blur-sm sm:grid-cols-3 xl:grid-cols-5">
         {artifactTypeValues.map((type) => {
           const meta = artifactMeta[type];
           const isSelected = type === selected;
@@ -61,7 +61,7 @@ export function ArtifactSelector({ selected, onSelect }: ArtifactSelectorProps) 
               type="button"
               onClick={() => onSelect(type)}
               className={cn(
-                "relative flex items-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-250 hover:text-foreground",
+                "relative flex items-center justify-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-all duration-250 hover:text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                 isSelected
                   ? "bg-card text-foreground shadow-[0_1px_3px_0_rgba(0,0,0,0.08),0_0_16px_-6px_color-mix(in_oklch,var(--primary),transparent_60%)]"
@@ -69,8 +69,8 @@ export function ArtifactSelector({ selected, onSelect }: ArtifactSelectorProps) 
               )}
             >
               <Icon className={cn("size-4 shrink-0 transition-colors", isSelected ? "text-primary" : "text-muted-foreground/70")} />
-              <span className="hidden sm:inline">{meta.title}</span>
-              <span className="sm:hidden">{meta.shortTitle}</span>
+              <span className="hidden md:inline">{meta.title}</span>
+              <span className="md:hidden">{meta.shortTitle}</span>
               {isSelected && (
                 <span
                   aria-hidden

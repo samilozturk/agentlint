@@ -33,7 +33,7 @@ export function OutputPanel({ value, isLoading }: OutputPanelProps) {
         </Badge>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[380px] w-full rounded-lg border border-border/50 bg-background/60">
+        <ScrollArea className="h-[280px] w-full rounded-lg border border-border/50 bg-background/60 sm:h-[320px] xl:h-[360px]">
           {isLoading ? (
             <div className="flex flex-col gap-3 p-4">
               <Skeleton className="h-4 w-3/4" />

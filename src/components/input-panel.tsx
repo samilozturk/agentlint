@@ -48,7 +48,7 @@ export function InputPanel({ value, onChange }: InputPanelProps) {
           data-testid="artifact-input"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-[380px] resize-none rounded-lg border-border/50 bg-background/60 font-mono text-sm leading-relaxed placeholder:text-muted-foreground/50 focus-visible:ring-primary/30"
+          className="h-[280px] resize-none rounded-lg border-border/50 bg-background/60 font-mono text-sm leading-relaxed placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 sm:h-[320px] xl:h-[360px]"
           placeholder="Paste your artifact content here..."
         />
 

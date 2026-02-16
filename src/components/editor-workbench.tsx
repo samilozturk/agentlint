@@ -16,6 +16,12 @@ import { OutputPanel } from "@/components/output-panel";
 import { RecentScans } from "@/components/recent-scans";
 import { ScoreDisplay } from "@/components/score-display";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -23,10 +29,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import type { ArtifactType } from "@/lib/artifacts";
 import { applySelectedSegments } from "@/lib/selective-diff";
 import { api } from "@/trpc/react";
+
+export type WorkbenchTab = "compose" | "review" | "history";
+
+type EditorWorkbenchProps = {
+  activeTab?: WorkbenchTab;
+  onActiveTabChange?: (tab: WorkbenchTab) => void;
+};
 
 const analysisStages = [
   "Sanitizing input",
@@ -87,21 +99,36 @@ const starterTemplates: Record<ArtifactType, string> = {
   ].join("\n"),
 };
 
-export function EditorWorkbench() {
+export function EditorWorkbench({
+  activeTab: activeTabProp,
+  onActiveTabChange,
+}: EditorWorkbenchProps) {
   const utils = api.useUtils();
   const [artifactType, setArtifactType] = useState<ArtifactType>("agents");
   const [input, setInput] = useState(starterTemplates.agents);
   const [output, setOutput] = useState("");
+  const [internalActiveTab, setInternalActiveTab] = useState<WorkbenchTab>("compose");
   const [contextDocuments, setContextDocuments] = useState<ContextDocumentDraft[]>([]);
   const [analysisStageIndex, setAnalysisStageIndex] = useState<number | null>(null);
   const [selectedDiffSegments, setSelectedDiffSegments] = useState<number[]>([]);
   const stageStreamRef = useRef<EventSource | null>(null);
+
+  const activeTab = activeTabProp ?? internalActiveTab;
+
+  function setActiveTab(next: WorkbenchTab) {
+    if (onActiveTabChange) {
+      onActiveTabChange(next);
+      return;
+    }
+    setInternalActiveTab(next);
+  }
 
   const recentScans = api.artifacts.listRecent.useQuery();
   const analyzeMutation = api.artifacts.analyze.useMutation({
     onSuccess: async ({ result }) => {
       setOutput(result.refinedContent);
       setSelectedDiffSegments([]);
+      setActiveTab("review");
       await utils.artifacts.listRecent.invalidate();
     },
   });
@@ -191,6 +218,7 @@ export function EditorWorkbench() {
     setArtifactType(next);
     setInput(starterTemplates[next]);
     setOutput("");
+    setActiveTab("compose");
     setContextDocuments([]);
   }
 
@@ -247,14 +275,14 @@ export function EditorWorkbench() {
   const analysis = analyzeMutation.data?.result.analysis ?? null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div id="workbench" className="flex flex-col gap-4 sm:gap-5">
       <Card className="panel-glow border-border/50 bg-card/75">
         <CardHeader>
           <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
             Artifact Type
           </CardTitle>
           <CardDescription className="text-xs">
-            Select what to evaluate, then run the judge.
+            Select artifact category, then compose and evaluate.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -262,69 +290,120 @@ export function EditorWorkbench() {
         </CardContent>
       </Card>
 
-      <section className="grid gap-4 xl:grid-cols-2">
-        <InputPanel value={input} onChange={setInput} />
-        <OutputPanel value={output} isLoading={analyzeMutation.isPending} />
-      </section>
+      {activeTab === "compose" ? (
+        <section id="compose" className="space-y-4">
+          <Accordion
+            type="multiple"
+            defaultValue={["studio", "actions"]}
+            className="panel-glow rounded-xl border border-border/50 bg-card/70 px-4 sm:px-5"
+          >
+            <AccordionItem value="studio">
+              <AccordionTrigger className="text-xs font-semibold uppercase tracking-widest font-display">
+                Compose Workspace
+              </AccordionTrigger>
+              <AccordionContent>
+                <section className="grid gap-4 xl:grid-cols-2">
+                  <InputPanel value={input} onChange={setInput} />
+                  <OutputPanel value={output} isLoading={analyzeMutation.isPending} />
+                </section>
+              </AccordionContent>
+            </AccordionItem>
 
-      <ContextDocumentsPanel
-        documents={contextDocuments}
-        onChange={setContextDocuments}
-      />
+            <AccordionItem value="context">
+              <AccordionTrigger className="text-xs font-semibold uppercase tracking-widest font-display">
+                Project Context
+              </AccordionTrigger>
+              <AccordionContent>
+                <ContextDocumentsPanel
+                  documents={contextDocuments}
+                  onChange={setContextDocuments}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-      <Card className="panel-glow border-border/50 bg-card/75">
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
-            Judge & Actions
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Run analysis, apply fixes, and export improved artifacts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <JudgeToolbar
-            isPending={analyzeMutation.isPending}
-            hasOutput={output.length > 0}
-            hasSelectedDiff={selectedDiffSegments.length > 0}
-            inputLength={input.trim().length}
-            isOverLimit={input.length > 1_000_000}
-            errorMessage={analyzeMutation.error?.message ?? null}
-            onAnalyze={onAnalyze}
-            onApplyFix={onApplyFix}
-            onApplySelected={onApplySelected}
-            onCopy={onCopy}
-            onExport={onExport}
+            <AccordionItem value="actions" className="border-b-0">
+              <AccordionTrigger className="text-xs font-semibold uppercase tracking-widest font-display">
+                Judge & Actions
+              </AccordionTrigger>
+              <AccordionContent>
+                <Card className="panel-glow border-border/50 bg-card/75">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
+                      Judge & Actions
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Run analysis, apply selected fixes, copy, and export.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-5">
+                    <JudgeToolbar
+                      isPending={analyzeMutation.isPending}
+                      hasOutput={output.length > 0}
+                      hasSelectedDiff={selectedDiffSegments.length > 0}
+                      inputLength={input.trim().length}
+                      isOverLimit={input.length > 1_000_000}
+                      errorMessage={analyzeMutation.error?.message ?? null}
+                      onAnalyze={onAnalyze}
+                      onApplyFix={onApplyFix}
+                      onApplySelected={onApplySelected}
+                      onCopy={onCopy}
+                      onExport={onExport}
+                    />
+                    {analyzeMutation.isPending && analysisStageIndex !== null ? (
+                      <div className="space-y-2 rounded-md border border-border/40 bg-background/45 p-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium">Pipeline Stage</span>
+                          <span className="text-muted-foreground">
+                            {analysisStages[analysisStageIndex]}
+                          </span>
+                        </div>
+                        <Progress value={analysisStageProgress} className="h-1.5" />
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </section>
+      ) : null}
+
+      {activeTab === "review" ? (
+        <section id="review" className="space-y-4">
+          <Card className="panel-glow border-border/50 bg-card/75">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-widest font-display">
+                Score Overview
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Inspect quality score, safety warnings, and reviewer confidence.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScoreDisplay data={scoreData} isLoading={analyzeMutation.isPending} />
+            </CardContent>
+          </Card>
+
+          <DiffViewer
+            original={input}
+            refined={output}
+            selectedSegments={selectedDiffSegments}
+            onSelectedSegmentsChange={setSelectedDiffSegments}
+            reasonHints={(analysis?.missingItems ?? []).map((item) => item.recommendation)}
           />
-          {analyzeMutation.isPending && analysisStageIndex !== null ? (
-            <div className="space-y-2 rounded-md border border-border/40 bg-background/45 p-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">Pipeline Stage</span>
-                <span className="text-muted-foreground">
-                  {analysisStages[analysisStageIndex]}
-                </span>
-              </div>
-              <Progress value={analysisStageProgress} className="h-1.5" />
-            </div>
-          ) : null}
-          <Separator className="bg-border/30" />
-          <ScoreDisplay data={scoreData} isLoading={analyzeMutation.isPending} />
-        </CardContent>
-      </Card>
 
-      <DiffViewer
-        original={input}
-        refined={output}
-        selectedSegments={selectedDiffSegments}
-        onSelectedSegmentsChange={setSelectedDiffSegments}
-        reasonHints={(analysis?.missingItems ?? []).map((item) => item.recommendation)}
-      />
+          <AnalysisDashboard analysis={analysis} />
+        </section>
+      ) : null}
 
-      <AnalysisDashboard analysis={analysis} />
-
-      <RecentScans
-        scans={recentScans.data}
-        isLoading={recentScans.isLoading}
-      />
+      {activeTab === "history" ? (
+        <section id="history">
+          <RecentScans
+            scans={recentScans.data}
+            isLoading={recentScans.isLoading}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }
