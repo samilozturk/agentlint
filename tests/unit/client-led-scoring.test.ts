@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildPolicySnapshot,
   clientMetricIds,
   combineClientAndGuardrailScores,
   computeClientWeightedScore,
@@ -12,6 +13,14 @@ import type { AnalyzeArtifactToolOutput } from "@/mcp/tools/analyze-artifact";
 
 function buildAnalyzeOutput(overrides: Partial<AnalyzeArtifactToolOutput> = {}): AnalyzeArtifactToolOutput {
   return {
+    policySnapshot: buildPolicySnapshot("agents"),
+    resourceUris: {
+      scoringPolicy: "agentlint://scoring-policy/agents",
+      assessmentSchema: "agentlint://assessment-schema/agents",
+      improvementPlaybook: "agentlint://improvement-playbook/agents",
+      artifactSpec: "agentlint://artifact-spec/agents",
+      artifactPathHints: "agentlint://artifact-path-hints/agents",
+    },
     score: 85,
     requestedProvider: "deterministic",
     provider: "deterministic",

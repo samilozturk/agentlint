@@ -19,7 +19,9 @@ const CLIENT_METRICS = [
   "maintainability",
 ] as const;
 
-function buildStringEnv(overrides: Record<string, string>): Record<string, string> {
+function buildStringEnv(
+  overrides: Record<string, string>,
+): Record<string, string> {
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(process.env)) {
     if (typeof value === "string") {
@@ -54,7 +56,10 @@ describe("MCP stdio server", () => {
       }),
       stderr: "pipe",
     });
-    const client = new Client({ name: "agentlint-test-client", version: "1.0.0" });
+    const client = new Client({
+      name: "agentlint-test-client",
+      version: "1.0.0",
+    });
 
     try {
       await client.connect(transport);
@@ -78,7 +83,8 @@ describe("MCP stdio server", () => {
         name: "analyze_artifact",
         arguments: {
           type: "agents",
-          content: "# AGENTS.md\n\nNever run force push without manual confirmation.",
+          content:
+            "# AGENTS.md\n\nNever run force push without manual confirmation.",
         },
       });
 
@@ -95,7 +101,8 @@ describe("MCP stdio server", () => {
       expect(structured.resourceUris).toBeTruthy();
 
       const clientAssessment = {
-        repositoryScanSummary: "Scanned AGENTS.md, docs and workflow references before scoring.",
+        repositoryScanSummary:
+          "Scanned AGENTS.md, docs and workflow references before scoring.",
         scannedPaths: ["AGENTS.md", "docs/", "package.json"],
         metricScores: CLIENT_METRICS.map((metric) => ({ metric, score: 88 })),
         metricEvidence: CLIENT_METRICS.map((metric) => ({
@@ -116,13 +123,17 @@ describe("MCP stdio server", () => {
         name: "submit_client_assessment",
         arguments: {
           type: "agents",
-          content: "# AGENTS.md\n\nNever run force push without manual confirmation.",
+          content:
+            "# AGENTS.md\n\nNever run force push without manual confirmation.",
           assessment: clientAssessment,
           targetScore: 80,
         },
       });
       expect(submitResult.isError).not.toBe(true);
-      const submitStructured = submitResult.structuredContent as Record<string, unknown>;
+      const submitStructured = submitResult.structuredContent as Record<
+        string,
+        unknown
+      >;
       expect(typeof submitStructured.finalScore).toBe("number");
       expect(submitStructured.policyVersion).toBe("client-led-v1");
       expect(submitStructured.policySnapshot).toBeTruthy();
@@ -134,12 +145,17 @@ describe("MCP stdio server", () => {
         name: "quality_gate_artifact",
         arguments: {
           type: "agents",
-          content: "# AGENTS.md\n\nNever run force push without manual confirmation.",
+          content:
+            "# AGENTS.md\n\nNever run force push without manual confirmation.",
           targetScore: 80,
         },
       });
       expect(strictGateWithoutAssessment.isError).not.toBe(true);
-      const strictStructured = strictGateWithoutAssessment.structuredContent as Record<string, unknown>;
+      const strictStructured =
+        strictGateWithoutAssessment.structuredContent as Record<
+          string,
+          unknown
+        >;
       expect(strictStructured.passed).toBe(false);
       expect(strictStructured.enforcement).toEqual(
         expect.objectContaining({
@@ -153,7 +169,8 @@ describe("MCP stdio server", () => {
         name: "quality_gate_artifact",
         arguments: {
           type: "agents",
-          content: "# AGENTS.md\n\nNever run force push without manual confirmation.",
+          content:
+            "# AGENTS.md\n\nNever run force push without manual confirmation.",
           targetScore: 100,
           candidateContent:
             "# AGENTS.md\n\nNever run force push without manual confirmation.\n\n## Verification\n- Run lint and tests before merge.\n<script>alert('xss')</script>",
@@ -163,7 +180,10 @@ describe("MCP stdio server", () => {
         },
       });
       expect(qualityGateResult.isError).not.toBe(true);
-      const qualityStructured = qualityGateResult.structuredContent as Record<string, unknown>;
+      const qualityStructured = qualityGateResult.structuredContent as Record<
+        string,
+        unknown
+      >;
       expect(qualityStructured.analysis).toEqual(
         expect.objectContaining({
           provider: "deterministic",
@@ -185,7 +205,9 @@ describe("MCP stdio server", () => {
         }),
       );
       expect(
-        (qualityStructured.warnings as string[]).some((warning) => warning.includes("Script tags")),
+        (qualityStructured.warnings as string[]).some((warning) =>
+          warning.includes("Script tags"),
+        ),
       ).toBe(true);
 
       const workspaceScan = await client.callTool({
@@ -197,30 +219,51 @@ describe("MCP stdio server", () => {
         },
       });
       expect(workspaceScan.isError).not.toBe(true);
-      const workspaceStructured = workspaceScan.structuredContent as Record<string, unknown>;
+      const workspaceStructured = workspaceScan.structuredContent as Record<
+        string,
+        unknown
+      >;
       expect(typeof workspaceStructured.analyzedCount).toBe("number");
 
       const prompts = await client.listPrompts();
-      expect(prompts.prompts.some((prompt) => prompt.name === "artifact_create_prompt")).toBe(true);
+      expect(
+        prompts.prompts.some(
+          (prompt) => prompt.name === "artifact_create_prompt",
+        ),
+      ).toBe(true);
 
       const resources = await client.listResources();
-      expect(resources.resources.some((resource) => resource.uri === "agentlint://prompt-pack/agents")).toBe(
-        true,
-      );
       expect(
-        resources.resources.some((resource) => resource.uri === "agentlint://artifact-path-hints/agents"),
+        resources.resources.some(
+          (resource) => resource.uri === "agentlint://prompt-pack/agents",
+        ),
       ).toBe(true);
-      expect(resources.resources.some((resource) => resource.uri === "agentlint://artifact-spec/agents")).toBe(
-        true,
-      );
-      expect(resources.resources.some((resource) => resource.uri === "agentlint://scoring-policy/agents")).toBe(
-        true,
-      );
-      expect(resources.resources.some((resource) => resource.uri === "agentlint://assessment-schema/agents")).toBe(
-        true,
-      );
       expect(
-        resources.resources.some((resource) => resource.uri === "agentlint://improvement-playbook/agents"),
+        resources.resources.some(
+          (resource) =>
+            resource.uri === "agentlint://artifact-path-hints/agents",
+        ),
+      ).toBe(true);
+      expect(
+        resources.resources.some(
+          (resource) => resource.uri === "agentlint://artifact-spec/agents",
+        ),
+      ).toBe(true);
+      expect(
+        resources.resources.some(
+          (resource) => resource.uri === "agentlint://scoring-policy/agents",
+        ),
+      ).toBe(true);
+      expect(
+        resources.resources.some(
+          (resource) => resource.uri === "agentlint://assessment-schema/agents",
+        ),
+      ).toBe(true);
+      expect(
+        resources.resources.some(
+          (resource) =>
+            resource.uri === "agentlint://improvement-playbook/agents",
+        ),
       ).toBe(true);
 
       const promptPack = await client.readResource({
@@ -257,14 +300,20 @@ describe("MCP stdio server", () => {
         },
       });
       expect(prepareFixContext.isError).not.toBe(true);
-      const prepareStructured = prepareFixContext.structuredContent as Record<string, unknown>;
+      const prepareStructured = prepareFixContext.structuredContent as Record<
+        string,
+        unknown
+      >;
       expect(prepareStructured.policySnapshot).toBeTruthy();
       expect(prepareStructured.requiredToolOrder).toEqual(
-        expect.arrayContaining(["prepare_artifact_fix_context", "submit_client_assessment"]),
+        expect.arrayContaining([
+          "prepare_artifact_fix_context",
+          "submit_client_assessment",
+        ]),
       );
     } finally {
       await client.close();
       await transport.close();
     }
-  });
+  }, 20_000);
 });

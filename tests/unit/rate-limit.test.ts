@@ -1,13 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { checkRateLimit } from "@/server/security/rate-limit";
+import {
+  checkRateLimit,
+  getRateLimitWindowCountForTests,
+  resetRateLimitWindowsForTests,
+} from "@/server/security/rate-limit";
 
 describe("checkRateLimit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    resetRateLimitWindowsForTests();
   });
 
   afterEach(() => {
+    resetRateLimitWindowsForTests();
     vi.useRealTimers();
   });
 
@@ -71,5 +77,18 @@ describe("checkRateLimit", () => {
 
     const allowedB = checkRateLimit("key-b", 2, 60_000);
     expect(allowedB.allowed).toBe(true);
+  });
+
+  it("prunes expired keys to keep limiter state bounded", () => {
+    for (let i = 0; i < 25; i++) {
+      checkRateLimit(`stale-${i}`, 2, 1_000);
+    }
+
+    expect(getRateLimitWindowCountForTests()).toBe(25);
+
+    vi.advanceTimersByTime(1_001);
+    checkRateLimit("fresh", 2, 1_000);
+
+    expect(getRateLimitWindowCountForTests()).toBe(1);
   });
 });
