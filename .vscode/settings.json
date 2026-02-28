@@ -17,5 +17,7 @@
     "**/dist": true,
     "**/coverage": true,
     "**/pnpm-lock.yaml": true
-  }
+  },
+  "git.autoRepositoryDetection": "openEditors",
+  "git.ignoreLimitWarning": true
 }

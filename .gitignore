@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+.pnpm-store/
 
 # build output
 dist/
@@ -19,6 +20,9 @@ coverage/
 # debug logs
 npm-debug.log*
 pnpm-debug.log*
+bun-debug.log*
+bun.lock
+bun.lockb
 
 # IDE / agent
 .sisyphus/
@@ -26,3 +30,4 @@ pnpm-debug.log*
 
 # Windows artifacts
 NUL
+Thumbs.db
