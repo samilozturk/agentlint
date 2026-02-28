@@ -1,0 +1,27 @@
+{
+  "name": "@agent-lint/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "agent-lint": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agent-lint/shared": "workspace:*",
+    "@agent-lint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
