@@ -18,8 +18,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@agent-lint/core": "workspace:*",
     "@agent-lint/shared": "workspace:*",
-    "@agent-lint/core": "workspace:*"
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
