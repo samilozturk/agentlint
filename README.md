@@ -36,7 +36,7 @@ npx @agent-lint/cli analyze AGENTS.md
 npx @agent-lint/cli scan .
 
 # Get a numeric quality score
-npx @agent-lint/cli score --type agents --file AGENTS.md
+npx @agent-lint/cli score AGENTS.md --type agents
 
 # CI mode: fail if score is below threshold
 npx @agent-lint/cli analyze AGENTS.md --fail-below 70 --json
@@ -108,40 +108,41 @@ Add to your Windsurf MCP config:
 
 ## MCP Tools
 
-| Tool | Description |
-|------|-------------|
-| `analyze_artifact` | Analyze a single artifact — returns scores across 12 metrics with findings and hints |
-| `analyze_workspace_artifacts` | Scan a workspace directory for AI agent artifacts with framework detection |
-| `analyze_context_bundle` | Analyze multiple artifacts together for cross-artifact consistency |
-| `prepare_artifact_fix_context` | Prepare context for an artifact improvement loop |
-| `submit_client_assessment` | Submit a client LLM assessment with evidence-backed scores |
-| `quality_gate_artifact` | Check if an artifact meets a target quality score |
-| `suggest_patch` | Generate patch suggestions to improve an artifact |
-| `validate_export` | Validate final artifact output for safety and correctness |
+| Tool                           | Description                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| `analyze_artifact`             | Analyze a single artifact — returns scores across 12 metrics with findings and hints |
+| `analyze_workspace_artifacts`  | Scan a workspace directory for AI agent artifacts with framework detection           |
+| `analyze_context_bundle`       | Analyze multiple artifacts together for cross-artifact consistency                   |
+| `prepare_artifact_fix_context` | Prepare context for an artifact improvement loop                                     |
+| `submit_client_assessment`     | Submit a client LLM assessment with evidence-backed scores                           |
+| `quality_gate_artifact`        | Check if an artifact meets a target quality score                                    |
+| `suggest_patch`                | Generate patch suggestions to improve an artifact                                    |
+| `apply_patches`                | Apply patch content to local files with hash guard, allowlist, and backup protection |
+| `validate_export`              | Validate final artifact output for safety and correctness                            |
 
 ## Quality Metrics (12)
 
-| Metric | What It Measures |
-|--------|-----------------|
-| `clarity` | How clear and unambiguous the instructions are |
-| `specificity` | How specific and detailed the guidance is |
-| `scope-control` | Whether boundaries and limitations are well-defined |
-| `completeness` | Coverage of necessary topics and edge cases |
-| `actionability` | Whether instructions can be directly acted upon |
-| `verifiability` | Whether compliance can be objectively verified |
-| `safety` | Presence of safety guardrails and constraints |
-| `injection-resistance` | Resistance to prompt injection attacks |
-| `secret-hygiene` | Absence of leaked secrets, keys, tokens |
-| `token-efficiency` | Conciseness without sacrificing quality |
-| `platform-fit` | Alignment with the target platform conventions |
-| `maintainability` | How easy it is to update and maintain over time |
+| Metric                 | What It Measures                                    |
+| ---------------------- | --------------------------------------------------- |
+| `clarity`              | How clear and unambiguous the instructions are      |
+| `specificity`          | How specific and detailed the guidance is           |
+| `scope-control`        | Whether boundaries and limitations are well-defined |
+| `completeness`         | Coverage of necessary topics and edge cases         |
+| `actionability`        | Whether instructions can be directly acted upon     |
+| `verifiability`        | Whether compliance can be objectively verified      |
+| `safety`               | Presence of safety guardrails and constraints       |
+| `injection-resistance` | Resistance to prompt injection attacks              |
+| `secret-hygiene`       | Absence of leaked secrets, keys, tokens             |
+| `token-efficiency`     | Conciseness without sacrificing quality             |
+| `platform-fit`         | Alignment with the target platform conventions      |
+| `maintainability`      | How easy it is to update and maintain over time     |
 
 ## CLI Reference
 
 ```
 agent-lint analyze <path>     Analyze a single artifact
 agent-lint scan [dir]         Scan workspace for artifacts
-agent-lint score <options>    Get numeric quality score
+agent-lint score <path>       Get numeric quality score
 
 Options:
   --json             Output as JSON
@@ -149,7 +150,6 @@ Options:
   --quiet            Show only score and pass/fail
   --fail-below <n>   Exit with code 1 if score < n (CI mode)
   --type <type>      Artifact type: agents, skills, rules, workflows, plans
-  --file <path>      Path to artifact file
 ```
 
 ## CI/CD Integration
@@ -183,13 +183,13 @@ See [`examples/github-action.yml`](examples/github-action.yml) for the full exam
 
 ## Supported Artifact Types
 
-| Type | File Patterns |
-|------|--------------|
-| Agents | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
-| Rules | `.cursor/rules/*.md`, `.windsurf/rules/*.md` |
-| Skills | `skills/*.md` |
-| Workflows | `workflows/*.md`, `docs/workflows/*.md` |
-| Plans | `plans/*.md`, `docs/plans/*.md` |
+| Type      | File Patterns                                               |
+| --------- | ----------------------------------------------------------- |
+| Agents    | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
+| Rules     | `.cursor/rules/*.md`, `.windsurf/rules/*.md`                |
+| Skills    | `skills/*.md`                                               |
+| Workflows | `workflows/*.md`, `docs/workflows/*.md`                     |
+| Plans     | `plans/*.md`, `docs/plans/*.md`                             |
 
 ## Architecture
 
@@ -201,12 +201,12 @@ packages/
   cli/       → CLI interface
 ```
 
-| Package | Description | Published |
-|---------|-------------|-----------|
-| `@agent-lint/shared` | Common types, parser, conventions | No (bundled internally) |
-| `@agent-lint/core` | Deterministic analysis engine + rules | No (bundled internally) |
-| `@agent-lint/mcp` | MCP server (stdio transport) | **Yes** |
-| `@agent-lint/cli` | CLI interface | **Yes** |
+| Package              | Description                           | Published               |
+| -------------------- | ------------------------------------- | ----------------------- |
+| `@agent-lint/shared` | Common types, parser, conventions     | No (bundled internally) |
+| `@agent-lint/core`   | Deterministic analysis engine + rules | No (bundled internally) |
+| `@agent-lint/mcp`    | MCP server (stdio transport)          | **Yes**                 |
+| `@agent-lint/cli`    | CLI interface                         | **Yes**                 |
 
 ## Development
 

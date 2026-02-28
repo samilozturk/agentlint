@@ -3,6 +3,7 @@
 ## Purpose
 
 Agent Lint is an OSS local-first static analysis tool for AI coding agent context artifacts:
+
 - AGENTS.md / CLAUDE.md
 - Skills
 - Rules
@@ -56,18 +57,19 @@ Build flow: tsup bundles JS (shared+core inlined via `noExternal`) → tsc gener
 
 `clarity`, `specificity`, `scope-control`, `completeness`, `actionability`, `verifiability`, `safety`, `injection-resistance`, `secret-hygiene`, `token-efficiency`, `platform-fit`, `maintainability`
 
-## MCP Tools (8)
+## MCP Tools (9)
 
-| Tool | Purpose |
-|------|---------|
-| `analyze_artifact` | Single artifact analysis |
-| `analyze_workspace_artifacts` | Workspace scanning + framework detection |
-| `analyze_context_bundle` | Multi-artifact consistency analysis |
-| `prepare_artifact_fix_context` | Fix loop context |
-| `submit_client_assessment` | Submit client LLM assessment |
-| `quality_gate_artifact` | Quality gate (target score check) |
-| `suggest_patch` | Patch suggestion |
-| `validate_export` | Final output validation |
+| Tool                           | Purpose                                               |
+| ------------------------------ | ----------------------------------------------------- |
+| `analyze_artifact`             | Single artifact analysis                              |
+| `analyze_workspace_artifacts`  | Workspace scanning + framework detection              |
+| `analyze_context_bundle`       | Multi-artifact consistency analysis                   |
+| `prepare_artifact_fix_context` | Fix loop context                                      |
+| `submit_client_assessment`     | Submit client LLM assessment                          |
+| `quality_gate_artifact`        | Quality gate (target score check)                     |
+| `suggest_patch`                | Patch suggestion                                      |
+| `apply_patches`                | Guarded local patch apply (hash + allowlist + backup) |
+| `validate_export`              | Final output validation                               |
 
 ## Development
 
