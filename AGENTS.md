@@ -1,51 +1,83 @@
-# Agent Lint - Project Context
+# Agent Lint — Project Context
 
 ## Purpose
-Agent Lint evaluates and improves AI coding agent context artifacts:
-- Skills
+
+Agent Lint is an OSS local-first static analysis tool for AI coding agent context artifacts:
 - AGENTS.md / CLAUDE.md
+- Skills
 - Rules
 - Workflows
 - Plans
 
+Fully deterministic. No LLM, no database, no auth.
+
 ## Stack
-- Next.js App Router + TypeScript
-- Tailwind CSS v4 + Shadcn UI
-- tRPC + React Query
-- Drizzle ORM + SQLite (libSQL compatible)
+
+- TypeScript (strict)
+- pnpm monorepo with project references
+- Vitest for testing
+- `@modelcontextprotocol/sdk` for MCP server
+
+## Monorepo Structure
+
+```
+packages/
+  shared/    → Common types, parser, conventions, schemas
+  core/      → Deterministic analysis engine + 12-metric rules
+  mcp/       → MCP server (stdio transport)
+  cli/       → CLI interface
+```
+
+Dependency flow: `shared ← core ← mcp` and `shared ← core ← cli`
 
 ## Rules
-- Prefer server components; use client components only for interactivity.
+
 - Keep strict typing; no `any`.
-- Use Drizzle for all data access.
-- Route all mutations through tRPC procedures.
 - Never auto-execute destructive commands.
+- `console.log()` is BANNED — all logs to stderr.
+- MCP server produces data, not instructions. Client decides what to do.
+- No state: no DB, no cache, no singletons. Every call is stateless.
+- No unguarded file writes. Only `apply_patches` with hash-guard + allowlist + backup.
+- Minimum dependencies. Every new dep needs justification. Package < 5MB.
 
-## Judge Pipeline
-Web/API path:
-1. Sanitize user input.
-2. Select artifact-specific system prompt.
-3. Run model provider (OpenAI/Anthropic) or fallback Mock Judge.
-4. Validate export format (markdown/yaml safety checks).
-5. Store original/refined content and score.
+## MCP Path (LLM-free, client-led scoring)
 
-MCP path (LLM-free):
 1. Sanitize user input.
 2. Expose client-led scoring policy (metrics + weights + evidence schema) and artifact guidance resources.
 3. Start fix loops with `prepare_artifact_fix_context`, then let MCP client LLM scan repository and produce evidence-backed scores.
 4. Run `submit_client_assessment`, then low-weight server guardrails (safety/export/checklist) with hybrid final score.
-5. Iterate rewrite -> `quality_gate_artifact` (clientAssessment required by default) until target score and guardrails pass.
+5. Iterate rewrite → `quality_gate_artifact` (clientAssessment required by default) until target score and guardrails pass.
 
-## Environment
-See `.env.example` for required variables.
+## Quality Metrics (12)
 
-## Roadmap Execution
-- Follow roadmap docs in this order:
-  1. `docs/roadmap_master.md`
-  2. `docs/engineering_guardrails.md`
-  3. `docs/phased_implementation_plan.md`
-  4. `docs/agent_execution_backlog.md`
-- Implement phases sequentially and run tests after each phase boundary.
-- Keep this file and roadmap docs aligned when execution priorities change.
-- Current execution snapshot is tracked in `docs/agent_execution_backlog.md`.
-- Current status: roadmap implementation is complete through Faz 6 (MCP + CLI), with MCP path in client-led weighted scoring mode and remote stateless compatibility hardened.
+`clarity`, `specificity`, `scope-control`, `completeness`, `actionability`, `verifiability`, `safety`, `injection-resistance`, `secret-hygiene`, `token-efficiency`, `platform-fit`, `maintainability`
+
+## MCP Tools (8)
+
+| Tool | Purpose |
+|------|---------|
+| `analyze_artifact` | Single artifact analysis |
+| `analyze_workspace_artifacts` | Workspace scanning + framework detection |
+| `analyze_context_bundle` | Multi-artifact consistency analysis |
+| `prepare_artifact_fix_context` | Fix loop context |
+| `submit_client_assessment` | Submit client LLM assessment |
+| `quality_gate_artifact` | Quality gate (target score check) |
+| `suggest_patch` | Patch suggestion |
+| `validate_export` | Final output validation |
+
+## Development
+
+```bash
+pnpm install
+pnpm run typecheck      # tsc --build (all packages)
+pnpm run test           # vitest
+pnpm run mcp:stdio      # Run MCP server
+pnpm run mcp:inspector  # MCP Inspector
+pnpm run cli            # CLI
+```
+
+## Reference Documents
+
+- `docs/great_plan.md` — Master 7-phase plan
+- `docs/dikkat_edilecekler.md` — Risks and pitfalls
+- `docs/dos_and_donts.md` — Rules and constraints
