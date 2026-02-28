@@ -217,9 +217,9 @@ Mevcut 8 tool'u incele ve sadeleştir:
 
 ### 2.1 — CLI Yeniden Yapılandırma
 
-- [ ] `src/cli/index.ts` → `packages/cli/src/index.ts`
-- [ ] CLI framework: `commander` veya `yargs` (mevcut kullanıma göre koru)
-- [ ] Komutlar:
+- [x] `src/cli/index.ts` → `packages/cli/src/index.ts`
+- [x] CLI framework: `commander` veya `yargs` (mevcut kullanıma göre koru)
+- [x] Komutlar:
   ```
   agent-lint analyze <path>        # Tekil artifact analizi
   agent-lint scan [dir]            # Workspace tarama
@@ -257,12 +257,12 @@ Mevcut 8 tool'u incele ve sadeleştir:
 
 ### 2.3 — CI/CD Modu
 
-- [ ] `agent-lint ci` komutu:
+- [x] `agent-lint ci` komutu:
   - `--fail-below <score>` → exit code 1 ile çık
   - `--format json` → makineden okunabilir output
   - `--format markdown` → PR comment'e yapıştırılabilir
   - `--format text` → terminal-dostu (default)
-- [ ] Non-zero exit code'lar:
+- [x] Non-zero exit code'lar:
   - `0` → tüm artifact'lar geçti
   - `1` → en az bir artifact eşiğin altında
   - `2` → konfigürasyon hatası
@@ -270,31 +270,31 @@ Mevcut 8 tool'u incele ve sadeleştir:
 
 ### 2.4 — Output Formatları
 
-- [ ] JSON output: `{ artifacts: [{ path, type, score, findings, patches }] }`
+- [x] JSON output: `{ artifacts: [{ path, type, score, findings, patches }] }`
 - [ ] Markdown output: tablo + findings + öneriler
-- [ ] Terminal output: renkli, emoji'li özet (varsayılan)
-- [ ] `--quiet` flag: sadece skor ve pass/fail
-- [ ] `--verbose` flag: tüm metrik detayları
+- [x] Terminal output: renkli, emoji'li özet (varsayılan)
+- [x] `--quiet` flag: sadece skor ve pass/fail
+- [x] `--verbose` flag: tüm metrik detayları
 
 ### 2.5 — CLI bin & Package
 
-- [ ] `packages/cli/package.json`:
+- [x] `packages/cli/package.json`:
   ```json
   {
     "name": "@agent-lint/cli",
     "bin": { "agent-lint": "./dist/index.js" }
   }
   ```
-- [ ] `@agent-lint/core` ve `@agent-lint/shared` bağımlılığı
+- [x] `@agent-lint/core` ve `@agent-lint/shared` bağımlılığı
 
 ### 2.6 — Faz 2 Doğrulama Kontrol Listesi
 
-- [ ] `npx @agent-lint/cli analyze AGENTS.md` çalışıyor
-- [ ] `npx @agent-lint/cli scan .` workspace tarıyor, artifact'ları buluyor
-- [ ] `npx @agent-lint/cli ci --fail-below 70` → geçen artifact'ta exit 0, düşükte exit 1
+- [x] `npx @agent-lint/cli analyze AGENTS.md` çalışıyor
+- [x] `npx @agent-lint/cli scan .` workspace tarıyor, artifact'ları buluyor
+- [x] `npx @agent-lint/cli ci --fail-below 70` → geçen artifact'ta exit 0, düşükte exit 1
 - [ ] `.agentlintrc` config okunuyor ve uygulanıyor
-- [ ] JSON, markdown, text output formatları çalışıyor
-- [ ] `--quiet` ve `--verbose` flag'leri doğru çalışıyor
+- [x] JSON, markdown, text output formatları çalışıyor
+- [x] `--quiet` ve `--verbose` flag'leri doğru çalışıyor
 
 ---
 
