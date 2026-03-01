@@ -20,4 +20,4 @@ export const BANNER = `
 
 export const TAGLINE = "Meta-agent orchestrator for AI coding agents";
 
-export const VERSION = "0.2.1";
+export const VERSION = "0.3.0";
