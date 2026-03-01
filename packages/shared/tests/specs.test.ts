@@ -11,7 +11,7 @@ describe("artifact spec conventions", () => {
       expect(markdown).toContain("## Mandatory sections");
       expect(markdown).toContain("## Quality checks");
       expect(markdown).toContain("## Anti-patterns to avoid");
-      expect(markdown).toContain("## Validation loop");
+      expect(markdown).toContain("## Recommended workflow");
       expect(markdown).toContain("## Path hints");
       expect(markdown).toContain(`# Artifact Path Hints: ${artifactType}`);
     }
