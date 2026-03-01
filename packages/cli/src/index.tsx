@@ -16,7 +16,7 @@ const program = new Command();
 program
   .name("agent-lint")
   .description("Meta-agent orchestrator for AI coding agent context artifacts")
-  .version("0.3.0")
+  .version("0.3.1")
   .showHelpAfterError();
 
 program

@@ -1,6 +1,6 @@
 {
   "name": "@agent-lint/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "license": "MIT",
   "description": "CLI for AI agent context artifact orchestration. Auto-detect IDEs, scan workspaces, generate fix reports. No LLM, no database.",
