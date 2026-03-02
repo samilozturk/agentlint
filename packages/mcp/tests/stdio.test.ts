@@ -1,4 +1,6 @@
 import { once } from "node:events";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -150,7 +152,14 @@ class McpStdioClient {
 }
 
 function spawnMcpServer(): ChildProcessWithoutNullStreams {
-  return spawn(process.execPath, ["--import", "tsx", "packages/mcp/src/bin.ts"], {
+  const distBin = path.resolve(__dirname, "..", "dist", "bin.js");
+
+  // Prefer built dist (available after `pnpm run build` / CI), fall back to tsx for dev
+  const spawnArgs = existsSync(distBin)
+    ? [distBin]
+    : ["--import", "tsx", "packages/mcp/src/bin.ts"];
+
+  return spawn(process.execPath, spawnArgs, {
     cwd: process.cwd(),
     stdio: "pipe",
     env: {
@@ -179,14 +188,21 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
       throw error;
     });
 
-    const initializeResponse = await client.request("initialize", {
-      protocolVersion: "2024-11-05",
-      capabilities: {},
-      clientInfo: {
-        name: "vitest",
-        version: "1.0.0",
-      },
-    });
+    let initializeResponse: Awaited<ReturnType<McpStdioClient["request"]>>;
+    try {
+      initializeResponse = await client.request("initialize", {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: {
+          name: "vitest",
+          version: "1.0.0",
+        },
+      });
+    } catch (error) {
+      throw new Error(
+        `MCP stdio init failed: ${error instanceof Error ? error.message : error}\nServer stderr:\n${stderrOutput}`
+      );
+    }
 
     expect("result" in initializeResponse).toBe(true);
     if ("result" in initializeResponse) {
