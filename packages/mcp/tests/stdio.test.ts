@@ -227,24 +227,23 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
       return;
     }
 
-    expect(tools).toHaveLength(9);
+    expect(tools).toHaveLength(4);
 
     const toolNames = tools
       .map((tool) => (typeof tool === "object" && tool !== null ? (tool as { name?: unknown }).name : null))
       .filter((name): name is string => typeof name === "string");
 
-    expect(toolNames).toContain("analyze_artifact");
-    expect(toolNames).toContain("quality_gate_artifact");
-    expect(toolNames).toContain("analyze_workspace_artifacts");
-    expect(toolNames).toContain("apply_patches");
+    expect(toolNames).toContain("agentlint_get_guidelines");
+    expect(toolNames).toContain("agentlint_plan_workspace_autofix");
+    expect(toolNames).toContain("agentlint_quick_check");
+    expect(toolNames).toContain("agentlint_emit_maintenance_snippet");
   });
 
-  it("calls analyze_artifact successfully", async () => {
+  it("calls agentlint_get_guidelines successfully", async () => {
     const response = await client.request("tools/call", {
-      name: "analyze_artifact",
+      name: "agentlint_get_guidelines",
       arguments: {
         type: "agents",
-        content: "# AGENTS\n\n## Mission\n- Be explicit and verifiable.",
       },
     });
 
@@ -253,17 +252,16 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
       return;
     }
 
-    const structuredContent = response.result.structuredContent;
-    expect(structuredContent).toBeTruthy();
+    const content = response.result.content;
+    expect(Array.isArray(content)).toBe(true);
 
-    if (!structuredContent || typeof structuredContent !== "object") {
+    if (!Array.isArray(content) || content.length === 0) {
       return;
     }
 
-    const score = (structuredContent as { score?: unknown }).score;
-    const warnings = (structuredContent as { warnings?: unknown }).warnings;
-    expect(typeof score).toBe("number");
-    expect(Array.isArray(warnings)).toBe(true);
+    const textItem = content[0] as { type?: string; text?: string };
+    expect(textItem.type).toBe("text");
+    expect(textItem.text).toContain("Guidelines");
   });
 
   it("returns an error for invalid tool calls", async () => {
@@ -278,7 +276,7 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
     expect(isJsonRpcError || isToolError).toBe(true);
   });
 
-  it("lists registered prompts", async () => {
+  it("lists registered prompts (currently empty)", async () => {
     const response = await client.request("prompts/list", {});
     expect("result" in response).toBe(true);
 
@@ -293,7 +291,7 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
       return;
     }
 
-    expect(prompts).toHaveLength(3);
+    expect(prompts).toHaveLength(0);
   });
 
   it("does not log protocol data to stderr", () => {
