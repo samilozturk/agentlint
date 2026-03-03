@@ -39,7 +39,7 @@ Yet most teams either:
 
 **Agent Lint solves this.**
 
-It acts as a **meta-agent orchestrator** — guiding your AI coding agent to create, maintain, and improve context artifacts using curated best practices from Cursor, Windsurf, Claude, VS Code, and community standards.
+It acts as a **meta-agent orchestrator** — guiding your AI coding agent to create, maintain, and improve context artifacts -the files that define how your agent behaves- using battle-tested best practice rules proven to boost quality and efficiency. No random tips. No fluff.
 
 ---
 
@@ -65,7 +65,7 @@ It acts as a **meta-agent orchestrator** — guiding your AI coding agent to cre
 - **Workspace scanning** detects missing and incomplete artifacts automatically
 - **Quick check** after every structural change — knows when context needs updating
 - **Persistent maintenance rules** keep your agent disciplined across sessions
-- Works with **every major IDE** — Cursor, Windsurf, VS Code, Claude
+- Works with **all coding agents** — Claude Code, Cursor, Windsurf, OpenCode etc.
 
 </td>
 </tr>
@@ -118,7 +118,7 @@ npx @agent-lint/cli prompt
 
 Paste the prompt into your IDE's AI chat. Your coding agent will use Agent Lint's MCP tools to scan, create, and fix all context artifacts — applying changes directly.
 
-**No API keys. No database. No LLM on the server side. Everything runs locally.**
+**No API keys. No database. Everything runs locally and simply.**
 
 ---
 
