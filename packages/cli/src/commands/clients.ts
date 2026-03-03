@@ -73,6 +73,17 @@ export function buildMcpPayload(client: McpClient): Record<string, unknown> {
         },
       };
 
+    case "opencode":
+      return {
+        [client.rootKey]: {
+          [MCP_SERVER_NAME]: {
+            type: "local",
+            command: [MCP_COMMAND, ...MCP_ARGS],
+            enabled: true,
+          },
+        },
+      };
+
     case "codex":
       // TOML handled separately — return flat server config
       return { command: MCP_COMMAND, args: [...MCP_ARGS] };
@@ -92,6 +103,13 @@ export function buildServerEntry(client: McpClient): Record<string, unknown> {
       return {
         command: { path: MCP_COMMAND, args: [...MCP_ARGS] },
         settings: {},
+      };
+
+    case "opencode":
+      return {
+        type: "local",
+        command: [MCP_COMMAND, ...MCP_ARGS],
+        enabled: true,
       };
 
     case "codex":
@@ -240,7 +258,7 @@ export const CLIENT_REGISTRY: McpClient[] = [
     rootKey: "mcp",
     scopes: {
       workspace: { pathTemplate: "opencode.json", absolute: false },
-      global: { pathTemplate: path.join(appData(), "opencode", "config.json"), absolute: true },
+      global: { pathTemplate: path.join(home(), ".config", "opencode", "opencode.json"), absolute: true },
     },
     detectBinaries: ["opencode"],
     detectDirs: [],
