@@ -51,7 +51,8 @@
     "clipboardy": "^5.3.1",
     "commander": "^14.0.3",
     "ink": "^6.8.0",
-    "react": "19"
+    "react": "19",
+    "smol-toml": "^1.3.0"
   },
   "devDependencies": {
     "@agent-lint/core": "workspace:*",
