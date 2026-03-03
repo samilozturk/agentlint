@@ -3,13 +3,16 @@
 <img src="https://img.shields.io/npm/v/@agent-lint/cli?color=%234f46e5&label=CLI&style=for-the-badge" alt="CLI Version" />
 <img src="https://img.shields.io/npm/v/@agent-lint/mcp?color=%234f46e5&label=MCP&style=for-the-badge" alt="MCP Version" />
 <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT Licensed" />
-<img src="https://img.shields.io/badge/LLM-not%20required-green?style=for-the-badge" alt="No LLM Required" />
+
 
 # Agent Lint
 
-### **The Meta-Agent Orchestrator for Your AI Coding Agents.**
+### **ESLint for your coding agents.**
 
-Your agents write code. Agent Lint makes sure they have the **right context** to do it well.
+Bad context = Bad code
+
+Agent Lint ensures your `AGENTS.md`,`SKILL.md` and rules are perfected and current.
+
 
 [Quick Start](#-quick-start) · [MCP Tools](#-mcp-tools) · [CLI](#-cli) · [Installation](#-installation)
 
@@ -25,7 +28,7 @@ Your agents write code. Agent Lint makes sure they have the **right context** to
 
 Your `AGENTS.md`, `CLAUDE.md`, cursor rules, and skills files are **the operating system of your coding agent.** They control how your agent thinks, writes code, and makes decisions.
 
-**Bad context = bad code.** It's that simple.
+**Context files are important**
 
 Yet most teams either:
 
