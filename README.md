@@ -3,13 +3,16 @@
 <img src="https://img.shields.io/npm/v/@agent-lint/cli?color=%234f46e5&label=CLI&style=for-the-badge" alt="CLI Version" />
 <img src="https://img.shields.io/npm/v/@agent-lint/mcp?color=%234f46e5&label=MCP&style=for-the-badge" alt="MCP Version" />
 <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="MIT Licensed" />
-<img src="https://img.shields.io/badge/LLM-not%20required-green?style=for-the-badge" alt="No LLM Required" />
+
 
 # Agent Lint
 
-### **The Meta-Agent Orchestrator for Your AI Coding Agents.**
+### **ESLint for your coding agents.**
 
-Your agents write code. Agent Lint makes sure they have the **right context** to do it well.
+Bad context = Bad code
+
+Agent Lint ensures your `AGENTS.md`,`SKILL.md` and rules are perfected and current.
+
 
 [Quick Start](#-quick-start) · [MCP Tools](#-mcp-tools) · [CLI](#-cli) · [Installation](#-installation)
 
@@ -25,7 +28,7 @@ Your agents write code. Agent Lint makes sure they have the **right context** to
 
 Your `AGENTS.md`, `CLAUDE.md`, cursor rules, and skills files are **the operating system of your coding agent.** They control how your agent thinks, writes code, and makes decisions.
 
-**Bad context = bad code.** It's that simple.
+**Context files are important**
 
 Yet most teams either:
 
@@ -36,17 +39,16 @@ Yet most teams either:
 
 **Agent Lint solves this.**
 
-It acts as a **meta-agent orchestrator** — guiding your AI coding agent to create, maintain, and improve context artifacts using curated best practices from Cursor, Windsurf, Claude, VS Code, and community standards.
+It acts as a **meta-agent orchestrator** — guiding your AI coding agent to create, maintain, and improve context artifacts -the files that define how your agent behaves- using battle-tested best practice rules proven to boost quality and efficiency. No random tips. No fluff.
 
 ---
 
-<table>
+
+<table width="100%">
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-### Without Agent Lint
-
-&nbsp;
+### ❌ Without Agent Lint
 
 - Vague, generic instructions that **waste thousands of tokens**
 - Context files become **stale** as the codebase evolves
@@ -55,21 +57,20 @@ It acts as a **meta-agent orchestrator** — guiding your AI coding agent to cre
 - Agents generate their own rules — often **repetitive and low-quality**
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-### With Agent Lint
-
-&nbsp;
+### ✅ With <font color="#6367FF">A</font><font color="#6367FF">g</font><font color="#7078FF">e</font><font color="#7078FF">n</font><font color="#8494FF">t</font> <font color="#C9BEFF">L</font><font color="#C9BEFF">i</font><font color="#E4CCFE">n</font><font color="#E4CCFE">t</font>
 
 - **Comprehensive guidelines** for every artifact type — what to include, what to avoid
 - **Workspace scanning** detects missing and incomplete artifacts automatically
 - **Quick check** after every structural change — knows when context needs updating
 - **Persistent maintenance rules** keep your agent disciplined across sessions
-- Works with **every major IDE** — Cursor, Windsurf, VS Code, Claude
+- Works with **all coding agents** — Claude Code, Cursor, Windsurf, OpenCode etc.
 
 </td>
 </tr>
 </table>
+
 
 ---
 
@@ -117,7 +118,7 @@ npx @agent-lint/cli prompt
 
 Paste the prompt into your IDE's AI chat. Your coding agent will use Agent Lint's MCP tools to scan, create, and fix all context artifacts — applying changes directly.
 
-**No API keys. No database. No LLM on the server side. Everything runs locally.**
+**No API keys. No database. Everything runs locally and simply.**
 
 ---
 
