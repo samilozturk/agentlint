@@ -11,7 +11,7 @@
     "typecheck:cli": "tsc --noEmit --project packages/cli/tsconfig.json",
     "mcp:stdio": "tsx packages/mcp/src/bin.ts",
     "mcp:inspector": "npx @modelcontextprotocol/inspector tsx packages/mcp/src/bin.ts",
-    "cli": "tsx packages/cli/src/index.ts",
+    "cli": "tsx packages/cli/src/index.tsx",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint"
