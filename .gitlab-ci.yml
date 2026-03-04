@@ -42,8 +42,12 @@ publish-mcp:
     - pnpm install --frozen-lockfile
     - pnpm run build
   script:
+    - node --version
+    - npm install -g npm@latest
+    - npm --version
+    - echo "NPM_ID_TOKEN is set:${NPM_ID_TOKEN:+yes}"
     - cd packages/mcp
-    - npm publish --access public
+    - npm publish --access public --provenance
   rules:
     - if: $CI_COMMIT_TAG =~ /^v/
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -71,8 +75,12 @@ publish-cli:
     - pnpm install --frozen-lockfile
     - pnpm run build
   script:
+    - node --version
+    - npm install -g npm@latest
+    - npm --version
+    - echo "NPM_ID_TOKEN is set:${NPM_ID_TOKEN:+yes}"
     - cd packages/cli
-    - npm publish --access public
+    - npm publish --access public --provenance
   rules:
     - if: $CI_COMMIT_TAG =~ /^v/
     - if: $CI_PIPELINE_SOURCE == "web"
