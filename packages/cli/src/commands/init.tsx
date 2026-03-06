@@ -3,6 +3,7 @@ import { Box, Text, render, useApp } from "ink";
 import { Spinner, MultiSelect, Select } from "@inkjs/ui";
 import {
   Banner,
+  ContinuePrompt,
   SectionTitle,
   SuccessItem,
   SkipItem,
@@ -129,14 +130,10 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
     return () => clearImmediate(id);
   }, [step, selectedScope]);
 
-  // When done: call onComplete callback (embedded) or exit (standalone)
+  // Standalone mode exits after showing results. Embedded mode waits for confirmation.
   useEffect(() => {
     if (step !== "done") return;
-    if (onComplete) {
-      // Embedded mode — notify parent, don't exit
-      const id = setTimeout(() => onComplete(results), 300);
-      return () => clearTimeout(id);
-    }
+    if (onComplete) return;
     // Standalone mode — exit process
     const id = setTimeout(() => exit(), 500);
     return () => clearTimeout(id);
@@ -255,7 +252,14 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
 
       {/* Step 5: Results */}
       {step === "done" && (
-        <ResultsView results={results} />
+        <>
+          <ResultsView results={results} />
+          {onComplete && (
+            <ContinuePrompt
+              onContinue={() => onComplete(results)}
+            />
+          )}
+        </>
       )}
     </Box>
   );

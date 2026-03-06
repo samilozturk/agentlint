@@ -18,21 +18,20 @@ import { App } from "./app.js";
 
 redirectLogsToStderr();
 
-// ── Interactive Mode ─────────────────────────────────────────────────────
-// Bare invocation (no subcommand) → launch interactive TUI session
+type EntryMode = "interactive" | "help" | "standalone";
 
-const argv = process.argv.slice(2);
-const normalizedArgv = argv[0] === "--" ? argv.slice(1) : argv;
+function normalizeCliArgs(argv: string[]): string[] {
+  return argv[0] === "--" ? argv.slice(1) : argv;
+}
 
-const hasArgs = normalizedArgv.length > 0;
+function resolveEntryMode(argv: string[], stdinIsTTY: boolean): EntryMode {
+  if (argv.length > 0) {
+    return "standalone";
+  }
+  return stdinIsTTY ? "interactive" : "help";
+}
 
-if (!hasArgs) {
-  // No subcommand → interactive session
-  render(React.createElement(App));
-} else {
-  // ── Standalone Mode ──────────────────────────────────────────────────
-  // Explicit subcommand → parse with commander (backward compatible)
-
+function createProgram(): Command {
   const program = new Command();
 
   program
@@ -68,11 +67,28 @@ if (!hasArgs) {
       runPromptCommand(options);
     });
 
-  try {
-    program.parse([process.argv[0], process.argv[1], ...normalizedArgv]);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown CLI error";
-    process.stderr.write(`${message}\n`);
-    process.exitCode = 2;
+  return program;
+}
+
+const normalizedArgv = normalizeCliArgs(process.argv.slice(2));
+const entryMode = resolveEntryMode(normalizedArgv, process.stdin.isTTY === true);
+
+if (entryMode === "interactive") {
+  render(React.createElement(App));
+} else {
+  const program = createProgram();
+
+  if (entryMode === "help") {
+    const helpText = program.helpInformation();
+    process.stdout.write(helpText.endsWith("\n") ? helpText : `${helpText}\n`);
+    process.exitCode = 0;
+  } else {
+    try {
+      program.parse([process.argv[0], process.argv[1], ...normalizedArgv]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown CLI error";
+      process.stderr.write(`${message}\n`);
+      process.exitCode = 2;
+    }
   }
 }

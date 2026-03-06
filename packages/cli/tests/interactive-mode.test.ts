@@ -1,5 +1,10 @@
-import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import React from "react";
+import { App } from "../src/app.js";
+import { pressEnter, renderInTTY, sleep, waitFor } from "./tty-test-utils.js";
 
 const CLI_PATH = path.resolve(__dirname, "..", "dist", "index.js");
 const ROOT = path.resolve(__dirname, "../../..");
@@ -12,94 +17,79 @@ function run(args: string[], cwd?: string): string {
   });
 }
 
-type SpawnInteractiveOptions = {
-  cwd?: string;
-  args?: string[];
-  killAfterMs?: number;
-};
-
-/**
- * Spawn CLI in interactive mode and collect rendered output.
- */
-function spawnInteractive(options: SpawnInteractiveOptions = {}): Promise<{ stderr: string; stdout: string; status: number | null }> {
-  const {
-    cwd,
-    args = [],
-    killAfterMs = 2000,
-  } = options;
-
-  return new Promise((resolve) => {
-    const child = spawn(process.execPath, [CLI_PATH, ...args], {
-      cwd: cwd ?? ROOT,
-      stdio: ["pipe", "pipe", "pipe"],
-      env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" },
-    });
-
-    let settled = false;
-    let status: number | null = null;
-    let stderr = "";
-    let stdout = "";
-    const timers: NodeJS.Timeout[] = [];
-
-    const resolveOnce = (flushDelayMs: number) => {
-      if (settled) return;
-      settled = true;
-      for (const timer of timers) {
-        clearTimeout(timer);
-      }
-      setTimeout(() => resolve({ stderr, stdout, status }), flushDelayMs);
-    };
-
-    child.stderr.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-
-    child.stdout.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString();
-    });
-
-    // Give Ink time to render, then kill
-    const killTimer = setTimeout(() => {
-      child.kill("SIGTERM");
-      resolveOnce(200);
-    }, killAfterMs);
-    timers.push(killTimer);
-
-    child.on("exit", (code) => {
-      status = code;
-      resolveOnce(100);
-    });
+function runCli(args: string[], cwd?: string) {
+  return spawnSync(process.execPath, [CLI_PATH, ...args], {
+    cwd: cwd ?? ROOT,
+    encoding: "utf-8",
+    timeout: 10_000,
   });
 }
 
-describe("Interactive mode (bare invocation)", () => {
-  it("renders main menu with all options on stdout", async () => {
-    const { stdout } = await spawnInteractive();
-    // Ink renders the TUI to stdout
-    // SectionTitle renders text in UPPERCASE with "// " prefix
-    expect(stdout.toUpperCase()).toContain("WHAT WOULD YOU LIKE TO DO?");
+describe("Bare invocation routing", () => {
+  it("prints help instead of launching TUI when stdin is not a TTY", () => {
+    const result = runCli([]);
+    const stdout = result.stdout ?? "";
+    const stderr = result.stderr ?? "";
+    const combined = `${stdout}${stderr}`;
+
+    expect(result.status).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage:");
     expect(stdout).toContain("init");
     expect(stdout).toContain("doctor");
     expect(stdout).toContain("prompt");
-    expect(stdout).toContain("Exit");
-  }, 10_000);
+    expect(combined).not.toContain("Raw mode is not supported");
+  });
 
-  it("renders the banner on stdout", async () => {
-    const { stdout } = await spawnInteractive();
-    // Banner contains version info
-    expect(stdout).toContain("v0.");
-  }, 10_000);
+  it("treats bare '--' as a help fallback in non-TTY mode", () => {
+    const result = runCli(["--"]);
+    const stdout = result.stdout ?? "";
+    const stderr = result.stderr ?? "";
+    const combined = `${stdout}${stderr}`;
 
-  it("does not immediately exit (produces output before kill)", async () => {
-    const { stdout } = await spawnInteractive();
-    // If interactive mode is working, there should be rendered output
-    expect(stdout.length).toBeGreaterThan(0);
-  }, 10_000);
+    expect(result.status).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Usage:");
+    expect(stdout).toContain("Set up Agent Lint MCP config");
+    expect(combined).not.toContain("Raw mode is not supported");
+  });
+});
 
-  it("treats bare '--' as interactive invocation", async () => {
-    const { stdout } = await spawnInteractive({ args: ["--"] });
-    expect(stdout.toUpperCase()).toContain("WHAT WOULD YOU LIKE TO DO?");
-    expect(stdout).toContain("Set up MCP config (init)");
+describe("Interactive TTY flow", () => {
+  it("keeps embedded init results visible until the user confirms", async () => {
+    const originalCwd = process.cwd();
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-interactive-"));
+    fs.mkdirSync(path.join(tmpDir, ".vscode"));
+    process.chdir(tmpDir);
+
+    const session = renderInTTY(React.createElement(App));
+
+    try {
+      await waitFor(() => session.getStdout().toUpperCase().includes("WHAT WOULD YOU LIKE TO DO?"));
+
+      pressEnter(session.stdin);
+      await waitFor(() => session.getStdout().toUpperCase().includes("SELECT CLIENTS TO CONFIGURE"));
+
+      pressEnter(session.stdin);
+      await waitFor(() => session.getStdout().toUpperCase().includes("SELECT CONFIG SCOPE"));
+
+      pressEnter(session.stdin);
+
+      await waitFor(() => session.getStdout().includes("MCP config is ready."), {
+        timeoutMs: 5_000,
+      });
+
+      await sleep(350);
+      expect(session.getStdout().toUpperCase()).not.toContain("WHAT'S NEXT?");
+
+      pressEnter(session.stdin);
+
+      await waitFor(() => session.getStdout().toUpperCase().includes("WHAT'S NEXT?"));
+    } finally {
+      session.cleanup();
+      process.chdir(originalCwd);
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   }, 10_000);
 });
 
@@ -140,26 +130,18 @@ describe("Standalone mode (backward compat after index.tsx refactor)", () => {
   });
 
   it("unknown command still errors instead of launching interactive menu", () => {
-    const result = spawnSync(process.execPath, [CLI_PATH, "unknown-command"], {
-      cwd: ROOT,
-      encoding: "utf-8",
-      timeout: 10_000,
-    });
-
+    const result = runCli(["unknown-command"]);
     const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+
     expect(result.status).not.toBe(0);
     expect(combined.toLowerCase()).toContain("unknown command");
     expect(combined.toUpperCase()).not.toContain("WHAT WOULD YOU LIKE TO DO?");
   });
 
   it("unknown global flag still errors in standalone parser", () => {
-    const result = spawnSync(process.execPath, [CLI_PATH, "--not-a-real-flag"], {
-      cwd: ROOT,
-      encoding: "utf-8",
-      timeout: 10_000,
-    });
-
+    const result = runCli(["--not-a-real-flag"]);
     const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+
     expect(result.status).not.toBe(0);
     expect(combined.toLowerCase()).toContain("unknown option");
     expect(combined.toUpperCase()).not.toContain("WHAT WOULD YOU LIKE TO DO?");

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 import {
   colors,
   gradient,
@@ -154,6 +154,34 @@ export function NextStep({ children }: { children: string }): React.ReactNode {
     <Box marginTop={1} marginLeft={1}>
       <Text color={colors.accent} bold>{">> "}</Text>
       <Text color={colors.tertiary}>{children}</Text>
+    </Box>
+  );
+}
+
+export function ContinuePrompt({
+  onContinue,
+  label = "Continue",
+}: {
+  onContinue: () => void;
+  label?: string;
+}): React.ReactNode {
+  useInput((_input, key) => {
+    if (key.return) {
+      onContinue();
+    }
+  });
+
+  return (
+    <Box marginTop={1} marginLeft={1} flexDirection="column">
+      <Box gap={1}>
+        <Text color={colors.accent} bold>{">> "}</Text>
+        <Text color={colors.tertiary} bold>{label}</Text>
+      </Box>
+      <Box marginLeft={4}>
+        <Text color={colors.dim} italic>
+          {"enter continue"}
+        </Text>
+      </Box>
     </Box>
   );
 }

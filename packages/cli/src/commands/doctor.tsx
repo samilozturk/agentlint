@@ -6,6 +6,7 @@ import { Spinner } from "@inkjs/ui";
 import { buildWorkspaceAutofixPlan } from "@agent-lint/core";
 import {
   Banner,
+  ContinuePrompt,
   SectionTitle,
   SuccessItem,
   ErrorItem,
@@ -66,15 +67,6 @@ export function DoctorApp({ onComplete, showBanner = true }: DoctorAppProps): Re
     return () => clearImmediate(id);
   }, []);
 
-  // When done: call onComplete callback (embedded) or let Ink exit naturally (standalone)
-  useEffect(() => {
-    if (phase !== "done" || !result) return;
-    if (onComplete) {
-      const id = setTimeout(() => onComplete(result), 300);
-      return () => clearTimeout(id);
-    }
-  }, [phase, result, onComplete]);
-
   return (
     <Box flexDirection="column">
       {showBanner && (
@@ -131,6 +123,12 @@ export function DoctorApp({ onComplete, showBanner = true }: DoctorAppProps): Re
           <NextStep>
             {`Run ${"agent-lint prompt"} to get a copy-paste prompt for your IDE.`}
           </NextStep>
+
+          {onComplete && (
+            <ContinuePrompt
+              onContinue={() => onComplete(result)}
+            />
+          )}
         </>
       )}
     </Box>

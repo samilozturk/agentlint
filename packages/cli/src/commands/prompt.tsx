@@ -5,6 +5,7 @@ import { Box, Text, render } from "ink";
 import clipboardy from "clipboardy";
 import {
   Banner,
+  ContinuePrompt,
   PromptBox,
   Hint,
   Divider,
@@ -52,15 +53,7 @@ export function PromptApp({ onComplete, showBanner = true }: PromptAppProps): Re
       .then(() => setCopied(true))
       .catch(() => setCopyError(true));
   }, []);
-
-  // When done: call onComplete callback (embedded) or let Ink exit naturally (standalone)
-  useEffect(() => {
-    if (!copied && !copyError) return;
-    if (onComplete) {
-      const id = setTimeout(() => onComplete({ prompt, hasReport, copied }), 300);
-      return () => clearTimeout(id);
-    }
-  }, [copied, copyError, onComplete, prompt, hasReport]);
+  const isReady = copied || copyError;
 
   return (
     <Box flexDirection="column">
@@ -104,6 +97,12 @@ export function PromptApp({ onComplete, showBanner = true }: PromptAppProps): Re
         <Hint>
           Run agent-lint doctor first to generate a detailed report for better results.
         </Hint>
+      )}
+
+      {onComplete && isReady && (
+        <ContinuePrompt
+          onContinue={() => onComplete({ prompt, hasReport, copied })}
+        />
       )}
     </Box>
   );
