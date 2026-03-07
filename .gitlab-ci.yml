@@ -49,10 +49,15 @@ publish-mcp:
     - |
       if [ -n "$NPM_TOKEN" ]; then
         echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        PUBLISH_FLAGS="--access public"
+      else
+        echo "NPM_TOKEN is not set. Falling back to npm trusted publishing via GitLab OIDC." >&2
+        echo "If npm trusted publishing is not configured for @agent-lint/mcp, add a masked GitLab CI/CD variable named NPM_TOKEN and retry this tag pipeline." >&2
+        PUBLISH_FLAGS="--access public --provenance"
       fi
     - cd packages/mcp
     - npm pack --dry-run
-    - npm publish --access public --provenance
+    - npm publish $PUBLISH_FLAGS
   rules:
     - if: $CI_COMMIT_TAG =~ /^mcp-v/
 
@@ -81,9 +86,14 @@ publish-cli:
     - |
       if [ -n "$NPM_TOKEN" ]; then
         echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        PUBLISH_FLAGS="--access public"
+      else
+        echo "NPM_TOKEN is not set. Falling back to npm trusted publishing via GitLab OIDC." >&2
+        echo "If npm trusted publishing is not configured for @agent-lint/cli, add a masked GitLab CI/CD variable named NPM_TOKEN and retry this tag pipeline." >&2
+        PUBLISH_FLAGS="--access public --provenance"
       fi
     - cd packages/cli
     - npm pack --dry-run
-    - npm publish --access public --provenance
+    - npm publish $PUBLISH_FLAGS
   rules:
     - if: $CI_COMMIT_TAG =~ /^cli-v/

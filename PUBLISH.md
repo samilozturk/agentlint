@@ -83,3 +83,18 @@ Check:
 ## Manual npm Auth
 
 If you publish outside OIDC trusted publishing, use a granular npm token with write access to `@agent-lint/*` and store it as `NPM_TOKEN` in GitLab CI/CD variables.
+
+Recommended GitLab setup:
+
+1. Open `Settings > CI/CD > Variables`
+2. Add variable `NPM_TOKEN`
+3. Paste a granular npm token with publish rights for `@agent-lint/cli` and `@agent-lint/mcp`
+4. Mark it `Masked`
+5. Mark it `Protected` only if your release tags are protected too
+6. Retry the failed `publish-cli` or `publish-mcp` job from the tag pipeline
+
+Current behavior:
+
+- if `NPM_TOKEN` is present, GitLab CI publishes with token-based auth
+- if `NPM_TOKEN` is missing, GitLab CI attempts npm trusted publishing with provenance
+- if npm trusted publishing is not configured on npm, the job will fail and the log will point you back to `NPM_TOKEN`
