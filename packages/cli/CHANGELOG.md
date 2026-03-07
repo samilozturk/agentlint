@@ -1,5 +1,11 @@
 # @agent-lint/cli Changelog
 
+## [0.4.3]
+
+### Fixed
+
+- GitLab publish jobs now support both plain and file-based `NPM_TOKEN` variables and fail fast on invalid npm auth
+
 ## [0.4.2]
 
 ### Changed

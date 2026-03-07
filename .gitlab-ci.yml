@@ -48,11 +48,18 @@ publish-mcp:
     - npm install -g npm@latest
     - |
       if [ -n "$NPM_TOKEN" ]; then
-        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        if [ -f "$NPM_TOKEN" ]; then
+          NODE_AUTH_TOKEN="$(tr -d '\r\n' < "$NPM_TOKEN")"
+        else
+          NODE_AUTH_TOKEN="$NPM_TOKEN"
+        fi
+        export NODE_AUTH_TOKEN
+        printf '//registry.npmjs.org/:_authToken=%s\nregistry=https://registry.npmjs.org/\nalways-auth=true\n' "$NODE_AUTH_TOKEN" > ~/.npmrc
+        npm whoami
         PUBLISH_FLAGS="--access public"
       else
         echo "NPM_TOKEN is not set. Falling back to npm trusted publishing via GitLab OIDC." >&2
-        echo "If npm trusted publishing is not configured for @agent-lint/mcp, add a masked GitLab CI/CD variable named NPM_TOKEN and retry this tag pipeline." >&2
+        echo "If npm trusted publishing is not configured for @agent-lint/mcp, add a GitLab CI/CD variable named NPM_TOKEN or disable Protected if your release tags are unprotected." >&2
         PUBLISH_FLAGS="--access public --provenance"
       fi
     - cd packages/mcp
@@ -85,11 +92,18 @@ publish-cli:
     - npm install -g npm@latest
     - |
       if [ -n "$NPM_TOKEN" ]; then
-        echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        if [ -f "$NPM_TOKEN" ]; then
+          NODE_AUTH_TOKEN="$(tr -d '\r\n' < "$NPM_TOKEN")"
+        else
+          NODE_AUTH_TOKEN="$NPM_TOKEN"
+        fi
+        export NODE_AUTH_TOKEN
+        printf '//registry.npmjs.org/:_authToken=%s\nregistry=https://registry.npmjs.org/\nalways-auth=true\n' "$NODE_AUTH_TOKEN" > ~/.npmrc
+        npm whoami
         PUBLISH_FLAGS="--access public"
       else
         echo "NPM_TOKEN is not set. Falling back to npm trusted publishing via GitLab OIDC." >&2
-        echo "If npm trusted publishing is not configured for @agent-lint/cli, add a masked GitLab CI/CD variable named NPM_TOKEN and retry this tag pipeline." >&2
+        echo "If npm trusted publishing is not configured for @agent-lint/cli, add a GitLab CI/CD variable named NPM_TOKEN or disable Protected if your release tags are unprotected." >&2
         PUBLISH_FLAGS="--access public --provenance"
       fi
     - cd packages/cli

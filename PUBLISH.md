@@ -96,5 +96,7 @@ Recommended GitLab setup:
 Current behavior:
 
 - if `NPM_TOKEN` is present, GitLab CI publishes with token-based auth
+- both plain variables and file-type variables are supported
+- token-based jobs run `npm whoami` before publish so auth failures fail fast
 - if `NPM_TOKEN` is missing, GitLab CI attempts npm trusted publishing with provenance
 - if npm trusted publishing is not configured on npm, the job will fail and the log will point you back to `NPM_TOKEN`
