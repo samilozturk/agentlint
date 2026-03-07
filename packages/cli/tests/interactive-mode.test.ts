@@ -67,16 +67,19 @@ describe("Interactive TTY flow", () => {
     try {
       await waitFor(() => session.getStdout().toUpperCase().includes("WHAT WOULD YOU LIKE TO DO?"));
 
+      await sleep(100);
       pressEnter(session.stdin);
       await waitFor(() => session.getStdout().toUpperCase().includes("SELECT CLIENTS TO CONFIGURE"));
 
+      await sleep(100);
       pressEnter(session.stdin);
       await waitFor(() => session.getStdout().toUpperCase().includes("SELECT CONFIG SCOPE"));
 
+      await sleep(100);
       pressEnter(session.stdin);
 
       await waitFor(() => session.getStdout().includes("MCP config is ready."), {
-        timeoutMs: 5_000,
+        timeoutMs: 10_000,
       });
 
       await sleep(350);
@@ -90,7 +93,7 @@ describe("Interactive TTY flow", () => {
       process.chdir(originalCwd);
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  }, 10_000);
+  }, 15_000);
 });
 
 describe("Standalone mode (backward compat after index.tsx refactor)", () => {

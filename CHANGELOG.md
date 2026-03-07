@@ -1,28 +1,21 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+This changelog tracks workspace-level changes. Package-specific release notes live in:
 
-## [0.1.1] — 2026-03-01
+- [packages/cli/CHANGELOG.md](packages/cli/CHANGELOG.md)
+- [packages/mcp/CHANGELOG.md](packages/mcp/CHANGELOG.md)
+
+## 2026-03-07
+
+### Changed
+
+- Rebuilt the public documentation around the current product surface: 3 CLI commands, 4 MCP tools, and 3 MCP resources.
+- Standardized the release model around independent package versions and package-scoped tags: `cli-vX.Y.Z` and `mcp-vX.Y.Z`.
+- Set GitHub as the public-facing home for discovery while keeping GitLab CI as the authoritative publish path.
+- Bumped published package versions to `@agent-lint/cli@0.4.1` and `@agent-lint/mcp@0.3.1`.
 
 ### Fixed
 
-- Add `createRequire` shim to ESM bundles so CJS dependencies (`gray-matter`) work correctly when installed via `npx`
-
-## [0.1.0] — 2026-02-28
-
-### Added
-
-- Initial monorepo structure with 4 packages: `@agent-lint/shared`, `@agent-lint/core`, `@agent-lint/mcp`, `@agent-lint/cli`
-- 12-metric deterministic quality scoring engine for AI agent context artifacts
-- MCP server (stdio transport) with 9 tools: `analyze_artifact`, `analyze_workspace_artifacts`, `analyze_context_bundle`, `prepare_artifact_fix_context`, `submit_client_assessment`, `quality_gate_artifact`, `suggest_patch`, `apply_patches`, `validate_export`
-- CLI with 3 commands: `analyze`, `scan`, `score` — supports `--json`, `--verbose`, `--quiet`, `--fail-below`
-- Security hardening: SHA-256 hash guard, extension allowlist, path traversal protection, backup/rollback, tool timeouts, message size limits
-- Input sanitization: prompt injection detection, shell injection, path injection, environment variable interpolation
-- 247 tests across all packages
-- StreamableHTTP transport with CORS, bearer token auth, rate limiting, per-session isolation
-- Custom Rule API: user-defined lint rules in `.agentlint/rules/`
-- Plugin system: npm-installable rule packages with `agentlint-plugin-*` / `@*/agentlint-plugin-*` conventions
-- Watch mode: `--watch` flag on `analyze` and `scan` commands for automatic re-analysis on file changes
-- GitHub Actions CI pipeline (test on Node 18/20/22 + lint)
-- Tag-triggered npm publish with provenance (sigstore)
-- Contributing guide and issue templates
+- Stabilized the interactive `agent-lint init` flow for bare invocation, TTY navigation, and embedded result confirmation.
+- Aligned MCP timeout configuration with the current public tool names and kept legacy timeout aliases only for compatibility.
+- Made MCP server version reporting resolve to the real package version in source, build, HTTP, and stdio flows.

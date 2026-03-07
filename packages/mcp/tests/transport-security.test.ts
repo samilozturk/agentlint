@@ -7,6 +7,7 @@ import {
   getToolTimeout,
   withToolTimeout,
 } from "../src/transport-security.js";
+import { CURRENT_TOOL_TIMEOUTS, LEGACY_TOOL_TIMEOUT_ALIASES } from "../src/catalog.js";
 
 // ─── Constants ───
 
@@ -21,15 +22,8 @@ describe("transport-security constants", () => {
 
   it("TOOL_TIMEOUTS has all expected tools", () => {
     const expectedTools = [
-      "analyze_artifact",
-      "analyze_workspace_artifacts",
-      "analyze_context_bundle",
-      "prepare_artifact_fix_context",
-      "submit_client_assessment",
-      "suggest_patch",
-      "quality_gate_artifact",
-      "apply_patches",
-      "validate_export",
+      ...Object.keys(CURRENT_TOOL_TIMEOUTS),
+      ...Object.keys(LEGACY_TOOL_TIMEOUT_ALIASES),
     ];
     for (const tool of expectedTools) {
       expect(TOOL_TIMEOUTS).toHaveProperty(tool);
@@ -37,16 +31,16 @@ describe("transport-security constants", () => {
     }
   });
 
-  it("apply_patches timeout is 15s", () => {
+  it("agentlint_emit_maintenance_snippet timeout is 10s", () => {
+    expect(TOOL_TIMEOUTS["agentlint_emit_maintenance_snippet"]).toBe(10_000);
+  });
+
+  it("apply_patches legacy alias timeout is 15s", () => {
     expect(TOOL_TIMEOUTS["apply_patches"]).toBe(15_000);
   });
 
-  it("validate_export timeout is 10s", () => {
-    expect(TOOL_TIMEOUTS["validate_export"]).toBe(10_000);
-  });
-
-  it("analyze_workspace_artifacts timeout is 60s", () => {
-    expect(TOOL_TIMEOUTS["analyze_workspace_artifacts"]).toBe(60_000);
+  it("agentlint_plan_workspace_autofix timeout is 60s", () => {
+    expect(TOOL_TIMEOUTS["agentlint_plan_workspace_autofix"]).toBe(60_000);
   });
 });
 
@@ -54,8 +48,9 @@ describe("transport-security constants", () => {
 
 describe("getToolTimeout", () => {
   it("returns configured timeout for known tool", () => {
+    expect(getToolTimeout("agentlint_quick_check")).toBe(30_000);
+    expect(getToolTimeout("agentlint_emit_maintenance_snippet")).toBe(10_000);
     expect(getToolTimeout("apply_patches")).toBe(15_000);
-    expect(getToolTimeout("validate_export")).toBe(10_000);
   });
 
   it("returns default timeout for unknown tool", () => {
@@ -135,8 +130,7 @@ describe("withToolTimeout", () => {
   });
 
   it("uses configured timeout when not explicitly provided", async () => {
-    // apply_patches has 15s timeout — function completes instantly, should resolve
-    const result = await withToolTimeout("apply_patches", async () => 42);
+    const result = await withToolTimeout("agentlint_get_guidelines", async () => 42);
     expect(result).toBe(42);
   });
 });

@@ -12,7 +12,8 @@
  * - Full security middleware integration (CORS, auth, rate limiting, origin/host validation)
  * - Graceful shutdown (SIGINT/SIGTERM)
  *
- * apply_patches is disabled in HTTP mode per great_plan.md §1.3.
+ * The current HTTP surface is read-only; legacy write-oriented tools are not
+ * part of the public MCP surface.
  *
  * @module
  */

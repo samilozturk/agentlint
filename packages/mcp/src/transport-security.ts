@@ -10,6 +10,7 @@
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import { logMcp } from "./logger.js";
+import { CURRENT_TOOL_TIMEOUTS, LEGACY_TOOL_TIMEOUT_ALIASES } from "./catalog.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -25,15 +26,8 @@ export const MAX_JSONRPC_MESSAGE_BYTES = 10 * 1024 * 1024;
  * Per-tool timeout values in milliseconds, from dos_and_donts.md.
  */
 export const TOOL_TIMEOUTS: Record<string, number> = {
-  analyze_artifact: 30_000,
-  analyze_workspace_artifacts: 60_000,
-  analyze_context_bundle: 30_000,
-  prepare_artifact_fix_context: 30_000,
-  submit_client_assessment: 30_000,
-  suggest_patch: 30_000,
-  quality_gate_artifact: 30_000,
-  apply_patches: 15_000,
-  validate_export: 10_000,
+  ...CURRENT_TOOL_TIMEOUTS,
+  ...LEGACY_TOOL_TIMEOUT_ALIASES,
 };
 
 /** Default timeout for unknown tools: 30 seconds */

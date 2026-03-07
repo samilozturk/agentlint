@@ -172,7 +172,7 @@ export function installClient(
   client: McpClient,
   scope: Scope,
   cwd: string,
-  preferCli: boolean = true,
+  preferCli: boolean = false,
 ): InstallResult {
   // Validate scope is available
   if (!client.scopes[scope]) {

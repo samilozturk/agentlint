@@ -1,155 +1,100 @@
 # Contributing to Agent Lint
 
-Thank you for your interest in contributing to Agent Lint! This guide will help you get started.
+Agent Lint is a strict TypeScript monorepo for keeping coding-agent context artifacts aligned with a real codebase. This guide covers the current public product surface and the rules for changing it safely.
+
+## Public Surface
+
+- CLI package: `@agent-lint/cli`
+- MCP package: `@agent-lint/mcp`
+- CLI commands: `init`, `doctor`, `prompt`
+- MCP tools: `agentlint_get_guidelines`, `agentlint_plan_workspace_autofix`, `agentlint_quick_check`, `agentlint_emit_maintenance_snippet`
 
 ## Development Setup
 
-### Prerequisites
-
-- **Node.js** >= 18
-- **pnpm** >= 9
-
-### Install & Build
-
 ```bash
-git clone https://gitlab.com/bsamilozturk/agentlint.git
+git clone https://github.com/samilytu/agentlint.git
 cd agentlint
 pnpm install
+```
+
+## Verify Before Opening a PR
+
+```bash
 pnpm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run test
 ```
 
-### Verify
+If you touch package metadata or release logic, also run:
 
 ```bash
-pnpm run test        # Run all tests
-pnpm run typecheck   # Type-check all packages
-pnpm run lint        # ESLint
+cd packages/cli && npm pack --dry-run
+cd ../mcp && npm pack --dry-run
 ```
 
-## Monorepo Structure
+## Monorepo Layout
 
-```
+```text
 packages/
-  shared/    → Common types, parser, conventions, schemas
-  core/      → Deterministic analysis engine + 12-metric rules
-  mcp/       → MCP server (stdio + HTTP transport)
-  cli/       → CLI interface
+  shared/    -> Shared schemas, parsers, conventions, and types
+  core/      -> Guidelines, workspace discovery, quick checks, maintenance snippets
+  mcp/       -> MCP server package
+  cli/       -> CLI package
 ```
 
-**Dependency flow**: `shared ← core ← mcp` and `shared ← core ← cli`
+Dependency flow:
 
-**Build flow**: tsup bundles JS (shared+core inlined via `noExternal`) → tsc generates `.d.ts` only
+- `shared <- core <- mcp`
+- `shared <- core <- cli`
 
-### Published packages
+## Working Rules
 
-| Package           | npm       |
-| ----------------- | --------- |
-| `@agent-lint/mcp` | Published |
-| `@agent-lint/cli` | Published |
+- Keep strict typing. No `any`.
+- `console.log()` is banned. Use stderr logging only.
+- The MCP server must remain read-only. It can guide the client agent, but it must not write repository files.
+- Avoid stateful behavior. No database, cache, or singleton coordination layer.
+- Minimize dependencies and keep published packages small.
 
-`@agent-lint/shared` and `@agent-lint/core` are internal — bundled into mcp and cli at build time.
+## What Needs Extra Care
 
-## Development Workflow
+- Any change to CLI commands or flags must update the public READMEs and tests.
+- Any change to MCP tools or resources must update the public READMEs and the docs consistency tests.
+- Package versions, changelogs, tags, and publish workflows must stay aligned.
+- GitHub is the public home. GitLab CI is the authoritative publish path. Do not reintroduce dual publish automation.
 
-1. **Fork & clone** the repository
-2. **Create a branch** from `main`: `git checkout -b feat/my-feature`
-3. **Make changes** following the coding standards below
-4. **Run tests**: `pnpm run test`
-5. **Run typecheck**: `pnpm run typecheck`
-6. **Commit** with a semantic message (see below)
-7. **Open a PR** against `main`
+## Commit and PR Style
 
-## Coding Standards
+Use conventional commit messages when possible:
 
-### TypeScript
-
-- **Strict mode** — no `any`, no `@ts-ignore`, no `@ts-expect-error`
-- All public functions must have explicit return types
-- Prefer `type` over `interface` for data shapes
-
-### Logging
-
-- **`console.log()` is BANNED** — MCP uses stdio, so stdout is reserved for protocol messages
-- Use `console.error()` for debug/info logging (goes to stderr)
-
-### No State
-
-- No databases, caches, or singletons
-- Every function call is stateless — MCP server processes each request from scratch
-
-### No Unguarded File Writes
-
-- Read-only analysis is the default
-- `apply_patches` is the only write path, and it requires: hash guard + extension allowlist + path traversal check + backup
-
-### Dependencies
-
-- Minimize new dependencies — every `pnpm add` needs justification
-- Published package size must stay under 5 MB
-- Forbidden: `express`, `lodash`, `axios`, `winston`, `chalk` (see `docs/dos_and_donts.md`)
-
-## Commit Messages
-
-Use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(core): add custom rule validation
-fix(mcp): handle empty artifact content
-test(cli): add watch mode integration tests
-docs: update CONTRIBUTING.md
-chore: bump vitest to v4
+```text
+feat(cli): add xyz
+fix(mcp): align timeout handling
+docs: refresh package readmes
+chore(release): prepare cli-v0.4.1
 ```
 
-**Scopes**: `shared`, `core`, `mcp`, `cli`, `rules`, `security`, `publish`, `http`
+Good PRs make the behavioral change and the public docs change in the same branch.
 
-## Adding a New Metric
+## Adding or Changing Product Surface
 
-1. Add the metric ID to `packages/shared/src/types.ts`
-2. Add scoring logic in `packages/core/src/analyzer.ts`
-3. Add tests in `packages/core/tests/analyzer.test.ts`
-4. Update the metric documentation in `README.md`
+For a new CLI feature:
 
-## Adding a Custom Rule
+1. Update the command implementation and tests.
+2. Update the CLI README and any root README references.
+3. Re-run `npm pack --dry-run` for `packages/cli`.
 
-Users can create custom rules in `.agentlint/rules/`:
+For a new MCP tool or resource:
 
-```typescript
-import type { CustomRuleDefinition } from "@agent-lint/core";
+1. Update the runtime registration and tests.
+2. Update the MCP README and any root README references.
+3. Keep docs consistency tests green.
 
-const rule: CustomRuleDefinition = {
-  id: "my-rule",
-  metric: "clarity",
-  label: "My Custom Rule",
-  description: "Checks for something specific",
-  requirement: "recommended",
-  check: (context) => {
-    const found = context.content.includes("something");
-    return {
-      status: found ? "pass" : "improve",
-      evidence: found ? "Found it" : null,
-      recommendation: "Add something to your artifact",
-    };
-  },
-};
+## Issues and Discussions
 
-export default rule;
-```
-
-## Running Tests
-
-```bash
-pnpm run test              # All tests
-pnpm run test:watch        # Watch mode
-pnpm vitest packages/core  # Single package
-```
-
-Test files live next to source: `packages/<pkg>/tests/*.test.ts`
-
-## Questions?
-
-- Open a [GitLab Issue](https://gitlab.com/bsamilozturk/agentlint/-/issues)
-- Check `docs/great_plan.md` for the project roadmap
+- Public docs and issue tracking: [GitHub](https://github.com/samilytu/agentlint)
+- Authoritative publish pipeline: [GitLab](https://gitlab.com/bsamilozturk/agentlint)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).

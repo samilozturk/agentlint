@@ -1,33 +1,37 @@
 {
   "name": "@agent-lint/cli",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "license": "MIT",
-  "description": "CLI for AI agent context artifact orchestration. Auto-detect IDEs, scan workspaces, generate fix reports, get copy-paste prompts. No LLM, no database.",
+  "description": "Set up Agent Lint MCP config, scan for stale context files, and print prompts for your coding agent.",
   "author": "Agent Lint Contributors",
   "repository": {
     "type": "git",
     "url": "git+https://gitlab.com/bsamilozturk/agentlint.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://gitlab.com/bsamilozturk/agentlint#readme",
+  "homepage": "https://github.com/samilytu/agentlint#readme",
   "bugs": {
-    "url": "https://gitlab.com/bsamilozturk/agentlint/-/issues"
+    "url": "https://github.com/samilytu/agentlint/issues"
   },
   "keywords": [
     "cli",
-    "ai-agents",
-    "context-artifacts",
-    "orchestrator",
+    "agent-lint",
+    "agentlint",
     "agents-md",
-    "claude-md",
-    "lint",
-    "ci-cd"
+    "mcp",
+    "claude-code",
+    "cursor",
+    "windsurf",
+    "codex",
+    "vscode",
+    "context-files"
   ],
   "files": [
     "dist/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "bin": {
     "agent-lint": "dist/index.js"

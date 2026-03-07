@@ -1,10 +1,15 @@
-import { createAgentLintMcpServer } from "@agent-lint/mcp";
+import { readFileSync } from "node:fs";
+import { createAgentLintMcpServer } from "../src/index.js";
 import {
   buildGuidelines,
   runQuickCheck,
   buildMaintenanceSnippet,
   buildWorkspaceAutofixPlan,
 } from "@agent-lint/core";
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { version: string };
 
 describe("MCP tools - core function integration", () => {
   it("guidelines tool: builds markdown for each artifact type", () => {
@@ -58,6 +63,12 @@ describe("MCP server creation", () => {
   it("creates server with default options", () => {
     const server = createAgentLintMcpServer();
     expect(server).toBeTruthy();
+    const internals = server as {
+      _registeredTools?: Record<string, unknown>;
+      server?: { _serverInfo?: { version?: string } };
+    };
+    expect(Object.keys(internals._registeredTools ?? {})).toHaveLength(4);
+    expect(internals.server?._serverInfo?.version).toBe(packageJson.version);
   });
 
   it("creates server with workspace scan enabled", () => {

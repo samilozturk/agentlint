@@ -1,7 +1,12 @@
 import { describe, it, expect, afterEach, beforeAll } from "vitest";
+import { readFileSync } from "node:fs";
 import { request as httpRequest } from "node:http";
 import type { Server } from "node:http";
 import { runHttpServer } from "../src/http.js";
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { version: string };
 
 // Increase max listeners to avoid warning in tests (many servers per process)
 beforeAll(() => {
@@ -377,6 +382,7 @@ describe("/mcp endpoint", () => {
     expect(body.result.protocolVersion).toBeDefined();
     expect(body.result.serverInfo).toBeDefined();
     expect(body.result.serverInfo.name).toBe("agentlint");
+    expect(body.result.serverInfo.version).toBe(packageJson.version);
   });
 
   it("readyz reflects session count after initialization", async () => {

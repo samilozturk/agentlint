@@ -1,8 +1,12 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   buildServerEntry,
   CLIENT_REGISTRY,
   type McpClient,
   type ClientId,
+  getDefaultSelectedClientIds,
 } from "../src/commands/clients.js";
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -130,5 +134,38 @@ describe("buildServerEntry", () => {
       expect(entry).toBeDefined();
       expect(typeof entry).toBe("object");
     }
+  });
+});
+
+describe("getDefaultSelectedClientIds", () => {
+  it("preselects clients detected from workspace directories", () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-clients-"));
+    fs.mkdirSync(path.join(cwd, ".cursor"));
+
+    const selected = getDefaultSelectedClientIds([
+      { client: stubClient("cursor", { detectDirs: [".cursor"] }), detectedBy: "binary" },
+      { client: stubClient("vscode", { detectDirs: [".vscode"] }), detectedBy: "binary" },
+    ], cwd);
+
+    expect(selected).toEqual(["cursor"]);
+
+    fs.rmSync(cwd, { recursive: true, force: true });
+  });
+
+  it("preselects clients with existing config files", () => {
+    const selected = getDefaultSelectedClientIds([
+      { client: stubClient("claude-desktop"), detectedBy: "config-exists" },
+    ], process.cwd());
+
+    expect(selected).toEqual(["claude-desktop"]);
+  });
+
+  it("does not preselect binary-only detections", () => {
+    const selected = getDefaultSelectedClientIds([
+      { client: stubClient("codex"), detectedBy: "binary" },
+      { client: stubClient("windsurf"), detectedBy: "binary" },
+    ], process.cwd());
+
+    expect(selected).toEqual([]);
   });
 });

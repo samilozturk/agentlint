@@ -5,9 +5,6 @@ stages:
 variables:
   PNPM_VERSION: "10"
 
-# ---------------------------------------------------------------------------
-# Test job — runs on every push and merge request
-# ---------------------------------------------------------------------------
 test:
   stage: test
   image: node:24
@@ -18,25 +15,18 @@ test:
   script:
     - pnpm run build
     - pnpm run typecheck
+    - pnpm run lint
     - pnpm run test
+    - (cd packages/cli && npm pack --dry-run)
+    - (cd packages/mcp && npm pack --dry-run)
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_TAG =~ /^(cli|mcp)-v/
 
-# ---------------------------------------------------------------------------
-# Publish @agent-lint/mcp
-#
-# Auth strategy (checked in order):
-#   1. OIDC trusted publishing — if configured on npmjs.com (zero secrets)
-#      Requires trusted publisher on npmjs.com:
-#        Namespace: bsamilozturk | Project: agentlint
-#        CI file: .gitlab-ci.yml | Environment: (blank)
-#   2. Token-based fallback — if NPM_TOKEN CI/CD variable is set
-#      Create: npmjs.com → Access Tokens → Generate New Token → Granular
-#      Add as masked CI/CD variable: Settings → CI/CD → Variables → NPM_TOKEN
-# ---------------------------------------------------------------------------
 publish-mcp:
   stage: publish
+  needs: ["test"]
   image: node:24
   id_tokens:
     NPM_ID_TOKEN:
@@ -48,30 +38,27 @@ publish-mcp:
     - corepack prepare pnpm@${PNPM_VERSION} --activate
     - pnpm install --frozen-lockfile
     - pnpm run build
+    - pnpm run typecheck
+    - pnpm run lint
+    - pnpm run test
   script:
+    - |
+      VERSION=$(node -p 'require("./packages/mcp/package.json").version')
+      test "$CI_COMMIT_TAG" = "mcp-v$VERSION"
     - npm install -g npm@latest
-    - node --version && npm --version
-    # Token-based fallback — if NPM_TOKEN is set, write .npmrc for auth
     - |
       if [ -n "$NPM_TOKEN" ]; then
-        echo "Auth: using NPM_TOKEN (token-based)"
         echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-      else
-        echo "Auth: using OIDC trusted publishing"
       fi
     - cd packages/mcp
+    - npm pack --dry-run
     - npm publish --access public --provenance
   rules:
-    - if: $CI_COMMIT_TAG =~ /^v/
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
+    - if: $CI_COMMIT_TAG =~ /^mcp-v/
 
-# ---------------------------------------------------------------------------
-# Publish @agent-lint/cli
-# Same auth strategy as publish-mcp (OIDC first, NPM_TOKEN fallback)
-# ---------------------------------------------------------------------------
 publish-cli:
   stage: publish
+  needs: ["test"]
   image: node:24
   id_tokens:
     NPM_ID_TOKEN:
@@ -83,19 +70,20 @@ publish-cli:
     - corepack prepare pnpm@${PNPM_VERSION} --activate
     - pnpm install --frozen-lockfile
     - pnpm run build
+    - pnpm run typecheck
+    - pnpm run lint
+    - pnpm run test
   script:
+    - |
+      VERSION=$(node -p 'require("./packages/cli/package.json").version')
+      test "$CI_COMMIT_TAG" = "cli-v$VERSION"
     - npm install -g npm@latest
-    - node --version && npm --version
     - |
       if [ -n "$NPM_TOKEN" ]; then
-        echo "Auth: using NPM_TOKEN (token-based)"
         echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-      else
-        echo "Auth: using OIDC trusted publishing"
       fi
     - cd packages/cli
+    - npm pack --dry-run
     - npm publish --access public --provenance
   rules:
-    - if: $CI_COMMIT_TAG =~ /^v/
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
+    - if: $CI_COMMIT_TAG =~ /^cli-v/

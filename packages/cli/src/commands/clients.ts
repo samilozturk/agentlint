@@ -340,6 +340,18 @@ export function detectInstalledClients(cwd: string): DetectedClient[] {
   return results;
 }
 
+export function getDefaultSelectedClientIds(detected: DetectedClient[], cwd: string): ClientId[] {
+  return detected
+    .filter((entry) => {
+      if (entry.detectedBy === "config-exists") {
+        return true;
+      }
+
+      return entry.client.detectDirs.some((dir) => fs.existsSync(path.join(cwd, dir)));
+    })
+    .map((entry) => entry.client.id);
+}
+
 // ── Path Resolution ────────────────────────────────────────────────────
 
 /**

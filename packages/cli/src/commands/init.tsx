@@ -19,6 +19,7 @@ import {
   type DetectedClient,
   CLIENT_REGISTRY,
   detectInstalledClients,
+  getDefaultSelectedClientIds,
   getAvailableScopes,
 } from "./clients.js";
 import { type InstallResult, installClient } from "./config-writer.js";
@@ -150,7 +151,7 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
   });
 
   // Pre-select detected clients
-  const defaultSelected = detected.map((d) => d.client.id);
+  const defaultSelected = getDefaultSelectedClientIds(detected, cwd);
 
   // Scope options
   const scopeOptions = [

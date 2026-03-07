@@ -1,33 +1,37 @@
 {
   "name": "@agent-lint/mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "license": "MIT",
-  "description": "MCP server for AI agent context artifact orchestration. Guidelines, workspace scanning, and maintenance rules for AGENTS.md, skills, rules, workflows, and plans. No LLM, no database.",
+  "description": "Read-only MCP server for keeping AGENTS.md, rules, and skills aligned with a codebase.",
   "author": "Agent Lint Contributors",
   "repository": {
     "type": "git",
     "url": "git+https://gitlab.com/bsamilozturk/agentlint.git",
     "directory": "packages/mcp"
   },
-  "homepage": "https://gitlab.com/bsamilozturk/agentlint#readme",
+  "homepage": "https://github.com/samilytu/agentlint#readme",
   "bugs": {
-    "url": "https://gitlab.com/bsamilozturk/agentlint/-/issues"
+    "url": "https://github.com/samilytu/agentlint/issues"
   },
   "keywords": [
     "mcp",
-    "ai-agents",
-    "context-artifacts",
-    "orchestrator",
+    "mcp-server",
+    "agent-lint",
+    "agentlint",
     "agents-md",
-    "claude-md",
-    "lint",
+    "claude-code",
+    "cursor",
+    "windsurf",
+    "codex",
+    "vscode",
     "model-context-protocol"
   ],
   "files": [
     "dist/",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "bin": {
     "agent-lint-mcp": "dist/bin.js"

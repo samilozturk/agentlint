@@ -1,8 +1,13 @@
 import { once } from "node:events";
 import { existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+const packageJson = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { version: string };
 
 type JsonRpcId = number;
 
@@ -198,6 +203,7 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
     if ("result" in initializeResponse) {
       expect(initializeResponse.result.capabilities).toBeTruthy();
       expect(initializeResponse.result.serverInfo).toBeTruthy();
+      expect(initializeResponse.result.serverInfo.version).toBe(packageJson.version);
     }
 
     client.notify("notifications/initialized", {});

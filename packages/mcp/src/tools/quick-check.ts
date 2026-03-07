@@ -5,10 +5,13 @@ import { runQuickCheck } from "@agent-lint/core";
 
 import { asInputSchema, asToolHandler } from "./schema-compat.js";
 import { toMarkdownResult, toErrorResult } from "./tool-result.js";
+import { withToolTimeout } from "../transport-security.js";
 
 export function registerQuickCheckTool(server: McpServer): void {
+  const toolName = "agentlint_quick_check";
+
   server.registerTool(
-    "agentlint_quick_check",
+    toolName,
     {
       title: "Quick Check",
       description:
@@ -25,11 +28,12 @@ export function registerQuickCheckTool(server: McpServer): void {
     },
     asToolHandler(async (args: QuickCheckInput) => {
       try {
-        const result = runQuickCheck(args.changedPaths, args.changeDescription);
+        const result = await withToolTimeout(toolName, async () =>
+          runQuickCheck(args.changedPaths, args.changeDescription));
         return toMarkdownResult(result.markdown);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return toErrorResult(`agentlint_quick_check failed: ${message}`);
+        return toErrorResult(`${toolName} failed: ${message}`);
       }
     }),
   );

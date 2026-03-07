@@ -5,6 +5,7 @@ import { buildWorkspaceAutofixPlan } from "@agent-lint/core";
 
 import { asInputSchema, asToolHandler } from "./schema-compat.js";
 import { toMarkdownResult, toErrorResult } from "./tool-result.js";
+import { withToolTimeout } from "../transport-security.js";
 
 export type RegisterPlanWorkspaceAutofixToolOptions = {
   enabled: boolean;
@@ -14,12 +15,14 @@ export function registerPlanWorkspaceAutofixTool(
   server: McpServer,
   options: RegisterPlanWorkspaceAutofixToolOptions,
 ): void {
+  const toolName = "agentlint_plan_workspace_autofix";
+
   if (!options.enabled) {
     return;
   }
 
   server.registerTool(
-    "agentlint_plan_workspace_autofix",
+    toolName,
     {
       title: "Plan Workspace Autofix",
       description:
@@ -37,11 +40,12 @@ export function registerPlanWorkspaceAutofixTool(
     asToolHandler(async (args: PlanWorkspaceAutofixInput) => {
       try {
         const rootPath = args.rootPath ?? process.cwd();
-        const plan = buildWorkspaceAutofixPlan(rootPath);
+        const plan = await withToolTimeout(toolName, async () =>
+          buildWorkspaceAutofixPlan(rootPath));
         return toMarkdownResult(plan.markdown);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return toErrorResult(`agentlint_plan_workspace_autofix failed: ${message}`);
+        return toErrorResult(`${toolName} failed: ${message}`);
       }
     }),
   );

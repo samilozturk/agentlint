@@ -5,10 +5,13 @@ import { buildMaintenanceSnippet } from "@agent-lint/core";
 
 import { asInputSchema, asToolHandler } from "./schema-compat.js";
 import { toMarkdownResult, toErrorResult } from "./tool-result.js";
+import { withToolTimeout } from "../transport-security.js";
 
 export function registerEmitMaintenanceSnippetTool(server: McpServer): void {
+  const toolName = "agentlint_emit_maintenance_snippet";
+
   server.registerTool(
-    "agentlint_emit_maintenance_snippet",
+    toolName,
     {
       title: "Emit Maintenance Snippet",
       description:
@@ -26,11 +29,12 @@ export function registerEmitMaintenanceSnippetTool(server: McpServer): void {
     },
     asToolHandler(async (args: EmitMaintenanceSnippetInput) => {
       try {
-        const result = buildMaintenanceSnippet(args.client ?? "generic");
+        const result = await withToolTimeout(toolName, async () =>
+          buildMaintenanceSnippet(args.client ?? "generic"));
         return toMarkdownResult(result.markdown);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        return toErrorResult(`agentlint_emit_maintenance_snippet failed: ${message}`);
+        return toErrorResult(`${toolName} failed: ${message}`);
       }
     }),
   );

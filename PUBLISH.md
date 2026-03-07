@@ -1,200 +1,85 @@
-# Agent Lint — npm Publish Rehberi
+# Publishing Agent Lint
 
-Bu doküman, `@agent-lint/mcp` ve `@agent-lint/cli` paketlerini npm'e ilk kez yayınlamak için gereken adımları sıralar.
+Agent Lint uses independent package versioning:
 
-## Ön Koşullar
+- `@agent-lint/cli`
+- `@agent-lint/mcp`
 
-- **Node.js** >= 18
-- **pnpm** >= 9
-- npm hesabı (https://www.npmjs.com/signup)
+GitHub is the public home for discovery. GitLab CI is the authoritative release and npm publish path.
 
----
+## Release Rules
 
-## Adım 1: npm Hesabı & Organizasyon
+- Tags are package-scoped: `cli-vX.Y.Z` and `mcp-vX.Y.Z`
+- The tag must match the target package version exactly
+- Update package-level release notes before tagging
+- Run `npm pack --dry-run` before every release
 
-### 1.1 npm'e giriş yap
-
-```bash
-npm login
-```
-
-Tarayıcı açılır, npm hesabınla giriş yap. Doğrulama:
-
-```bash
-npm whoami
-```
-
-### 1.2 `@agent-lint` organizasyonunu oluştur
-
-npm'de scoped public paketler yayınlamak için önce organizasyonu oluşturman gerekiyor:
-
-1. https://www.npmjs.com/org/create adresine git
-2. Organization name: `agent-lint`
-3. Plan: **Free** (public paketler için yeterli)
-4. Create
-
-> **Not**: Eğer `agent-lint` scope'u alınmışsa, farklı bir isim seçebilirsin.
-> Bu durumda tüm `package.json` dosyalarındaki `@agent-lint/` prefix'ini güncelle.
-
----
-
-## Adım 2: Build & Test Doğrulaması
+## Pre-Release Checklist
 
 ```bash
 pnpm install
 pnpm run build
 pnpm run typecheck
-pnpm run test
 pnpm run lint
+pnpm run test
 ```
 
-Tümü başarılı olmalı (exit code 0).
-
----
-
-## Adım 3: Pack Kontrolü (dry-run)
-
-Publish etmeden önce paketin içeriğini kontrol et:
+Dry-run both published packages:
 
 ```bash
-cd packages/mcp && npm pack --dry-run && cd ../..
-cd packages/cli && npm pack --dry-run && cd ../..
+cd packages/cli && npm pack --dry-run
+cd ../mcp && npm pack --dry-run
 ```
 
-Kontrol listesi:
-- [ ] `dist/` dizini dahil mi?
-- [ ] `README.md` dahil mi?
-- [ ] `LICENSE` dahil mi?
-- [ ] `package.json` dahil mi?
-- [ ] Gereksiz dosya yok mu? (`tests/`, `src/`, `.ts` dosyaları, vb.)
-- [ ] Boyut makul mü? (MCP ~400 KB, CLI ~340 KB packed)
+Check:
 
----
+- `dist/` is included
+- `README.md` is included
+- `CHANGELOG.md` is included
+- no source or test files leak into the tarball
 
-## Adım 4: İlk Publish
+## Releasing `@agent-lint/cli`
 
-### 4.1 MCP paketi
+1. Update `packages/cli/package.json`
+2. Update [packages/cli/CHANGELOG.md](packages/cli/CHANGELOG.md)
+3. Update [CHANGELOG.md](CHANGELOG.md) if the workspace-level story changed
+4. Commit the release change
+5. Create tag `cli-vX.Y.Z`
+6. Push the tag to the GitLab authoritative remote
+7. Mirror the same tag to the GitHub public remote
 
-```bash
-cd packages/mcp
-npm publish --access public
-cd ../..
-```
+## Releasing `@agent-lint/mcp`
 
-### 4.2 CLI paketi
+1. Update `packages/mcp/package.json`
+2. Update [packages/mcp/CHANGELOG.md](packages/mcp/CHANGELOG.md)
+3. Update [CHANGELOG.md](CHANGELOG.md) if the workspace-level story changed
+4. Commit the release change
+5. Create tag `mcp-vX.Y.Z`
+6. Push the tag to the GitLab authoritative remote
+7. Mirror the same tag to the GitHub public remote
 
-```bash
-cd packages/cli
-npm publish --access public
-cd ../..
-```
+## CI Responsibilities
 
-> **Önemli**: Scoped paketler varsayılan olarak private yayınlanır.
-> `--access public` flag'i ilk publish'te **zorunludur**.
-> Sonraki versiyonlarda gerek yoktur (npm ayarı hatırlar).
+### GitHub Actions
 
----
+- verify-only
+- runs install, build, typecheck, lint, test, and pack dry-runs
+- validates package-scoped tags
+- does not publish to npm
 
-## Adım 5: Yayın Doğrulaması
+### GitLab CI
 
-### npm sayfalarını kontrol et
+- authoritative publish path
+- validates that the pushed tag matches the target package version
+- publishes only the tagged package
+- uses provenance-enabled npm publishing
 
-- https://www.npmjs.com/package/@agent-lint/mcp
-- https://www.npmjs.com/package/@agent-lint/cli
+## npm Metadata Policy
 
-### Kurulum testi (temiz bir dizinde)
+- `repository` points to GitLab because that is the authoritative publish source
+- `homepage` points to GitHub because that is the public landing page
+- `bugs` points to GitHub Issues
 
-```bash
-mkdir /tmp/test-agentlint && cd /tmp/test-agentlint
+## Manual npm Auth
 
-# CLI test
-npx @agent-lint/cli --help
-echo "# My AGENTS.md" > AGENTS.md
-npx @agent-lint/cli analyze AGENTS.md --type agents
-npx @agent-lint/cli score AGENTS.md --type agents
-
-# MCP test
-npx -y @agent-lint/mcp --help
-```
-
----
-
-## Adım 6: Git Tag & Push
-
-```bash
-git add -A
-git commit -m "chore(publish): prepare v0.1.0 release"
-git tag v0.1.0
-git push origin main --tags
-```
-
-Tag push, GitLab CI pipeline'ını tetikler (`.gitlab-ci.yml`).
-Sonraki sürümlerde tag-based CI publish otomatik çalışacaktır.
-
----
-
-## Sonraki Sürümler
-
-### Versiyon güncelleme
-
-```bash
-# Tüm publish edilecek paketlerin versiyonunu güncelle
-cd packages/mcp && npm version patch && cd ../..
-cd packages/cli && npm version patch && cd ../..
-
-# veya minor/major:
-# npm version minor
-# npm version major
-```
-
-### Changeset ile (opsiyonel)
-
-Proje zaten changeset altyapısına sahip:
-
-```bash
-npx changeset           # Değişiklik kaydı oluştur
-npx changeset version   # Versiyonları güncelle
-npx changeset publish   # Publish et
-```
-
-### Tag-based CI publish
-
-GitLab CI'da `NPM_TOKEN` secret'ı ayarlandıysa:
-
-1. **GitLab** → Settings → CI/CD → Variables
-2. Key: `NPM_TOKEN`, Value: npm access token
-3. Protected: Yes, Masked: Yes
-
-Sonra:
-
-```bash
-git tag v0.1.1
-git push origin --tags
-```
-
-CI otomatik build + test + publish yapar.
-
----
-
-## npm Access Token Oluşturma
-
-1. https://www.npmjs.com/settings/~/tokens adresine git
-2. **Generate New Token** → **Granular Access Token**
-3. Token name: `agentlint-ci`
-4. Expiration: 365 gün
-5. Packages: `@agent-lint/*` — Read and write
-6. Generate
-
-Bu token'ı GitLab CI/CD variables'a `NPM_TOKEN` olarak ekle.
-
----
-
-## Sorun Giderme
-
-| Sorun | Çözüm |
-|-------|-------|
-| `E403 Forbidden` | npm login yap, org üyeliğini kontrol et |
-| `E404 Not Found` | `@agent-lint` org'u oluşturuldu mu? |
-| `ENEEDAUTH` | `npm login` çalıştır |
-| `E402 Payment Required` | `--access public` flag'i ekle (scoped paketler default private) |
-| Pack'te gereksiz dosya var | `package.json` → `"files"` alanını kontrol et |
+If you publish outside OIDC trusted publishing, use a granular npm token with write access to `@agent-lint/*` and store it as `NPM_TOKEN` in GitLab CI/CD variables.

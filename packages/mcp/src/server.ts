@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerAgentLintPrompts } from "./prompts/register-prompts.js";
@@ -5,6 +6,8 @@ import { registerAgentLintResources } from "./resources/register-resources.js";
 import { registerAgentLintTools } from "./tools/index.js";
 
 export const DEFAULT_MCP_SERVER_NAME = "agentlint";
+
+declare const __MCP_VERSION__: string;
 
 const DEFAULT_MCP_INSTRUCTIONS =
   [
@@ -28,7 +31,29 @@ export type CreateAgentLintMcpServerOptions = {
 };
 
 function resolveServerVersion(): string {
-  return process.env.npm_package_version ?? "0.2.0";
+  if (
+    process.env.npm_package_name === "@agent-lint/mcp" &&
+    process.env.npm_package_version
+  ) {
+    return process.env.npm_package_version;
+  }
+
+  if (typeof __MCP_VERSION__ === "string" && __MCP_VERSION__.length > 0) {
+    return __MCP_VERSION__;
+  }
+
+  try {
+    const pkg = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+    ) as { version?: string };
+    if (typeof pkg.version === "string" && pkg.version.length > 0) {
+      return pkg.version;
+    }
+  } catch {
+    // Fall through to the dev default when package metadata is unavailable.
+  }
+
+  return "0.0.0-dev";
 }
 
 function resolveWorkspaceScanEnabled(options: CreateAgentLintMcpServerOptions): boolean {
@@ -44,7 +69,7 @@ function resolveWorkspaceScanEnabled(options: CreateAgentLintMcpServerOptions): 
     return process.env.MCP_ENABLE_WORKSPACE_SCAN === "true";
   }
 
-  return process.env.MCP_ENABLE_WORKSPACE_SCAN === "true";
+  return process.env.MCP_ENABLE_WORKSPACE_SCAN !== "false";
 }
 
 function resolveInstructions(options: CreateAgentLintMcpServerOptions, workspaceScanEnabled: boolean): string {

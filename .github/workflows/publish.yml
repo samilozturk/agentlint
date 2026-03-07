@@ -1,17 +1,17 @@
-name: Publish
+name: Release Verify
 
 on:
   push:
     tags:
-      - "v*"
+      - "cli-v*"
+      - "mcp-v*"
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  publish:
-    name: Publish to npm
+  release-verify:
+    name: Verify tagged release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,20 +24,26 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - run: pnpm run typecheck
+      - run: pnpm run lint
       - run: pnpm run test
 
-      - name: Publish @agent-lint/mcp
-        run: pnpm publish --no-git-checks --provenance --access public
-        working-directory: packages/mcp
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish @agent-lint/cli
-        run: pnpm publish --no-git-checks --provenance --access public
-        working-directory: packages/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Validate package-scoped tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$TAG" == cli-v* ]]; then
+            VERSION=$(node -p "require('./packages/cli/package.json').version")
+            test "$TAG" = "cli-v$VERSION"
+            (cd packages/cli && npm pack --dry-run)
+          elif [[ "$TAG" == mcp-v* ]]; then
+            VERSION=$(node -p "require('./packages/mcp/package.json').version")
+            test "$TAG" = "mcp-v$VERSION"
+            (cd packages/mcp && npm pack --dry-run)
+          else
+            echo "Unsupported tag: $TAG"
+            exit 1
+          fi

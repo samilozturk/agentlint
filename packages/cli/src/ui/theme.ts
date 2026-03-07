@@ -1,6 +1,27 @@
+import { readFileSync } from "node:fs";
+
 declare const __CLI_VERSION__: string;
 
-export const VERSION: string = typeof __CLI_VERSION__ !== "undefined" ? __CLI_VERSION__ : "0.0.0-dev";
+function resolveVersion(): string {
+  if (typeof __CLI_VERSION__ !== "undefined" && __CLI_VERSION__.length > 0) {
+    return __CLI_VERSION__;
+  }
+
+  try {
+    const pkg = JSON.parse(
+      readFileSync(new URL("../../package.json", import.meta.url), "utf-8"),
+    ) as { version?: string };
+    if (typeof pkg.version === "string" && pkg.version.length > 0) {
+      return pkg.version;
+    }
+  } catch {
+    // Fall through to the development default when package metadata is unavailable.
+  }
+
+  return "0.0.0-dev";
+}
+
+export const VERSION: string = resolveVersion();
 
 export const colors = {
   primary: "#84B179",
@@ -43,4 +64,4 @@ export const BANNER_LINES_2 = [
   "╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝   ",
 ];
 
-export const TAGLINE = "Meta-agent orchestrator for AI coding agents";
+export const TAGLINE = "Keep AGENTS.md, rules, and skills in sync";
