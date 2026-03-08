@@ -41,6 +41,10 @@ type ArtifactMatcher = {
   regex: RegExp;
 };
 
+function normalizePath(filePath: string): string {
+  return filePath.replace(/\\/g, "/");
+}
+
 const SKIP_DIRS = new Set([
   "node_modules",
   ".git",
@@ -129,7 +133,7 @@ function escapeRegExp(value: string): string {
 }
 
 function globToRegExp(pattern: string): RegExp {
-  const normalizedPattern = pattern.replace(/\\/g, "/");
+  const normalizedPattern = normalizePath(pattern);
   let source = "^";
 
   for (let i = 0; i < normalizedPattern.length; i++) {
@@ -231,7 +235,7 @@ function collectCandidateFiles(
       continue;
     }
 
-    const relativePath = path.relative(rootPath, fullPath).replace(/\\/g, "/");
+    const relativePath = normalizePath(path.relative(rootPath, fullPath));
     const type = matchArtifactType(relativePath);
 
     if (!type) {
@@ -240,7 +244,7 @@ function collectCandidateFiles(
 
     results.push({
       filePath: fullPath,
-      relativePath: path.relative(rootPath, fullPath),
+      relativePath,
       type,
     });
   }

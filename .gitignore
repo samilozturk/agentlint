@@ -35,6 +35,14 @@ opencode.json
 # generated report
 .agentlint-report.md
 
+# committed noisy fixtures
+!fixtures/workspace/.claude/
+!fixtures/workspace/.claude/**
+!fixtures/workspace/.cursor/
+!fixtures/workspace/.cursor/**
+!fixtures/workspace/.windsurf/
+!fixtures/workspace/.windsurf/**
+
 # Windows artifacts
 NUL
 Thumbs.db

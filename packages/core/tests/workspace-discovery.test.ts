@@ -12,11 +12,11 @@ describe("workspace-discovery", () => {
 
     expect(result.rootPath).toBe(fixtureWorkspace);
     expect(relativePaths).toEqual([
-      ".cursor\\rules\\code-style.md",
-      ".windsurf\\skills\\testing\\SKILL.md",
+      ".cursor/rules/code-style.md",
+      ".windsurf/skills/testing/SKILL.md",
       "AGENTS.md",
-      "docs\\plans\\roadmap.md",
-      "docs\\workflows\\deploy.md",
+      "docs/plans/roadmap.md",
+      "docs/workflows/deploy.md",
     ]);
   });
 
@@ -26,10 +26,10 @@ describe("workspace-discovery", () => {
 
     expect(relativePaths.has(".agentlint-report.md")).toBe(false);
     expect(relativePaths.has("README.md")).toBe(false);
-    expect(relativePaths.has("docs\\deploy-workflow.md")).toBe(false);
-    expect(relativePaths.has("docs\\roadmap.md")).toBe(false);
-    expect(relativePaths.has("examples\\sample\\AGENTS.md")).toBe(false);
-    expect(relativePaths.has("packages\\cli\\README.md")).toBe(false);
+    expect(relativePaths.has("docs/deploy-workflow.md")).toBe(false);
+    expect(relativePaths.has("docs/roadmap.md")).toBe(false);
+    expect(relativePaths.has("examples/sample/AGENTS.md")).toBe(false);
+    expect(relativePaths.has("packages/cli/README.md")).toBe(false);
   });
 
   it("detects missing artifact types from canonical paths only", () => {

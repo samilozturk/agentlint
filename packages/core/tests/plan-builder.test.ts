@@ -14,12 +14,12 @@ describe("plan-builder", () => {
   it("lists canonical artifacts and excludes noisy paths", () => {
     const plan = buildWorkspaceAutofixPlan(fixtureWorkspace);
 
-    expect(plan.markdown).toContain("docs\\workflows\\deploy.md");
-    expect(plan.markdown).toContain("docs\\plans\\roadmap.md");
+    expect(plan.markdown).toContain("docs/workflows/deploy.md");
+    expect(plan.markdown).toContain("docs/plans/roadmap.md");
     expect(plan.markdown).not.toContain(".agentlint-report.md");
     expect(plan.markdown).not.toContain("README.md");
-    expect(plan.markdown).not.toContain("docs\\deploy-workflow.md");
-    expect(plan.markdown).not.toContain("examples\\sample\\AGENTS.md");
+    expect(plan.markdown).not.toContain("docs/deploy-workflow.md");
+    expect(plan.markdown).not.toContain("examples/sample/AGENTS.md");
   });
 
   it("includes LLM instructions and guidelines references", () => {

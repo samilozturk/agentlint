@@ -40,7 +40,8 @@ export interface DoctorAppProps {
 type DoctorScanResult = Omit<DoctorResult, "reportPath" | "reportSaved" | "reportError">;
 
 function formatMissingArtifact(rootPath: string, suggestedPath: string, type: string): string {
-  const relativeSuggestedPath = path.relative(rootPath, suggestedPath) || suggestedPath;
+  const relativeSuggestedPath =
+    (path.relative(rootPath, suggestedPath) || suggestedPath).replace(/\\/g, "/");
   return `${type} -> ${relativeSuggestedPath}`;
 }
 

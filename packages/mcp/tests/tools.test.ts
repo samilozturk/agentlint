@@ -58,9 +58,9 @@ describe("MCP tools - core function integration", () => {
     const plan = buildWorkspaceAutofixPlan(fixtureWorkspace);
     expect(plan.markdown).toContain("# Workspace Autofix Plan");
     expect(plan.markdown).toContain("## Discovered artifacts");
-    expect(plan.markdown).toContain("docs\\workflows\\deploy.md");
+    expect(plan.markdown).toContain("docs/workflows/deploy.md");
     expect(plan.markdown).not.toContain(".agentlint-report.md");
-    expect(plan.markdown).not.toContain("packages\\cli\\README.md");
+    expect(plan.markdown).not.toContain("packages/cli/README.md");
   });
 });
 

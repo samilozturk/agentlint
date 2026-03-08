@@ -29,10 +29,10 @@ describe("CLI output modes", () => {
     const out = run(["doctor", "--stdout"], FIXTURE_WORKSPACE);
 
     expect(out).toContain("# Workspace Autofix Plan");
-    expect(out).toContain("docs\\workflows\\deploy.md");
-    expect(out).toContain("docs\\plans\\roadmap.md");
+    expect(out).toContain("docs/workflows/deploy.md");
+    expect(out).toContain("docs/plans/roadmap.md");
     expect(out).not.toContain(".agentlint-report.md");
-    expect(out).not.toContain("packages\\cli\\README.md");
+    expect(out).not.toContain("packages/cli/README.md");
     expect(out).not.toContain("README.md");
   });
 
@@ -42,11 +42,11 @@ describe("CLI output modes", () => {
     const relativePaths = parsed.discovered.map((artifact) => artifact.relativePath).sort();
 
     expect(relativePaths).toEqual([
-      ".cursor\\rules\\code-style.md",
-      ".windsurf\\skills\\testing\\SKILL.md",
+      ".cursor/rules/code-style.md",
+      ".windsurf/skills/testing/SKILL.md",
       "AGENTS.md",
-      "docs\\plans\\roadmap.md",
-      "docs\\workflows\\deploy.md",
+      "docs/plans/roadmap.md",
+      "docs/workflows/deploy.md",
     ]);
     expect(parsed.missing).toHaveLength(0);
   });
