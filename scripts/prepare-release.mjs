@@ -25,10 +25,14 @@ function listPendingChangesets() {
     );
 }
 
-function withReleaseRemote(token) {
+function releaseRemoteUrl(token) {
   const server = process.env.CI_SERVER_HOST ?? "gitlab.com";
   const projectPath = process.env.CI_PROJECT_PATH ?? "bsamilozturk/agentlint";
   return `https://oauth2:${encodeURIComponent(token)}@${server}/${projectPath}.git`;
+}
+
+function configureReleasePushRemote(token) {
+  run("git", ["remote", "set-url", "--push", "origin", releaseRemoteUrl(token)]);
 }
 
 async function apiRequest(path, options = {}) {
@@ -146,9 +150,10 @@ async function main() {
 
   run("git", ["add", "-A"]);
   run("git", ["commit", "-m", RELEASE_TITLE]);
+  configureReleasePushRemote(token);
   execFileSync(
     "git",
-    ["push", "--force-with-lease", withReleaseRemote(token), `HEAD:${RELEASE_BRANCH}`],
+    ["push", "--force-with-lease", "origin", `HEAD:${RELEASE_BRANCH}`],
     {
       stdio: "inherit",
     },

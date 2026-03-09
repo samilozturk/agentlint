@@ -43,6 +43,7 @@ prepare-release:
   stage: release
   image: node:24
   needs: ["test"]
+  resource_group: release-next
   before_script:
     - corepack enable
     - corepack prepare pnpm@${PNPM_VERSION} --activate
