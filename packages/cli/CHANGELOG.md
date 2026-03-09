@@ -1,5 +1,11 @@
 # @agent-lint/cli Changelog
 
+## 0.4.5
+
+### Patch Changes
+
+- 5db9d58: Make doctor report persistence opt-in with `--save-report`, simplify prompt flow, and align the TUI next-step behavior with the new CLI flow.
+
 ## 0.4.4
 
 ### Patch Changes
