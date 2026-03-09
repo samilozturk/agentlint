@@ -254,7 +254,7 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
       {/* Step 5: Results */}
       {step === "done" && (
         <>
-          <ResultsView results={results} />
+          <ResultsView results={results} embedded={!!onComplete} />
           {onComplete && (
             <ContinuePrompt
               onContinue={() => onComplete(results)}
@@ -268,7 +268,7 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
 
 // ── Results Display ────────────────────────────────────────────────────
 
-function ResultsView({ results }: { results: ClientInstallResult[] }): React.ReactNode {
+function ResultsView({ results, embedded }: { results: ClientInstallResult[]; embedded?: boolean }): React.ReactNode {
   if (results.length === 0) {
     return (
       <>
@@ -276,7 +276,9 @@ function ResultsView({ results }: { results: ClientInstallResult[] }): React.Rea
         <Box marginLeft={2}>
           <Text color={colors.muted}>No clients were selected for configuration.</Text>
         </Box>
-        <NextStep>{"Run agent-lint init again to set up MCP config."}</NextStep>
+        {!embedded && (
+          <NextStep>{"Run agent-lint init again to set up MCP config."}</NextStep>
+        )}
       </>
     );
   }
@@ -337,9 +339,11 @@ function ResultsView({ results }: { results: ClientInstallResult[] }): React.Rea
         </Box>
       )}
 
-      <NextStep>
-        {`Run ${"`"}agent-lint doctor${"`"} to scan your workspace.`}
-      </NextStep>
+      {!embedded && (
+        <NextStep>
+          {`Run ${"`"}agent-lint doctor${"`"} to scan your workspace.`}
+        </NextStep>
+      )}
     </>
   );
 }

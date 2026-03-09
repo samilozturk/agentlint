@@ -25,8 +25,11 @@ export type DoctorResult = {
   discovered: string[];
   missing: string[];
   markdown: string;
-  reportPath: string;
-  reportSaved: boolean;
+  /** Only present when --save-report was used */
+  reportPath?: string;
+  /** Only present when --save-report was used */
+  reportSaved?: boolean;
+  /** Only present when --save-report write failed */
   reportError?: string;
 };
 
@@ -35,6 +38,8 @@ export interface DoctorAppProps {
   onComplete?: (result: DoctorResult) => void;
   /** Whether to show banner (standalone mode). Default: true */
   showBanner?: boolean;
+  /** Whether to persist the report to .agentlint-report.md */
+  saveReport?: boolean;
 }
 
 type DoctorScanResult = Omit<DoctorResult, "reportPath" | "reportSaved" | "reportError">;
@@ -95,30 +100,31 @@ function persistDoctorReport(rootPath: string, markdown: string): {
   }
 }
 
-function runDoctor(rootPath: string = process.cwd()): DoctorResult {
+function runDoctor(rootPath: string = process.cwd(), saveReport = false): DoctorResult {
   const scanResult = buildDoctorScanResult(rootPath);
-  const persistence = persistDoctorReport(rootPath, scanResult.markdown);
 
-  return {
-    ...scanResult,
-    ...persistence,
-  };
+  if (saveReport) {
+    const persistence = persistDoctorReport(rootPath, scanResult.markdown);
+    return { ...scanResult, ...persistence };
+  }
+
+  return scanResult;
 }
 
-export function DoctorApp({ onComplete, showBanner = true }: DoctorAppProps): React.ReactNode {
+export function DoctorApp({ onComplete, showBanner = true, saveReport = false }: DoctorAppProps): React.ReactNode {
   const { exit } = useApp();
   const [phase, setPhase] = useState<"scanning" | "done">("scanning");
   const [result, setResult] = useState<DoctorResult | null>(null);
 
   useEffect(() => {
     const id = setImmediate(() => {
-      const r = runDoctor();
+      const r = runDoctor(process.cwd(), saveReport);
 
       setResult(r);
       setPhase("done");
     });
     return () => clearImmediate(id);
-  }, []);
+  }, [saveReport]);
 
   useEffect(() => {
     if (phase !== "done" || onComplete) {
@@ -179,23 +185,25 @@ export function DoctorApp({ onComplete, showBanner = true }: DoctorAppProps): Re
             </>
           )}
 
-          {result.reportSaved ? (
+          {result.reportSaved === true && result.reportPath && (
             <>
               <SectionTitle>Report saved</SectionTitle>
               <InfoItem>{path.relative(process.cwd(), result.reportPath) || REPORT_FILENAME}</InfoItem>
             </>
-          ) : (
+          )}
+
+          {result.reportSaved === false && result.reportError && (
             <>
               <SectionTitle>Report not saved</SectionTitle>
-              <ErrorItem>{result.reportError ?? "Unknown report write error."}</ErrorItem>
+              <ErrorItem>{result.reportError}</ErrorItem>
             </>
           )}
 
-          <NextStep>
-            {result.reportSaved
-              ? `Run ${"agent-lint prompt"} to get a ready-to-paste prompt for your IDE.`
-              : `Fix the report write issue and run ${"agent-lint doctor"} again.`}
-          </NextStep>
+          {!onComplete && (
+            <NextStep>
+              {`Run ${"agent-lint prompt"} to get a ready-to-paste prompt for your IDE.`}
+            </NextStep>
+          )}
 
           {onComplete && (
             <ContinuePrompt
@@ -211,6 +219,7 @@ export function DoctorApp({ onComplete, showBanner = true }: DoctorAppProps): Re
 export function runDoctorCommand(options: {
   stdout?: boolean;
   json?: boolean;
+  saveReport?: boolean;
 }): void {
   const rootPath = process.cwd();
 
@@ -226,5 +235,5 @@ export function runDoctorCommand(options: {
     return;
   }
 
-  render(<DoctorApp showBanner={true} />);
+  render(<DoctorApp showBanner={true} saveReport={options.saveReport} />);
 }

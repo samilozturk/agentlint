@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Box, useApp } from "ink";
 import { Banner, Divider } from "./ui/components.js";
 import { MainMenu, type MenuCommand } from "./ui/main-menu.js";
@@ -7,25 +7,65 @@ import { InitWizard, type ClientInstallResult } from "./commands/init.js";
 import { DoctorApp, type DoctorResult } from "./commands/doctor.js";
 import { PromptApp, type PromptResult } from "./commands/prompt.js";
 
-// ── State Machine ──────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────
 
 type AppScreen =
   | { type: "menu" }
   | { type: "command"; command: MenuCommand }
   | { type: "next-action"; context: NextActionContext };
 
-export function resolvePromptHasReport(sessionHasReport: boolean, promptResultHasReport: boolean): boolean {
-  return sessionHasReport || promptResultHasReport;
+export interface InitCommandOptions {
+  yes?: boolean;
+  all?: boolean;
+}
+
+export interface DoctorCommandOptions {
+  saveReport?: boolean;
+}
+
+export interface AppProps {
+  /** Pre-navigate to a command on launch (skips MainMenu) */
+  initialCommand?: MenuCommand;
+  /** Options for the initial command (consumed once, then cleared) */
+  commandOptions?: {
+    init?: InitCommandOptions;
+    doctor?: DoctorCommandOptions;
+  };
 }
 
 // ── App Component ──────────────────────────────────────────────────────
 
-export function App(): React.ReactNode {
+export function App({ initialCommand, commandOptions }: AppProps): React.ReactNode {
   const { exit } = useApp();
-  const [screen, setScreen] = useState<AppScreen>({ type: "menu" });
 
-  // Track state for smart suggestions
-  const [hasReport, setHasReport] = useState(false);
+  // When initialCommand is provided, start directly at that command screen
+  const [screen, setScreen] = useState<AppScreen>(
+    initialCommand && initialCommand !== "exit"
+      ? { type: "command", command: initialCommand }
+      : { type: "menu" },
+  );
+
+  // Track whether the initial commandOptions have been consumed.
+  // Once consumed, subsequent navigations to the same command use default options.
+  const initialOptionsConsumed = useRef(false);
+
+  /** Return init options — uses commandOptions.init on the first call, then {} */
+  const getInitOptions = useCallback((): InitCommandOptions => {
+    if (!initialOptionsConsumed.current && commandOptions?.init) {
+      initialOptionsConsumed.current = true;
+      return commandOptions.init;
+    }
+    return {};
+  }, [commandOptions]);
+
+  /** Return doctor options — uses commandOptions.doctor on the first call, then {} */
+  const getDoctorOptions = useCallback((): DoctorCommandOptions => {
+    if (!initialOptionsConsumed.current && commandOptions?.doctor) {
+      initialOptionsConsumed.current = true;
+      return commandOptions.doctor;
+    }
+    return {};
+  }, [commandOptions]);
 
   // ── Menu Selection ─────────────────────────────────────────────────
 
@@ -48,35 +88,27 @@ export function App(): React.ReactNode {
       context: {
         completedCommand: "init",
         initCreatedConfigs: created,
-        hasReport,
-      },
-    });
-  }, [hasReport]);
-
-  const handleDoctorComplete = useCallback((result: DoctorResult) => {
-    setHasReport(result.reportSaved);
-    setScreen({
-      type: "next-action",
-      context: {
-        completedCommand: "doctor",
-        hasReport: result.reportSaved,
       },
     });
   }, []);
 
-  const handlePromptComplete = useCallback((result: PromptResult) => {
-    const effectiveHasReport = resolvePromptHasReport(hasReport, result.hasReport);
-    if (effectiveHasReport !== hasReport) {
-      setHasReport(effectiveHasReport);
-    }
+  const handleDoctorComplete = useCallback((_result: DoctorResult) => {
+    setScreen({
+      type: "next-action",
+      context: {
+        completedCommand: "doctor",
+      },
+    });
+  }, []);
+
+  const handlePromptComplete = useCallback((_result: PromptResult) => {
     setScreen({
       type: "next-action",
       context: {
         completedCommand: "prompt",
-        hasReport: effectiveHasReport,
       },
     });
-  }, [hasReport]);
+  }, []);
 
   // ── Next Action Selection ──────────────────────────────────────────
 
@@ -109,7 +141,7 @@ export function App(): React.ReactNode {
       {/* Command Screens (embedded mode — no banner, with onComplete) */}
       {screen.type === "command" && screen.command === "init" && (
         <InitWizard
-          options={{}}
+          options={getInitOptions()}
           onComplete={handleInitComplete}
           showBanner={false}
         />
@@ -119,6 +151,7 @@ export function App(): React.ReactNode {
         <DoctorApp
           onComplete={handleDoctorComplete}
           showBanner={false}
+          saveReport={getDoctorOptions().saveReport}
         />
       )}
 

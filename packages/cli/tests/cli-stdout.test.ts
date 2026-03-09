@@ -51,13 +51,13 @@ describe("CLI output modes", () => {
     expect(parsed.missing).toHaveLength(0);
   });
 
-  it("doctor standalone writes a non-empty report file", () => {
+  it("doctor --save-report writes a non-empty report file", () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-"));
 
     try {
       fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
 
-      const result = runCli(["doctor"], tmpDir);
+      const result = runCli(["doctor", "--save-report"], tmpDir);
       const reportPath = path.join(tmpDir, ".agentlint-report.md");
 
       expect(result.status).toBe(0);
@@ -69,26 +69,28 @@ describe("CLI output modes", () => {
     }
   });
 
-  it("prompt --stdout prints the generic prompt before a report exists", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-prompt-generic-"));
+  it("doctor without --save-report does not write a report file", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-no-report-"));
 
     try {
-      const out = run(["prompt", "--stdout"], tmpDir);
-      expect(out).toContain("Run agentlint_plan_workspace_autofix");
-      expect(out).not.toContain("Read the file .agentlint-report.md");
+      fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
+
+      const result = runCli(["doctor"], tmpDir);
+      const reportPath = path.join(tmpDir, ".agentlint-report.md");
+
+      expect(result.status).toBe(0);
+      expect(fs.existsSync(reportPath)).toBe(false);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
 
-  it("prompt --stdout prints the report-aware prompt when a report exists", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-prompt-report-"));
+  it("prompt --stdout prints the MCP prompt", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-prompt-generic-"));
 
     try {
-      fs.writeFileSync(path.join(tmpDir, ".agentlint-report.md"), "# report\n");
       const out = run(["prompt", "--stdout"], tmpDir);
-      expect(out).toContain("Read the file .agentlint-report.md");
-      expect(out).not.toContain("Run agentlint_plan_workspace_autofix");
+      expect(out).toContain("Run agentlint_plan_workspace_autofix");
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

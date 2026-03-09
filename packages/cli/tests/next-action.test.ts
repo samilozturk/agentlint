@@ -27,10 +27,9 @@ describe("buildNextActions", () => {
 
   // ── After doctor ───────────────────────────────────────────────────────
 
-  it("recommends prompt after doctor when report exists", () => {
+  it("recommends prompt after doctor", () => {
     const context: NextActionContext = {
       completedCommand: "doctor",
-      hasReport: true,
     };
     const options = buildNextActions(context);
     expect(options[0].value).toBe("prompt");
@@ -38,40 +37,16 @@ describe("buildNextActions", () => {
     expect(options[1].value).toBe("init");
   });
 
-  it("recommends rerunning doctor after doctor when report was not saved", () => {
-    const context: NextActionContext = {
-      completedCommand: "doctor",
-      hasReport: false,
-    };
-    const options = buildNextActions(context);
-    expect(options[0].value).toBe("doctor");
-    expect(options[0].label).toContain("recommended");
-    expect(options[1].value).toBe("prompt");
-  });
-
   // ── After prompt ───────────────────────────────────────────────────────
 
-  it("recommends doctor after prompt when no report exists", () => {
+  it("recommends doctor after prompt", () => {
     const context: NextActionContext = {
       completedCommand: "prompt",
-      hasReport: false,
     };
     const options = buildNextActions(context);
     expect(options[0].value).toBe("doctor");
     expect(options[0].label).toContain("recommended");
     expect(options[1].value).toBe("init");
-  });
-
-  it("offers doctor and init after prompt when report exists (no recommendation)", () => {
-    const context: NextActionContext = {
-      completedCommand: "prompt",
-      hasReport: true,
-    };
-    const options = buildNextActions(context);
-    expect(options[0].value).toBe("doctor");
-    expect(options[1].value).toBe("init");
-    // No "recommended" — workflow is complete
-    expect(options[0].label).not.toContain("recommended");
   });
 
   // ── Navigation options always present ──────────────────────────────────
@@ -80,10 +55,8 @@ describe("buildNextActions", () => {
     const contexts: NextActionContext[] = [
       { completedCommand: "init", initCreatedConfigs: true },
       { completedCommand: "init", initCreatedConfigs: false },
-      { completedCommand: "doctor", hasReport: true },
-      { completedCommand: "doctor", hasReport: false },
-      { completedCommand: "prompt", hasReport: false },
-      { completedCommand: "prompt", hasReport: true },
+      { completedCommand: "doctor" },
+      { completedCommand: "prompt" },
     ];
 
     for (const context of contexts) {
@@ -99,9 +72,8 @@ describe("buildNextActions", () => {
   it("returns at least 4 options for every context", () => {
     const contexts: NextActionContext[] = [
       { completedCommand: "init", initCreatedConfigs: true },
-      { completedCommand: "doctor", hasReport: true },
-      { completedCommand: "doctor", hasReport: false },
-      { completedCommand: "prompt", hasReport: false },
+      { completedCommand: "doctor" },
+      { completedCommand: "prompt" },
     ];
 
     for (const context of contexts) {

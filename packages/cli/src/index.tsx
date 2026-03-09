@@ -14,7 +14,8 @@ import { runDoctorCommand } from "./commands/doctor.js";
 import { runPromptCommand } from "./commands/prompt.js";
 import { redirectLogsToStderr } from "./utils.js";
 import { VERSION } from "./ui/theme.js";
-import { App } from "./app.js";
+import { App, type AppProps } from "./app.js";
+import type { MenuCommand } from "./ui/main-menu.js";
 
 redirectLogsToStderr();
 
@@ -29,6 +30,62 @@ function resolveEntryMode(argv: string[], stdinIsTTY: boolean): EntryMode {
     return "standalone";
   }
   return stdinIsTTY ? "interactive" : "help";
+}
+
+// ── TUI-eligible command detection ─────────────────────────────────────
+
+/** Flags that force non-interactive (Commander.js) handling */
+const NON_INTERACTIVE_FLAGS = new Set(["--stdout", "--json", "--help", "-h"]);
+
+/** Commands that can be routed through the interactive App shell */
+const TUI_COMMANDS = new Set<string>(["init", "doctor", "prompt"]);
+
+interface ParsedTuiCommand {
+  command: MenuCommand;
+  appProps: AppProps;
+}
+
+/**
+ * Attempt to parse argv as a TUI-eligible command.
+ * Returns null if the command should be handled by Commander.js instead
+ * (non-TUI command, or has non-interactive flags like --stdout/--json).
+ */
+export function parseTuiCommand(argv: string[]): ParsedTuiCommand | null {
+  const [cmd, ...rest] = argv;
+  if (!cmd || !TUI_COMMANDS.has(cmd)) return null;
+
+  // If any non-interactive flag is present, bail to Commander.js
+  if (rest.some((flag) => NON_INTERACTIVE_FLAGS.has(flag))) return null;
+
+  const command = cmd as MenuCommand;
+  const appProps: AppProps = { initialCommand: command };
+
+  // Parse command-specific flags for init
+  if (command === "init") {
+    const initOpts: { yes?: boolean; all?: boolean } = {};
+    for (const flag of rest) {
+      if (flag === "--yes" || flag === "-y") initOpts.yes = true;
+      else if (flag === "--all") initOpts.all = true;
+      else return null; // Unknown flag — let Commander.js handle (and error)
+    }
+    if (initOpts.yes || initOpts.all) {
+      appProps.commandOptions = { init: initOpts };
+    }
+  } else if (command === "doctor") {
+    const doctorOpts: { saveReport?: boolean } = {};
+    for (const flag of rest) {
+      if (flag === "--save-report") doctorOpts.saveReport = true;
+      else return null; // Unknown flag — let Commander.js handle (and error)
+    }
+    if (doctorOpts.saveReport) {
+      appProps.commandOptions = { doctor: doctorOpts };
+    }
+  } else if (rest.length > 0) {
+    // prompt with unknown flags — let Commander.js handle
+    return null;
+  }
+
+  return { command, appProps };
 }
 
 function createProgram(): Command {
@@ -53,9 +110,10 @@ function createProgram(): Command {
   program
     .command("doctor")
     .description("Scan the workspace and generate a context maintenance report")
-    .option("--stdout", "Print report to stdout instead of writing a file")
+    .option("--stdout", "Print report to stdout instead of TUI")
     .option("--json", "Output discovery results as JSON")
-    .action((options: { stdout?: boolean; json?: boolean }) => {
+    .option("--save-report", "Save report to .agentlint-report.md")
+    .action((options: { stdout?: boolean; json?: boolean; saveReport?: boolean }) => {
       runDoctorCommand(options);
     });
 
@@ -74,15 +132,18 @@ const normalizedArgv = normalizeCliArgs(process.argv.slice(2));
 const entryMode = resolveEntryMode(normalizedArgv, process.stdin.isTTY === true);
 
 if (entryMode === "interactive") {
+  // No args + TTY → full interactive mode starting at MainMenu
   render(React.createElement(App));
-} else {
-  const program = createProgram();
+} else if (entryMode === "standalone") {
+  // Try to route TUI-eligible commands through the interactive App shell
+  const tuiParsed = process.stdin.isTTY === true ? parseTuiCommand(normalizedArgv) : null;
 
-  if (entryMode === "help") {
-    const helpText = program.helpInformation();
-    process.stdout.write(helpText.endsWith("\n") ? helpText : `${helpText}\n`);
-    process.exitCode = 0;
+  if (tuiParsed) {
+    // TUI command in a TTY → render App pre-navigated to the command, with loop
+    render(React.createElement(App, tuiParsed.appProps));
   } else {
+    // Non-TUI mode: --stdout, --json, --version, --help, unknown commands, non-TTY
+    const program = createProgram();
     try {
       program.parse([process.argv[0], process.argv[1], ...normalizedArgv]);
     } catch (error) {
@@ -91,4 +152,10 @@ if (entryMode === "interactive") {
       process.exitCode = 2;
     }
   }
+} else {
+  // No args + not TTY → print help
+  const program = createProgram();
+  const helpText = program.helpInformation();
+  process.stdout.write(helpText.endsWith("\n") ? helpText : `${helpText}\n`);
+  process.exitCode = 0;
 }

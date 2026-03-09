@@ -46,13 +46,15 @@ describe("Embedded command flows", () => {
 
       try {
         await waitFor(
-          () => session.getStdout().toUpperCase().includes("REPORT SAVED"),
+          () => session.getStdout().toUpperCase().includes("DISCOVERED ARTIFACTS") ||
+                session.getStdout().toUpperCase().includes("MISSING ARTIFACT TYPES"),
           { timeoutMs: 5_000 },
         );
 
         await sleep(350);
         expect(onComplete).not.toHaveBeenCalled();
-        expect(fs.existsSync(path.join(process.cwd(), ".agentlint-report.md"))).toBe(true);
+        // No report file should exist without --save-report
+        expect(fs.existsSync(path.join(process.cwd(), ".agentlint-report.md"))).toBe(false);
 
         pressEnter(session.stdin);
 
@@ -82,45 +84,6 @@ describe("Embedded command flows", () => {
         expect(output).not.toContain("[object Object]");
         expect(output).toContain("skills ->");
         expect(output).toContain("workflows ->");
-      } finally {
-        session.cleanup();
-      }
-    });
-  });
-
-  it("surfaces report write failures instead of claiming success", async () => {
-    await withTempCwd(async () => {
-      fs.writeFileSync(path.join(process.cwd(), "AGENTS.md"), "# AGENTS\n");
-      const originalWriteFileSync = fs.writeFileSync;
-      vi.spyOn(fs, "writeFileSync").mockImplementation((file, data, options) => {
-        if (typeof file === "string" && file.endsWith(".agentlint-report.md")) {
-          throw new Error("disk full");
-        }
-        return Reflect.apply(originalWriteFileSync, fs, [file, data, options]);
-      });
-
-      const onComplete = vi.fn();
-      const session = renderInTTY(
-        React.createElement(DoctorApp, { onComplete, showBanner: false }),
-      );
-
-      try {
-        await waitFor(
-          () => session.getStdout().toUpperCase().includes("REPORT NOT SAVED"),
-          { timeoutMs: 5_000 },
-        );
-
-        const output = session.getStdout().toUpperCase();
-        expect(output).not.toContain("REPORT SAVED");
-
-        pressEnter(session.stdin);
-        await waitFor(() => onComplete.mock.calls.length === 1);
-        expect(onComplete).toHaveBeenCalledWith(
-          expect.objectContaining({
-            reportSaved: false,
-            reportError: expect.stringContaining("disk full"),
-          }),
-        );
       } finally {
         session.cleanup();
       }
@@ -185,7 +148,6 @@ describe("Embedded command flows", () => {
         expect(onComplete).toHaveBeenCalledWith(
           expect.objectContaining({
             copied: true,
-            hasReport: false,
           }),
         );
       } finally {
@@ -216,7 +178,6 @@ describe("Embedded command flows", () => {
         expect(onComplete).toHaveBeenCalledWith(
           expect.objectContaining({
             copied: false,
-            hasReport: false,
           }),
         );
       } finally {

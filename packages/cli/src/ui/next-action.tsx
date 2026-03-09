@@ -12,8 +12,6 @@ export interface NextActionContext {
   completedCommand: MenuCommand;
   /** Whether init created new configs (vs all already existed) */
   initCreatedConfigs?: boolean;
-  /** Whether a doctor report file exists */
-  hasReport?: boolean;
 }
 
 export interface NextActionProps {
@@ -27,7 +25,7 @@ interface ActionOption {
 }
 
 export function buildNextActions(context: NextActionContext): ActionOption[] {
-  const { completedCommand, initCreatedConfigs, hasReport } = context;
+  const { completedCommand, initCreatedConfigs } = context;
   const options: ActionOption[] = [];
 
   switch (completedCommand) {
@@ -42,23 +40,13 @@ export function buildNextActions(context: NextActionContext): ActionOption[] {
       break;
 
     case "doctor":
-      if (hasReport === false) {
-        options.push({ label: "Scan workspace again (recommended)", value: "doctor" });
-        options.push({ label: "Get IDE prompt (prompt)", value: "prompt" });
-      } else {
-        options.push({ label: "Get IDE prompt (recommended)", value: "prompt" });
-        options.push({ label: "Set up MCP config (init)", value: "init" });
-      }
+      options.push({ label: "Get IDE prompt (recommended)", value: "prompt" });
+      options.push({ label: "Set up MCP config (init)", value: "init" });
       break;
 
     case "prompt":
-      if (!hasReport) {
-        options.push({ label: "Scan workspace (recommended)", value: "doctor" });
-        options.push({ label: "Set up MCP config (init)", value: "init" });
-      } else {
-        options.push({ label: "Scan workspace (doctor)", value: "doctor" });
-        options.push({ label: "Set up MCP config (init)", value: "init" });
-      }
+      options.push({ label: "Scan workspace (recommended)", value: "doctor" });
+      options.push({ label: "Set up MCP config (init)", value: "init" });
       break;
 
     default:
