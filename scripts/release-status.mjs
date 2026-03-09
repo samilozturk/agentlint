@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import process from "node:process";
+import { execPnpm } from "./lib/pnpm-runner.mjs";
 
 function run(command, args, options = {}) {
   const result = execFileSync(command, args, {
@@ -32,17 +33,12 @@ function resolveSinceRef() {
 function main() {
   const sinceRef = resolveSinceRef();
   const args = ["exec", "changeset", "status", "--verbose"];
-  const pnpmEntrypoint = process.env.npm_execpath;
-
-  if (!pnpmEntrypoint) {
-    throw new Error("npm_execpath is not set; cannot invoke pnpm reliably.");
-  }
 
   if (sinceRef) {
     args.push("--since", sinceRef);
   }
 
-  execFileSync(process.execPath, [pnpmEntrypoint, ...args], {
+  execPnpm(args, {
     stdio: "inherit",
   });
 }

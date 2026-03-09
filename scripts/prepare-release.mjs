@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import process from "node:process";
+import { execPnpm } from "./lib/pnpm-runner.mjs";
 
 const RELEASE_BRANCH = "release/next";
 const RELEASE_TITLE = "chore(release): prepare npm release";
@@ -133,12 +134,7 @@ async function main() {
   }
   run("git", ["checkout", "-B", RELEASE_BRANCH]);
 
-  const pnpmEntrypoint = process.env.npm_execpath;
-  if (!pnpmEntrypoint) {
-    throw new Error("npm_execpath is not set; cannot invoke pnpm reliably.");
-  }
-
-  execFileSync(process.execPath, [pnpmEntrypoint, "exec", "changeset", "version"], {
+  execPnpm(["exec", "changeset", "version"], {
     stdio: "inherit",
   });
 
