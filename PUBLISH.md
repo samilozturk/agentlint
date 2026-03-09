@@ -5,18 +5,19 @@ Agent Lint publishes two independently versioned packages:
 - `@agent-lint/cli`
 - `@agent-lint/mcp`
 
-GitHub stays public-facing for docs and issues. GitLab CI is the only system that versions, tags, publishes, and mirrors releases.
+GitHub stays public-facing for docs and issues. GitLab CI is the control plane that versions, tags, publishes, mirrors `main` after successful verification, and mirrors release tags after npm publish succeeds.
 
 ## Release Flow
 
 1. Ship code changes in a normal merge request.
 2. Add a changeset with `pnpm changeset` if the change affects a published package.
 3. Merge to `main`.
-4. GitLab creates or updates a single `release/next` merge request with generated version and changelog changes.
-5. Review and merge that release MR.
-6. GitLab tags each changed package as `cli-vX.Y.Z` or `mcp-vX.Y.Z`.
-7. A maintainer starts the publish job from the tag pipeline.
-8. After a successful npm publish, GitLab mirrors the same package tag to GitHub.
+4. After the `main` pipeline passes, GitLab mirrors the new `main` commit to GitHub.
+5. GitLab creates or updates a single `release/next` merge request with generated version and changelog changes.
+6. Review and merge that release MR.
+7. GitLab tags each changed package as `cli-vX.Y.Z` or `mcp-vX.Y.Z`.
+8. A maintainer starts the publish job from the tag pipeline.
+9. After a successful npm publish, GitLab mirrors the same package tag to GitHub.
 
 Manual version edits and manual tag creation are no longer the normal path.
 
@@ -48,7 +49,8 @@ Configure these GitLab CI/CD variables:
   - dedicated project access token
   - minimum scope needed to push `release/next`, create tags, and open or update merge requests
 - `GITHUB_MIRROR_TOKEN`
-  - fine-grained GitHub token with tag push access to `samilytu/agentlint`
+  - fine-grained GitHub token with branch and tag push access to `samilytu/agentlint`
+  - if the target repo contains `.github/workflows`, also grant read/write access for Workflows
 - `GITHUB_MIRROR_REPOSITORY`
   - optional override for the GitHub mirror target
   - defaults to `samilytu/agentlint`
@@ -100,7 +102,8 @@ Current CI auth behavior:
 ### GitLab CI
 
 - enforce changesets on merge requests that affect published package outputs
+- mirror the default branch to GitHub after a successful push pipeline on `main`
 - prepare and maintain the single `release/next` release MR
 - create package-scoped release tags after the release MR merges
 - wait for a maintainer to start the publish job from the tag pipeline
-- mirror successful release tags to GitHub
+- mirror successful release tags to GitHub only after npm publish succeeds
