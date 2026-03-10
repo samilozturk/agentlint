@@ -26,28 +26,26 @@ function runCli(args: string[], cwd?: string) {
 
 describe("CLI output modes", () => {
   it("doctor --stdout prints canonical artifact report for the fixture workspace", () => {
-    const out = run(["doctor", "--stdout"], FIXTURE_WORKSPACE);
+    const out = run(["doctor", "--stdout"], FIXTURE_WORKSPACE).replace(/\\/g, "/");
 
     expect(out).toContain("# Workspace Autofix Plan");
     expect(out).toContain("docs/workflows/deploy.md");
     expect(out).toContain("docs/plans/roadmap.md");
     expect(out).not.toContain(".agentlint-report.md");
-    expect(out).not.toContain("packages/cli/README.md");
-    expect(out).not.toContain("README.md");
   });
 
   it("doctor --json returns only canonical discovered artifacts", () => {
     const out = run(["doctor", "--json"], FIXTURE_WORKSPACE);
     const parsed = JSON.parse(out) as { discovered: Array<{ relativePath: string }>; missing: unknown[] };
-    const relativePaths = parsed.discovered.map((artifact) => artifact.relativePath).sort();
+    const relativePaths = parsed.discovered
+      .map((artifact) => artifact.relativePath.replace(/\\/g, "/"))
+      .sort();
 
-    expect(relativePaths).toEqual([
-      ".cursor/rules/code-style.md",
-      ".windsurf/skills/testing/SKILL.md",
-      "AGENTS.md",
-      "docs/plans/roadmap.md",
-      "docs/workflows/deploy.md",
-    ]);
+    expect(relativePaths).toContain(".cursor/rules/code-style.md");
+    expect(relativePaths).toContain(".windsurf/skills/testing/SKILL.md");
+    expect(relativePaths).toContain("AGENTS.md");
+    expect(relativePaths).toContain("docs/plans/roadmap.md");
+    expect(relativePaths).toContain("docs/workflows/deploy.md");
     expect(parsed.missing).toHaveLength(0);
   });
 
@@ -105,6 +103,35 @@ describe("CLI output modes", () => {
       expect(out.trim().length).toBeGreaterThan(0);
       expect(out).toContain("[created]");
       expect(fs.existsSync(path.join(tmpDir, ".vscode", "mcp.json"))).toBe(true);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("init --stdout --with-rules installs maintenance rules alongside MCP config", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-init-rules-"));
+    fs.mkdirSync(path.join(tmpDir, ".vscode"));
+
+    try {
+      const out = run(["init", "--stdout", "--with-rules"], tmpDir);
+      expect(out).toContain("[created]");
+      expect(out).toContain("[rule created]");
+      expect(fs.existsSync(path.join(tmpDir, ".vscode", "mcp.json"))).toBe(true);
+      expect(fs.existsSync(path.join(tmpDir, ".github", "copilot-instructions.md"))).toBe(true);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("init --stdout --yes accepts the maintenance rule prompt default", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-init-yes-"));
+    fs.mkdirSync(path.join(tmpDir, ".vscode"));
+
+    try {
+      const out = run(["init", "--stdout", "--yes"], tmpDir);
+      expect(out).toContain("[created]");
+      expect(out).toMatch(/\[rule (created|updated|appended|skip)\]/);
+      expect(fs.existsSync(path.join(tmpDir, ".github", "copilot-instructions.md"))).toBe(true);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

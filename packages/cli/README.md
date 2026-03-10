@@ -16,7 +16,7 @@ The `agent-lint` binary opens an interactive TUI in a TTY and falls back to help
 
 | Command | Purpose |
 | --- | --- |
-| `agent-lint init` | Detect supported IDE clients and install an Agent Lint MCP entry |
+| `agent-lint init` | Detect supported IDE clients, install an Agent Lint MCP entry, and optionally add maintenance rules |
 | `agent-lint doctor` | Scan the workspace and generate a context maintenance report |
 | `agent-lint prompt` | Print a ready-to-paste IDE prompt for the next maintenance step |
 
@@ -24,12 +24,15 @@ The `agent-lint` binary opens an interactive TUI in a TTY and falls back to help
 
 ```bash
 agent-lint init
+agent-lint init --with-rules
 agent-lint doctor
 agent-lint doctor --stdout
 agent-lint doctor --json
 agent-lint prompt
 agent-lint prompt --stdout
 ```
+
+Re-running `agent-lint init --with-rules` updates managed rule files in place and avoids duplicate snippets.
 
 ## Supported IDEs
 
@@ -56,7 +59,7 @@ agent-lint prompt --stdout
 - workflows
 - plans
 
-It writes a report file by default and can also print to stdout or JSON for automation.
+It can save a report file and can also print to stdout or JSON for automation.
 
 ## Related
 

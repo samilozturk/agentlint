@@ -49,4 +49,25 @@ describe("maintenance-snippet", () => {
       expect(result.snippet).toContain("agentlint_get_guidelines");
     }
   });
+
+  it("teaches the agent to infer Agent Lint from plain-English context requests", () => {
+    const result = buildMaintenanceSnippet("generic");
+    expect(result.snippet).toContain("plain-English requests");
+    expect(result.snippet).toContain("AGENTS.md");
+    expect(result.snippet).toContain("rules, skills, workflows, or plans");
+  });
+
+  it("teaches the agent to react to structural changes", () => {
+    const result = buildMaintenanceSnippet("generic");
+    expect(result.snippet).toContain("new modules");
+    expect(result.snippet).toContain("dependency changes");
+    expect(result.snippet).toContain("CI/config updates");
+  });
+
+  it("describes the intended Agent Lint tool order", () => {
+    const result = buildMaintenanceSnippet("generic");
+    expect(result.snippet).toContain("agentlint_plan_workspace_autofix");
+    expect(result.snippet).toContain("agentlint_quick_check");
+    expect(result.snippet).toContain("agentlint_emit_maintenance_snippet");
+  });
 });

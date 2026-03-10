@@ -73,6 +73,17 @@ describe("parseTuiCommand", () => {
     });
   });
 
+  it("parses 'init --with-rules' with command options", () => {
+    const result = parseTuiCommand(["init", "--with-rules"]);
+    expect(result).toEqual({
+      command: "init",
+      appProps: {
+        initialCommand: "init",
+        commandOptions: { init: { withRules: true } },
+      },
+    });
+  });
+
   // ── Doctor with flags ───────────────────────────────────────────────────
 
   it("parses 'doctor --save-report' with command options", () => {

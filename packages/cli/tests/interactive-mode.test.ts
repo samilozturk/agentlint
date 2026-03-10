@@ -79,6 +79,13 @@ describe("Interactive TTY flow", () => {
       await sleep(100);
       pressEnter(session.stdin);
 
+      await waitFor(() => session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES"), {
+        timeoutMs: 10_000,
+      });
+
+      await sleep(100);
+      pressEnter(session.stdin);
+
       await waitFor(() => session.getStdout().includes("MCP config is ready."), {
         timeoutMs: 10_000,
       });

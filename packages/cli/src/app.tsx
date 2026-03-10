@@ -17,6 +17,7 @@ type AppScreen =
 export interface InitCommandOptions {
   yes?: boolean;
   all?: boolean;
+  withRules?: boolean;
 }
 
 export interface DoctorCommandOptions {
@@ -81,7 +82,9 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
 
   const handleInitComplete = useCallback((results: ClientInstallResult[]) => {
     const created = results.some(
-      (r) => r.result.status === "created" || r.result.status === "merged" || r.result.status === "cli-success",
+      (r) => r.configResult.status === "created" ||
+        r.configResult.status === "merged" ||
+        r.configResult.status === "cli-success",
     );
     setScreen({
       type: "next-action",

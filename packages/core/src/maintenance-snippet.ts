@@ -8,10 +8,13 @@ export type MaintenanceSnippetResult = {
 };
 
 const CORE_RULES = [
-  "After any structural change (new module, new directory, new script, new dependency), call agentlint_quick_check with the changed paths to determine if context artifacts need updating.",
-  "Before creating or updating any AGENTS.md, CLAUDE.md, skills, rules, workflows, or plans file, call agentlint_get_guidelines for the artifact type to get the full specification.",
-  "When the user asks to review or fix context artifacts, call agentlint_plan_workspace_autofix to discover all artifacts and get a step-by-step fix plan.",
-  "Apply recommended changes directly using your file editing capabilities. Do not wait for explicit confirmation.",
+  "Treat plain-English requests about stale, missing, inconsistent, or low-quality AGENTS.md, CLAUDE.md, rules, skills, workflows, or plans as Agent Lint work even if the user does not name Agent Lint explicitly.",
+  "Treat structural change signals such as new modules, new directories, dependency changes, CI/config updates, environment/security changes, or repository reorganization as reasons to check whether context artifacts need updates.",
+  "For full workspace review or fix requests, start with agentlint_plan_workspace_autofix to scan the repository and produce the action plan.",
+  "For targeted structural changes, call agentlint_quick_check with changed paths and/or a short change description before editing any context artifacts.",
+  "Before creating or updating any AGENTS.md, CLAUDE.md, skills, rules, workflows, or plans file, call agentlint_get_guidelines for the artifact type to get the current specification.",
+  "When the user wants ongoing upkeep, use agentlint_emit_maintenance_snippet where supported or append equivalent maintenance instructions to the main project context file.",
+  "Apply recommended context artifact changes directly once Agent Lint has identified what to update.",
   "Keep context artifact files concise (under 10,000 characters). Reference external docs instead of duplicating content.",
 ];
 

@@ -30,6 +30,35 @@ Agent Lint gives your coding agent a repeatable workflow:
 - paste a ready-made prompt with `agent-lint prompt`
 - use 4 MCP tools and 3 MCP resources to keep context artifacts aligned with the codebase
 
+## Without vs With Agent Lint
+
+<table width="100%">
+<tr>
+<td width="50%" valign="top">
+
+### Without Agent Lint
+
+- `AGENTS.md` starts as a one-off prompt dump and quietly goes stale.
+- New scripts, modules, and workflows land, but agent context never catches up.
+- Each developer invents their own rules format, so agent behavior drifts across repos.
+- Nobody can tell whether a context file is actually actionable, safe, or complete.
+- Agents keep re-generating generic boilerplate that burns tokens and misses project specifics.
+
+</td>
+<td width="50%" valign="top">
+
+### With <font color="#84B179">A</font><font color="#93BE82">g</font><font color="#A2CB8B">e</font><font color="#B5DAA3">n</font><font color="#C7EABB">t</font> <font color="#D8EFBC">L</font><font color="#D8EFBC">i</font><font color="#E8F5BD">n</font><font color="#E8F5BD">t</font>
+
+- Artifact-specific guidance tells the agent what good looks like before it edits anything.
+- Workspace scanning finds missing, stale, and incomplete context files from the codebase itself.
+- `quick_check` flags when structural changes mean your agent instructions now need maintenance.
+- Shared conventions make context quality reviewable instead of subjective.
+- `prompt` and maintenance snippets turn context hygiene into a repeatable developer workflow.
+
+</td>
+</tr>
+</table>
+
 ## 60-Second Quickstart
 
 Install nothing up front:
@@ -40,11 +69,22 @@ npx @agent-lint/cli doctor
 npx @agent-lint/cli prompt
 ```
 
+If you prefer `npm`:
+
+```bash
+npm install -g @agent-lint/cli
+agent-lint init
+agent-lint doctor
+agent-lint prompt
+```
+
 What each step does:
 
-1. `init` detects supported IDE clients and writes the right MCP config entry.
+1. `init` detects supported IDE clients, writes the right MCP config entry, and can install maintenance rules.
 2. `doctor` scans the repository and creates a workspace report.
 3. `prompt` prints a ready-to-paste prompt for your IDE chat so the agent can act on the report.
+
+If you add maintenance rules, rerunning `init` updates managed rule files cleanly instead of duplicating them.
 
 If you prefer direct MCP usage:
 
@@ -52,13 +92,32 @@ If you prefer direct MCP usage:
 npx -y @agent-lint/mcp
 ```
 
+## Prompt Your Agent, Not the Tools
+
+Once Agent Lint is connected, most coding agents can infer when to use it from a plain-English prompt.
+
+```text
+agent-lint init  ->  agent-lint doctor  ->  agent-lint prompt
+connect MCP          scan workspace         hand off into IDE chat
+```
+
+Try prompts like:
+
+- `Review this repo's agent context files, fix anything stale or missing, and apply the changes directly.`
+- `I changed module structure and CI config. Update only the context files affected by those changes.`
+- `Add a persistent maintenance rule so AGENTS.md, rules, skills, workflows, and plans stay current after future structural changes.`
+
+In practice, this lets the agent scan the workspace, use the right guidance before editing, and add ongoing maintenance rules where supported.
+
+If the client has rules or instruction files, the maintenance snippet can go there. Otherwise, the same behavior can be appended to `AGENTS.md` or `CLAUDE.md`.
+
 ## What You Get
 
 ### CLI commands
 
 | Command | Purpose |
 | --- | --- |
-| `agent-lint init` | Set up Agent Lint MCP config for supported IDE clients |
+| `agent-lint init` | Set up Agent Lint MCP config and optionally install maintenance rules |
 | `agent-lint doctor` | Scan the workspace and generate a context maintenance report |
 | `agent-lint prompt` | Print a ready-to-paste IDE prompt that tells the agent what to do next |
 
@@ -79,38 +138,33 @@ npx -y @agent-lint/mcp
 | `agentlint://template/{type}` | Skeleton template for a new artifact |
 | `agentlint://path-hints/{type}` | File discovery hints for each IDE client |
 
-## Why Not Maintain These Files By Hand?
-
-| Hand-written workflow | Agent Lint workflow |
-| --- | --- |
-| Every repo starts from scratch | The agent gets the same artifact guidance every time |
-| Context gets stale after structural changes | `doctor` and `quick_check` make drift visible |
-| Rules differ across developers and repos | Artifact expectations stay consistent |
-| Copy-paste prompts are written ad hoc | `prompt` gives a repeatable handoff into IDE chat |
-
 ## Supported Clients
 
-`agent-lint init` supports Cursor, Windsurf, VS Code, Claude Desktop, Claude Code, OpenCode, Cline, Kiro, Zed, and Codex CLI.
+`agent-lint init` supports:
+
+<p>
+  <kbd>Claude Code</kbd>
+  <kbd>Codex</kbd>
+  <kbd>Cursor</kbd>
+  <kbd>Windsurf</kbd>
+  <kbd>OpenCode</kbd>
+  <kbd>VS Code</kbd>
+  <kbd>Claude Desktop</kbd>
+  <kbd>Cline</kbd>
+  <kbd>Kiro</kbd>
+  <kbd>Zed</kbd>
+</p>
 
 For exact formats and scope support, see:
 
 - [CLI package README](packages/cli/README.md)
 - [MCP package README](packages/mcp/README.md)
 
-## Design Constraints
+## Core Guarantees
 
-- Local only. No database, auth layer, or hosted LLM.
-- MCP is read-only. Agent Lint provides guidance; the client agent applies changes.
-- Strict TypeScript monorepo with bundled internal packages.
-- Independent package versioning for `@agent-lint/cli` and `@agent-lint/mcp`.
-
-## Repository and Releases
-
-- GitHub is the canonical public home for docs, issues, and release discovery.
-- GitLab CI is the authoritative publish path for npm releases and provenance.
-- Release tags are package-scoped: `cli-vX.Y.Z` and `mcp-vX.Y.Z`.
-- Contributors add Changesets in feature and fix PRs; GitLab prepares a single release MR from those pending changes.
-- Merging the release MR creates tags automatically, waits for a maintainer-triggered publish job on the tag pipeline, and mirrors those tags back to GitHub after publish.
+- Local-first. No hosted LLM, no database, and no auth layer.
+- Read-only MCP server. Agent Lint returns guidance; your client agent makes repository changes.
+- Lightweight by design. Separate CLI and MCP packages, minimal dependencies, and strict TypeScript throughout.
 
 ## Contributing
 

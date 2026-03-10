@@ -107,6 +107,13 @@ describe("Embedded command flows", () => {
         pressEnter(session.stdin);
 
         await waitFor(
+          () => session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES"),
+          { timeoutMs: 5_000 },
+        );
+
+        pressEnter(session.stdin);
+
+        await waitFor(
           () => session.getStdout().includes("MCP config is ready."),
           { timeoutMs: 5_000 },
         );
@@ -124,7 +131,7 @@ describe("Embedded command flows", () => {
         session.cleanup();
       }
     });
-  });
+  }, 10_000);
 
   it("keeps the copied prompt visible until the user confirms", async () => {
     clipboard.write.mockResolvedValue(undefined);

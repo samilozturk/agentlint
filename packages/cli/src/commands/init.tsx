@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Text, render, useApp } from "ink";
 import { Spinner, MultiSelect, Select } from "@inkjs/ui";
 import {
@@ -23,28 +23,113 @@ import {
   getAvailableScopes,
 } from "./clients.js";
 import { type InstallResult, installClient } from "./config-writer.js";
+import {
+  type MaintenanceInstallResult,
+  installMaintenanceRule,
+} from "./maintenance-writer.js";
 
-// ── Types ──────────────────────────────────────────────────────────────
-
-type WizardStep = "detecting" | "selectClients" | "selectScope" | "installing" | "done";
+type WizardStep =
+  | "detecting"
+  | "selectClients"
+  | "selectScope"
+  | "installing"
+  | "confirmRules"
+  | "installingRules"
+  | "done";
 
 export interface ClientInstallResult {
   client: McpClient;
   scope: Scope;
-  result: InstallResult;
+  configResult: InstallResult;
+  maintenanceResult?: MaintenanceInstallResult;
 }
 
 export interface InitWizardProps {
-  options: { yes?: boolean; all?: boolean };
-  /** When provided, called instead of process exit (embedded mode) */
+  options: { yes?: boolean; all?: boolean; withRules?: boolean };
   onComplete?: (results: ClientInstallResult[]) => void;
-  /** Whether to show banner (standalone mode). Default: true */
   showBanner?: boolean;
 }
 
-// ── Stdout Mode (backward compat) ──────────────────────────────────────
+function isConfigReady(result: InstallResult): boolean {
+  return result.status === "created" ||
+    result.status === "merged" ||
+    result.status === "exists" ||
+    result.status === "cli-success";
+}
 
-function runStdoutInit(options: { yes?: boolean; all?: boolean }): void {
+function formatPath(result: InstallResult): string {
+  if ("configPath" in result) {
+    return result.configPath;
+  }
+  return "";
+}
+
+function formatError(result: InstallResult): string {
+  if ("message" in result) {
+    return result.message;
+  }
+  return "Unknown error";
+}
+
+function formatMaintenance(result: MaintenanceInstallResult | undefined): string {
+  if (!result) {
+    return "No maintenance rule result";
+  }
+
+  if ("targetPath" in result && result.targetPath) {
+    return result.targetPath;
+  }
+
+  if ("message" in result) {
+    return result.message;
+  }
+
+  return "Unknown maintenance rule result";
+}
+
+function printConfigResult(client: McpClient, result: InstallResult): void {
+  switch (result.status) {
+    case "created":
+    case "merged":
+      process.stdout.write(`[created] ${result.configPath} (${client.name})\n`);
+      break;
+    case "exists":
+      process.stdout.write(`[skip] ${result.configPath} (${client.name}) - already exists\n`);
+      break;
+    case "cli-success":
+      process.stdout.write(`[created] ${client.name} via CLI: ${result.message}\n`);
+      break;
+    case "no-scope":
+    case "error":
+      process.stdout.write(`[note] ${client.name}: ${result.message}\n`);
+      break;
+  }
+}
+
+function printMaintenanceResult(client: McpClient, result: MaintenanceInstallResult): void {
+  switch (result.status) {
+    case "created":
+      process.stdout.write(`[rule created] ${result.targetPath} (${client.name})\n`);
+      break;
+    case "updated":
+      process.stdout.write(`[rule updated] ${result.targetPath} (${client.name})\n`);
+      break;
+    case "appended":
+      process.stdout.write(`[rule appended] ${result.targetPath} (${client.name})\n`);
+      break;
+    case "exists":
+      process.stdout.write(`[rule skip] ${result.targetPath} (${client.name}) - already exists\n`);
+      break;
+    case "skipped":
+      process.stdout.write(`[rule skip] ${client.name}: ${result.message}\n`);
+      break;
+    case "error":
+      process.stdout.write(`[rule error] ${client.name}: ${result.message}\n`);
+      break;
+  }
+}
+
+function runStdoutInit(options: { yes?: boolean; all?: boolean; withRules?: boolean }): void {
   const cwd = process.cwd();
   const detected = detectInstalledClients(cwd);
   const clients = options.all
@@ -59,28 +144,24 @@ function runStdoutInit(options: { yes?: boolean; all?: boolean }): void {
   for (const client of clients) {
     const scopes = getAvailableScopes(client);
     const scope = scopes.includes("workspace") ? "workspace" : "global";
-    const result = installClient(client, scope, cwd, /* preferCli */ false);
+    const configResult = installClient(client, scope, cwd, false);
+    printConfigResult(client, configResult);
 
-    switch (result.status) {
-      case "created":
-      case "merged":
-        process.stdout.write(`[created] ${result.configPath} (${client.name})\n`);
-        break;
-      case "exists":
-        process.stdout.write(`[skip] ${result.configPath} (${client.name}) — already exists\n`);
-        break;
-      case "cli-success":
-        process.stdout.write(`[created] ${client.name} via CLI: ${result.message}\n`);
-        break;
-      case "no-scope":
-      case "error":
-        process.stdout.write(`[note] ${client.name}: ${result.message}\n`);
-        break;
+    if (!options.withRules && !options.yes) {
+      continue;
     }
+
+    if (!isConfigReady(configResult)) {
+      printMaintenanceResult(client, {
+        status: "skipped",
+        message: "MCP config was not installed for this client.",
+      });
+      continue;
+    }
+
+    printMaintenanceResult(client, installMaintenanceRule(client, cwd));
   }
 }
-
-// ── Wizard Component ───────────────────────────────────────────────────
 
 export function InitWizard({ options, onComplete, showBanner = true }: InitWizardProps): React.ReactNode {
   const { exit } = useApp();
@@ -91,15 +172,14 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
   const [selectedClientIds, setSelectedClientIds] = useState<ClientId[]>([]);
   const [selectedScope, setSelectedScope] = useState<Scope | null>(null);
   const [results, setResults] = useState<ClientInstallResult[]>([]);
+  const [maintenanceRequested, setMaintenanceRequested] = useState(false);
 
-  // Step 1: Auto-detect clients
   useEffect(() => {
     const id = setImmediate(() => {
       const found = detectInstalledClients(cwd);
       setDetected(found);
 
       if (options.all) {
-        // --all: skip selection, use all clients
         setSelectedClientIds(CLIENT_REGISTRY.map((c) => c.id));
         setStep("selectScope");
       } else {
@@ -107,40 +187,79 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
       }
     });
     return () => clearImmediate(id);
-  }, []);
+  }, [cwd, options.all]);
 
-  // Step 4: Install configs when scope is selected
   useEffect(() => {
-    if (step !== "installing") return;
-    if (!selectedScope) return;
+    if (step !== "installing" || !selectedScope) {
+      return;
+    }
 
     const id = setImmediate(() => {
-      const installResults: ClientInstallResult[] = [];
       const selectedClients = CLIENT_REGISTRY.filter((c) =>
-        selectedClientIds.includes(c.id),
-      );
+        selectedClientIds.includes(c.id));
+      const configResults = selectedClients.map((client) => ({
+        client,
+        scope: selectedScope,
+        configResult: installClient(client, selectedScope, cwd),
+      }));
 
-      for (const client of selectedClients) {
-        const result = installClient(client, selectedScope, cwd);
-        installResults.push({ client, scope: selectedScope, result });
+      setResults(configResults);
+
+      if (!configResults.some((entry) => isConfigReady(entry.configResult))) {
+        setStep("done");
+        return;
       }
 
-      setResults(installResults);
+      if (options.withRules || options.yes) {
+        setMaintenanceRequested(true);
+        setStep("installingRules");
+        return;
+      }
+
+      setStep("confirmRules");
+    });
+
+    return () => clearImmediate(id);
+  }, [cwd, options.withRules, options.yes, selectedClientIds, selectedScope, step]);
+
+  useEffect(() => {
+    if (step !== "installingRules") {
+      return;
+    }
+
+    const id = setImmediate(() => {
+      setResults((previous) =>
+        previous.map((entry) => {
+          if (!isConfigReady(entry.configResult)) {
+            return {
+              ...entry,
+              maintenanceResult: {
+                status: "skipped",
+                message: "MCP config was not installed for this client.",
+              },
+            };
+          }
+
+          return {
+            ...entry,
+            maintenanceResult: installMaintenanceRule(entry.client, cwd),
+          };
+        }));
       setStep("done");
     });
-    return () => clearImmediate(id);
-  }, [step, selectedScope]);
 
-  // Standalone mode exits after showing results. Embedded mode waits for confirmation.
+    return () => clearImmediate(id);
+  }, [cwd, step]);
+
   useEffect(() => {
-    if (step !== "done") return;
-    if (onComplete) return;
-    // Standalone mode — exit process
+    if (step !== "done" || onComplete) {
+      return;
+    }
+
     const id = setTimeout(() => exit(), 500);
     return () => clearTimeout(id);
-  }, [step, onComplete, results, exit]);
+  }, [exit, onComplete, step]);
 
-  // Build client options for MultiSelect
   const clientOptions = CLIENT_REGISTRY.map((client) => {
     const det = detected.find((d) => d.client.id === client.id);
     const suffix = det ? ` (detected via ${det.detectedBy})` : "";
@@ -150,13 +269,10 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
     };
   });
 
-  // Pre-select detected clients
   const defaultSelected = getDefaultSelectedClientIds(detected, cwd);
-
-  // Scope options
   const scopeOptions = [
-    { label: "Workspace — project-local config", value: "workspace" as Scope },
-    { label: "Global — user-level config", value: "global" as Scope },
+    { label: "Workspace - project-local config", value: "workspace" as Scope },
+    { label: "Global - user-level config", value: "global" as Scope },
   ];
 
   return (
@@ -168,14 +284,12 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
         </>
       )}
 
-      {/* Step 1: Detecting */}
       {step === "detecting" && (
         <Box marginTop={1} marginLeft={2}>
           <Spinner label="Detecting installed IDE clients..." />
         </Box>
       )}
 
-      {/* Step 2: Select Clients */}
       {step === "selectClients" && (
         <>
           {detected.length > 0 ? (
@@ -204,7 +318,6 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
               defaultValue={defaultSelected}
               onSubmit={(values) => {
                 if (values.length === 0) {
-                  // Nothing selected — exit gracefully
                   setStep("done");
                   return;
                 }
@@ -216,7 +329,6 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
         </>
       )}
 
-      {/* Step 3: Select Scope */}
       {step === "selectScope" && (
         <>
           <Box marginTop={1} marginLeft={2}>
@@ -244,21 +356,67 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
         </>
       )}
 
-      {/* Step 4: Installing */}
       {step === "installing" && (
         <Box marginTop={1} marginLeft={2}>
           <Spinner label="Configuring MCP servers..." />
         </Box>
       )}
 
-      {/* Step 5: Results */}
+      {step === "confirmRules" && (
+        <>
+          <Box marginTop={1} marginLeft={2}>
+            <Text color={colors.success} bold>{"+ "}</Text>
+            <Text>MCP setup is complete.</Text>
+          </Box>
+
+          <SectionTitle>Install maintenance rules</SectionTitle>
+          <Box marginLeft={3} marginBottom={0}>
+            <Text color={colors.dim} italic>
+              {"↑/↓ navigate · enter confirm"}
+            </Text>
+          </Box>
+          <Box marginLeft={3} marginTop={0}>
+            <Select
+              options={[
+                {
+                  label: "Yes - add maintenance rules (recommended)",
+                  value: "yes",
+                },
+                {
+                  label: "No - keep MCP setup only",
+                  value: "no",
+                },
+              ]}
+              onChange={(value) => {
+                if (value === "yes") {
+                  setMaintenanceRequested(true);
+                  setStep("installingRules");
+                  return;
+                }
+
+                setMaintenanceRequested(false);
+                setStep("done");
+              }}
+            />
+          </Box>
+        </>
+      )}
+
+      {step === "installingRules" && (
+        <Box marginTop={1} marginLeft={2}>
+          <Spinner label="Installing maintenance rules..." />
+        </Box>
+      )}
+
       {step === "done" && (
         <>
-          <ResultsView results={results} embedded={!!onComplete} />
+          <ResultsView
+            results={results}
+            embedded={!!onComplete}
+            maintenanceRequested={maintenanceRequested}
+          />
           {onComplete && (
-            <ContinuePrompt
-              onContinue={() => onComplete(results)}
-            />
+            <ContinuePrompt onContinue={() => onComplete(results)} />
           )}
         </>
       )}
@@ -266,9 +424,15 @@ export function InitWizard({ options, onComplete, showBanner = true }: InitWizar
   );
 }
 
-// ── Results Display ────────────────────────────────────────────────────
-
-function ResultsView({ results, embedded }: { results: ClientInstallResult[]; embedded?: boolean }): React.ReactNode {
+function ResultsView({
+  results,
+  embedded,
+  maintenanceRequested,
+}: {
+  results: ClientInstallResult[];
+  embedded?: boolean;
+  maintenanceRequested?: boolean;
+}): React.ReactNode {
   if (results.length === 0) {
     return (
       <>
@@ -284,10 +448,20 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
   }
 
   const created = results.filter(
-    (r) => r.result.status === "created" || r.result.status === "merged" || r.result.status === "cli-success",
+    (r) => r.configResult.status === "created" ||
+      r.configResult.status === "merged" ||
+      r.configResult.status === "cli-success",
   );
-  const skipped = results.filter((r) => r.result.status === "exists");
-  const errors = results.filter((r) => r.result.status === "error" || r.result.status === "no-scope");
+  const skipped = results.filter((r) => r.configResult.status === "exists");
+  const errors = results.filter(
+    (r) => r.configResult.status === "error" || r.configResult.status === "no-scope");
+  const ruleCreated = results.filter(
+    (r) => r.maintenanceResult?.status === "created" ||
+      r.maintenanceResult?.status === "updated" ||
+      r.maintenanceResult?.status === "appended");
+  const ruleExisting = results.filter((r) => r.maintenanceResult?.status === "exists");
+  const ruleSkipped = results.filter((r) => r.maintenanceResult?.status === "skipped");
+  const ruleErrors = results.filter((r) => r.maintenanceResult?.status === "error");
 
   return (
     <>
@@ -296,9 +470,9 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
           <SectionTitle>Configured</SectionTitle>
           {created.map((r, i) => (
             <SuccessItem key={i}>
-              {r.result.status === "cli-success"
+              {r.configResult.status === "cli-success"
                 ? `${r.client.name} (${r.scope}) via CLI`
-                : `${formatPath(r.result)} (${r.client.name}, ${r.scope})`}
+                : `${formatPath(r.configResult)} (${r.client.name}, ${r.scope})`}
             </SuccessItem>
           ))}
         </>
@@ -309,7 +483,7 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
           <SectionTitle>Already configured</SectionTitle>
           {skipped.map((r, i) => (
             <SkipItem key={i}>
-              {`${formatPath(r.result)} (${r.client.name}) — already exists`}
+              {`${formatPath(r.configResult)} (${r.client.name}) - already exists`}
             </SkipItem>
           ))}
         </>
@@ -320,7 +494,51 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
           <SectionTitle>Errors</SectionTitle>
           {errors.map((r, i) => (
             <ErrorItem key={i}>
-              {`${r.client.name}: ${formatError(r.result)}`}
+              {`${r.client.name}: ${formatError(r.configResult)}`}
+            </ErrorItem>
+          ))}
+        </>
+      )}
+
+      {ruleCreated.length > 0 && (
+        <>
+          <SectionTitle>Maintenance rules installed</SectionTitle>
+          {ruleCreated.map((r, i) => (
+            <SuccessItem key={i}>
+              {`${formatMaintenance(r.maintenanceResult)} (${r.client.name})`}
+            </SuccessItem>
+          ))}
+        </>
+      )}
+
+      {ruleExisting.length > 0 && (
+        <>
+          <SectionTitle>Maintenance rules already configured</SectionTitle>
+          {ruleExisting.map((r, i) => (
+            <SkipItem key={i}>
+              {`${formatMaintenance(r.maintenanceResult)} (${r.client.name})`}
+            </SkipItem>
+          ))}
+        </>
+      )}
+
+      {ruleSkipped.length > 0 && (
+        <>
+          <SectionTitle>Maintenance rules skipped</SectionTitle>
+          {ruleSkipped.map((r, i) => (
+            <SkipItem key={i}>
+              {`${r.client.name}: ${formatMaintenance(r.maintenanceResult)}`}
+            </SkipItem>
+          ))}
+        </>
+      )}
+
+      {ruleErrors.length > 0 && (
+        <>
+          <SectionTitle>Maintenance rule errors</SectionTitle>
+          {ruleErrors.map((r, i) => (
+            <ErrorItem key={i}>
+              {`${r.client.name}: ${formatMaintenance(r.maintenanceResult)}`}
             </ErrorItem>
           ))}
         </>
@@ -332,9 +550,15 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
         </Box>
       )}
 
+      {!maintenanceRequested && (
+        <Box marginLeft={2} marginTop={1}>
+          <Text color={colors.muted}>Maintenance rules were not installed.</Text>
+        </Box>
+      )}
+
       {created.length > 0 && (
         <Box marginLeft={2} marginTop={1}>
-          <Text color={colors.success} bold>{"✔ "}</Text>
+          <Text color={colors.success} bold>{"+ "}</Text>
           <Text>MCP config is ready. Now let your agent lint your context files.</Text>
         </Box>
       )}
@@ -348,23 +572,12 @@ function ResultsView({ results, embedded }: { results: ClientInstallResult[]; em
   );
 }
 
-function formatPath(result: InstallResult): string {
-  if ("configPath" in result) {
-    return result.configPath;
-  }
-  return "";
-}
-
-function formatError(result: InstallResult): string {
-  if ("message" in result) {
-    return result.message;
-  }
-  return "Unknown error";
-}
-
-// ── Export ──────────────────────────────────────────────────────────────
-
-export function runInitCommand(options: { yes?: boolean; all?: boolean; stdout?: boolean }): void {
+export function runInitCommand(options: {
+  yes?: boolean;
+  all?: boolean;
+  withRules?: boolean;
+  stdout?: boolean;
+}): void {
   if (options.stdout) {
     runStdoutInit(options);
     return;
