@@ -52,7 +52,7 @@ describe("maintenance-snippet", () => {
 
   it("teaches the agent to infer Agent Lint from plain-English context requests", () => {
     const result = buildMaintenanceSnippet("generic");
-    expect(result.snippet).toContain("plain-English requests");
+    expect(result.snippet).toContain("natural language requests");
     expect(result.snippet).toContain("AGENTS.md");
     expect(result.snippet).toContain("rules, skills, workflows, or plans");
   });

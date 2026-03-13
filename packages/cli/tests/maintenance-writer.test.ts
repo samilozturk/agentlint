@@ -86,7 +86,7 @@ describe("installMaintenanceRule", () => {
       const finalRaw = fs.readFileSync(targetPath, "utf-8");
 
       expect(result.status).toBe("exists");
-      expect((finalRaw.match(/plain-English requests/g) ?? [])).toHaveLength(1);
+      expect((finalRaw.match(/natural language requests/g) ?? [])).toHaveLength(1);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
