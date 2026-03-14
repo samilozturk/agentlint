@@ -10,9 +10,9 @@
     "url": "git+https://gitlab.com/bsamilozturk/agentlint.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/samilytu/agentlint#readme",
+  "homepage": "https://github.com/samilozturk/agentlint#readme",
   "bugs": {
-    "url": "https://github.com/samilytu/agentlint/issues"
+    "url": "https://github.com/samilozturk/agentlint/issues"
   },
   "keywords": [
     "cli",

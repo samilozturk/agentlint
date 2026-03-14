@@ -61,7 +61,7 @@ Notes:
 
 ## Related
 
-- [Root README](https://github.com/samilytu/agentlint)
+- [Root README](https://github.com/samilozturk/agentlint)
 - [CLI package](https://www.npmjs.com/package/@agent-lint/cli)
 - [Authoritative publish source](https://gitlab.com/bsamilozturk/agentlint)
 

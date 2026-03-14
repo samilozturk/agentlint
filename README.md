@@ -8,7 +8,7 @@ Keep `AGENTS.md`, `CLAUDE.md`, rules, skills, workflows, and plans structured, c
 
 Agent Lint helps coding agents maintain the files that shape how they work: `AGENTS.md`, `CLAUDE.md`, rules, skills, workflows, and plans. It stays local, does not call an LLM, and keeps the MCP server read-only. The CLI can write MCP client config when you run `init`; repository edits still belong to the client agent.
 
-[CLI on npm](https://www.npmjs.com/package/@agent-lint/cli) | [MCP on npm](https://www.npmjs.com/package/@agent-lint/mcp) | [GitHub](https://github.com/samilytu/agentlint) | [GitLab](https://gitlab.com/bsamilozturk/agentlint)
+[CLI on npm](https://www.npmjs.com/package/@agent-lint/cli) | [MCP on npm](https://www.npmjs.com/package/@agent-lint/mcp) | [GitHub](https://github.com/samilozturk/agentlint) | [GitLab](https://gitlab.com/bsamilozturk/agentlint)
 
 ![Agent Lint doctor demo](docs/screenshots/demo-doctor.svg)
 

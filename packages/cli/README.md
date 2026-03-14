@@ -75,7 +75,7 @@ It can save a report file and can also print to stdout or JSON for automation.
 
 ## Related
 
-- [Root README](https://github.com/samilytu/agentlint)
+- [Root README](https://github.com/samilozturk/agentlint)
 - [MCP package](https://www.npmjs.com/package/@agent-lint/mcp)
 - [Authoritative publish source](https://gitlab.com/bsamilozturk/agentlint)
 
