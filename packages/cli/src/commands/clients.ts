@@ -17,7 +17,8 @@ export type ClientId =
   | "cline"
   | "roo-code"
   | "kiro"
-  | "zed";
+  | "zed"
+  | "antigravity";
 
 export type ConfigFormat = "json" | "toml";
 export type Scope = "global" | "workspace";
@@ -146,7 +147,7 @@ export const CLIENT_REGISTRY: McpClient[] = [
     rootKey: "mcpServers",
     scopes: {
       workspace: { pathTemplate: ".mcp.json", absolute: false },
-      global: { pathTemplate: path.join(home(), ".claude.json"), absolute: true },
+      global: { pathTemplate: path.join(home(), ".mcp.json"), absolute: true },
     },
     detectBinaries: ["claude"],
     detectDirs: [".claude"],
@@ -282,7 +283,10 @@ export const CLIENT_REGISTRY: McpClient[] = [
     rootKey: "mcpServers",
     scopes: {
       global: {
-        pathTemplate: path.join(home(), ".cline", "data", "settings", "cline_mcp_settings.json"),
+        pathTemplate:
+          process.platform === "win32"
+            ? vscodeExtensionStoragePath("saoudrizwan.claude-dev")
+            : path.join(home(), ".cline", "data", "settings", "cline_mcp_settings.json"),
         absolute: true,
       },
     },
@@ -343,6 +347,21 @@ export const CLIENT_REGISTRY: McpClient[] = [
     },
     detectBinaries: ["zed"],
     detectDirs: [".zed"],
+  },
+  {
+    id: "antigravity",
+    name: "Antigravity",
+    configFormat: "json",
+    rootKey: "mcpServers",
+    scopes: {
+      global: {
+        pathTemplate: path.join(home(), ".gemini", "antigravity", "mcp_config.json"),
+        absolute: true,
+      },
+    },
+    detectBinaries: [],
+    detectDirs: [".gemini"],
+    detectPaths: [],
   },
 ];
 

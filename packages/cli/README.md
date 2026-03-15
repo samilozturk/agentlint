@@ -48,7 +48,7 @@ When you install maintenance rules, Agent Lint uses the client-specific instruct
 
 | IDE | Format | Scopes | Notes |
 | --- | --- | --- | --- |
-| Claude Code | JSON | Workspace / Global | Uses `.mcp.json` or `~/.claude.json`; prefers the `claude mcp add` flow when available |
+| Claude Code | JSON | Workspace / Global | Uses `.mcp.json` or `~/.mcp.json`; prefers the `claude mcp add` flow when available |
 | Codex | TOML | Workspace / Global | Uses `.codex/config.toml` or `~/.codex/config.toml` |
 | Cursor | JSON | Workspace / Global | Writes `.cursor/mcp.json` or `~/.cursor/mcp.json` |
 | OpenCode | JSON | Workspace / Global | Uses `opencode.json` or the OpenCode user config |
@@ -60,6 +60,7 @@ When you install maintenance rules, Agent Lint uses the client-specific instruct
 | Roo Code | JSON | Workspace / Global | Uses `.roo/mcp.json` or the Roo Code VS Code global storage MCP settings file |
 | Kiro | JSON | Workspace / Global | Uses `.kiro/settings/mcp.json` or `~/.kiro/settings/mcp.json` |
 | Zed | JSON | Workspace / Global | Uses Zed context server settings |
+| Antigravity | JSON | Global | Uses Antigravity MCP config |
 
 ## What `doctor` Produces
 

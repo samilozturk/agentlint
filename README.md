@@ -162,6 +162,7 @@ By default, Agent Lint anchors your context in the industry-standard `AGENTS.md`
   <kbd>Roo Code</kbd>
   <kbd>Kiro</kbd>
   <kbd>Zed</kbd>
+  <kbd>Antigravity</kbd>
 </p>
 
 For exact formats and scope support, see:

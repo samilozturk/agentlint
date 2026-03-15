@@ -136,6 +136,14 @@ describe("buildServerEntry", () => {
     });
   });
 
+  it("returns default stdio entry for antigravity", () => {
+    const entry = buildServerEntry(stubClient("antigravity"));
+    expect(entry).toEqual({
+      command: "npx",
+      args: ["-y", "@agent-lint/mcp"],
+    });
+  });
+
   it("never includes rootKey wrapper in returned entry", () => {
     for (const client of CLIENT_REGISTRY) {
       const entry = buildServerEntry(client);
@@ -295,6 +303,7 @@ describe("CLIENT_REGISTRY", () => {
       "roo-code",
       "kiro",
       "zed",
+      "antigravity",
     ]);
   });
 
@@ -308,6 +317,7 @@ describe("CLIENT_REGISTRY", () => {
     expect(scopesById["roo-code"]).toEqual(["workspace", "global"]);
     expect(scopesById["kiro"]).toEqual(["workspace", "global"]);
     expect(scopesById["cline"]).toEqual(["global"]);
+    expect(scopesById["antigravity"]).toEqual(["global"]);
   });
 });
 
@@ -318,7 +328,7 @@ describe("resolveConfigPath", () => {
 
     expect(client).toBeDefined();
     expect(slash(resolveConfigPath(client!, "workspace", cwd)!)).toBe("/workspace/.mcp.json");
-    expect(slash(resolveConfigPath(client!, "global", cwd)!)).toMatch(/\.claude\.json$/);
+    expect(slash(resolveConfigPath(client!, "global", cwd)!)).toMatch(/\.mcp\.json$/);
   });
 
   it("resolves Roo Code, Kilo Code, and Kiro MCP files", () => {
