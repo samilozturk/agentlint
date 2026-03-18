@@ -19,6 +19,7 @@ The `agent-lint` binary opens an interactive TUI in a TTY and falls back to help
 | `agent-lint init` | Detect supported IDE clients, install an Agent Lint MCP entry, and optionally add maintenance rules |
 | `agent-lint doctor` | Scan the workspace and generate a context maintenance report grouped into missing types, incomplete files, stale, conflicting, and weak findings |
 | `agent-lint prompt` | Print a ready-to-paste IDE prompt for the next maintenance step, using broad-scan or targeted-maintenance wording plus local change signals when available |
+| `agent-lint score <file>` | Score a context artifact against 12 quality dimensions and print targeted improvement suggestions; auto-detects artifact type or accepts `--type` |
 
 ### Common command examples
 
@@ -30,6 +31,8 @@ agent-lint doctor --stdout
 agent-lint doctor --json
 agent-lint prompt
 agent-lint prompt --stdout
+agent-lint score AGENTS.md
+agent-lint score CLAUDE.md --type agents
 ```
 
 Re-running `agent-lint init --with-rules` updates managed rule files in place and avoids duplicate snippets.
@@ -81,6 +84,15 @@ It groups what it finds into:
 - weak-but-present sections such as placeholders or thin verification guidance
 
 It can save a report file and can also print to stdout or JSON for automation.
+
+## What `score` Produces
+
+`agent-lint score <file>` evaluates a single context artifact against 12 quality dimensions using pure static analysis:
+
+- scope, structure, actionability, verification, security, maintenance, progressive disclosure, cross-references, and more
+- each dimension receives a per-signal score with targeted improvement suggestions
+- artifact type is auto-detected from the filename or overridden with `--type agents|skills|rules|workflows|plans`
+- useful in autoresearch loops: score, improve, compare, keep or revert
 
 ## What `prompt` Produces
 
