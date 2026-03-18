@@ -4,7 +4,7 @@ import { Select } from "@inkjs/ui";
 import { SectionTitle } from "./components.js";
 import { colors } from "./theme.js";
 
-export type MenuCommand = "init" | "doctor" | "prompt" | "exit";
+export type MenuCommand = "init" | "scan" | "prompt" | "exit";
 
 export interface MainMenuProps {
   onSelect: (command: MenuCommand) => void;
@@ -16,8 +16,8 @@ const menuOptions: { label: string; value: MenuCommand }[] = [
     value: "init",
   },
   {
-    label: "Scan workspace (doctor) - Scan the workspace for missing, stale, or weak context artifacts.",
-    value: "doctor",
+    label: "Scan workspace (scan) - Scan the workspace for missing, stale, or weak context artifacts.",
+    value: "scan",
   },
   {
     label: "Get prompt (prompt) - Generate the handoff prompt after setup and scan results are clear.",
@@ -37,7 +37,7 @@ export function MainMenu({ onSelect }: MainMenuProps): React.ReactNode {
       </Box>
       <Box marginLeft={3} marginTop={1} flexDirection="column">
         <Text color={colors.muted}>Start here if you are unsure:</Text>
-        <Text color={colors.tertiary}>1. init -&gt; 2. doctor -&gt; 3. prompt</Text>
+        <Text color={colors.tertiary}>1. init -&gt; 2. scan -&gt; 3. prompt</Text>
       </Box>
       <Box marginLeft={3} marginTop={1}>
         <Select

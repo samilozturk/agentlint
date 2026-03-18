@@ -6,7 +6,7 @@ Agent Lint is a strict TypeScript monorepo for keeping coding-agent context arti
 
 - CLI package: `@agent-lint/cli`
 - MCP package: `@agent-lint/mcp`
-- CLI commands: `init`, `doctor`, `prompt`
+- CLI commands: `init`, `scan`, `prompt`
 - MCP tools: `agentlint_get_guidelines`, `agentlint_plan_workspace_autofix`, `agentlint_quick_check`, `agentlint_emit_maintenance_snippet`
 
 ## Development Setup

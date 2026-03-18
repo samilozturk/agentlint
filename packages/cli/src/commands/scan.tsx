@@ -19,7 +19,7 @@ import { colors } from "../ui/theme.js";
 
 const REPORT_FILENAME = ".agentlint-report.md";
 
-export type DoctorResult = {
+export type ScanResult = {
   discoveredCount: number;
   missingCount: number;
   incompleteCount: number;
@@ -38,16 +38,16 @@ export type DoctorResult = {
   reportError?: string;
 };
 
-export interface DoctorAppProps {
+export interface ScanAppProps {
   /** When provided, called instead of process exit (embedded mode) */
-  onComplete?: (result: DoctorResult) => void;
+  onComplete?: (result: ScanResult) => void;
   /** Whether to show banner (standalone mode). Default: true */
   showBanner?: boolean;
   /** Whether to persist the report to .agentlint-report.md */
   saveReport?: boolean;
 }
 
-type DoctorScanResult = Omit<DoctorResult, "reportPath" | "reportSaved" | "reportError">;
+type ScanInternalResult = Omit<ScanResult, "reportPath" | "reportSaved" | "reportError">;
 
 function formatMissingArtifact(rootPath: string, suggestedPath: string, type: string): string {
   const relativeSuggestedPath =
@@ -55,7 +55,7 @@ function formatMissingArtifact(rootPath: string, suggestedPath: string, type: st
   return `${type} -> ${relativeSuggestedPath}`;
 }
 
-function buildDoctorScanResult(rootPath: string): DoctorScanResult {
+function buildScanResult(rootPath: string): ScanInternalResult {
   const plan = buildWorkspaceAutofixPlan(rootPath);
   const { discoveryResult } = plan;
 
@@ -77,7 +77,7 @@ function buildDoctorScanResult(rootPath: string): DoctorScanResult {
   };
 }
 
-function persistDoctorReport(rootPath: string, markdown: string): {
+function persistScanReport(rootPath: string, markdown: string): {
   reportPath: string;
   reportSaved: boolean;
   reportError?: string;
@@ -110,25 +110,25 @@ function persistDoctorReport(rootPath: string, markdown: string): {
   }
 }
 
-function runDoctor(rootPath: string = process.cwd(), saveReport = false): DoctorResult {
-  const scanResult = buildDoctorScanResult(rootPath);
+function runScan(rootPath: string = process.cwd(), saveReport = false): ScanResult {
+  const scanResult = buildScanResult(rootPath);
 
   if (saveReport) {
-    const persistence = persistDoctorReport(rootPath, scanResult.markdown);
+    const persistence = persistScanReport(rootPath, scanResult.markdown);
     return { ...scanResult, ...persistence };
   }
 
   return scanResult;
 }
 
-export function DoctorApp({ onComplete, showBanner = true, saveReport = false }: DoctorAppProps): React.ReactNode {
+export function ScanApp({ onComplete, showBanner = true, saveReport = false }: ScanAppProps): React.ReactNode {
   const { exit } = useApp();
   const [phase, setPhase] = useState<"scanning" | "done">("scanning");
-  const [result, setResult] = useState<DoctorResult | null>(null);
+  const [result, setResult] = useState<ScanResult | null>(null);
 
   useEffect(() => {
     const id = setImmediate(() => {
-      const r = runDoctor(process.cwd(), saveReport);
+      const r = runScan(process.cwd(), saveReport);
 
       setResult(r);
       setPhase("done");
@@ -252,7 +252,7 @@ export function DoctorApp({ onComplete, showBanner = true, saveReport = false }:
   );
 }
 
-export function runDoctorCommand(options: {
+export function runScanCommand(options: {
   stdout?: boolean;
   json?: boolean;
   saveReport?: boolean;
@@ -266,10 +266,10 @@ export function runDoctorCommand(options: {
   }
 
   if (options.stdout) {
-    const result = buildDoctorScanResult(rootPath);
+    const result = buildScanResult(rootPath);
     process.stdout.write(result.markdown + "\n");
     return;
   }
 
-  render(<DoctorApp showBanner={true} saveReport={options.saveReport} />);
+  render(<ScanApp showBanner={true} saveReport={options.saveReport} />);
 }

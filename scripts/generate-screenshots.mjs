@@ -43,7 +43,7 @@ const VERSION = cliPackageJson.version;
 const CLI_DESCRIPTION =
   "Set up Agent Lint MCP config, scan for stale context files, and print prompts for your coding agent";
 const INIT_DESCRIPTION = "Set up Agent Lint MCP config for supported IDE clients";
-const DOCTOR_DESCRIPTION = "Scan the workspace and generate a context maintenance report";
+const SCAN_DESCRIPTION = "Scan the workspace and generate a context maintenance report";
 const PROMPT_DESCRIPTION = "Print a ready-to-paste IDE prompt for the next maintenance step";
 const PROMPT_WITH_REPORT =
   "Read the file .agentlint-report.md in this project and execute the recommended context maintenance fixes. " +
@@ -264,12 +264,12 @@ function sceneInit() {
     renderSkipItem(".codex/config.toml (Codex CLI) - already exists"),
     "",
     renderSuccessItem("MCP config is ready. Now let your agent lint your context files."),
-    renderNextStep("Run `agent-lint doctor` to scan your workspace."),
+    renderNextStep("Run `agent-lint scan` to scan your workspace."),
     "",
   ].join("\n");
 }
 
-function sceneDoctor() {
+function sceneScan() {
   return [
     renderBanner(),
     renderDivider(),
@@ -317,7 +317,7 @@ function sceneHelp() {
     "",
     bold(colors.primary, "Commands:"),
     wrapHelpLine("init [options]", INIT_DESCRIPTION),
-    wrapHelpLine("doctor [options]", DOCTOR_DESCRIPTION),
+    wrapHelpLine("scan [options]", SCAN_DESCRIPTION),
     wrapHelpLine("prompt [options]", PROMPT_DESCRIPTION),
     "  " + colored(colors.success, "help [command]") + "    display help for command",
     "",
@@ -360,7 +360,7 @@ if (!fs.existsSync(outputDir)) {
 
 const scenes = [
   { file: "demo-init", render: sceneInit },
-  { file: "demo-doctor", render: sceneDoctor },
+  { file: "demo-scan", render: sceneScan },
   { file: "demo-prompt", render: scenePrompt },
   { file: "demo-help", render: sceneHelp },
 ];

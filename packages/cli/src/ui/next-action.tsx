@@ -38,13 +38,13 @@ export function buildNextActions(context: NextActionContext): ActionOption[] {
           value: "prompt",
         });
         options.push({
-          label: "Scan workspace (doctor) - Run a full scan if you want a report before handing off.",
-          value: "doctor",
+          label: "Scan workspace (scan) - Run a full scan if you want a report before handing off.",
+          value: "scan",
         });
       } else {
         options.push({
           label: "Scan workspace (recommended) - Verify the current workspace before the next handoff.",
-          value: "doctor",
+          value: "scan",
         });
         options.push({
           label: "Get prompt (prompt) - Generate the handoff prompt after the scan is clear.",
@@ -53,7 +53,7 @@ export function buildNextActions(context: NextActionContext): ActionOption[] {
       }
       break;
 
-    case "doctor":
+    case "scan":
       options.push({
         label: "Get prompt (recommended) - Turn the scan results into a ready-to-use handoff prompt.",
         value: "prompt",
@@ -67,7 +67,7 @@ export function buildNextActions(context: NextActionContext): ActionOption[] {
     case "prompt":
       options.push({
         label: "Scan workspace (recommended) - Rescan the workspace after follow-up changes.",
-        value: "doctor",
+        value: "scan",
       });
       options.push({
         label: "Set up MCP config (init) - Set up or refresh MCP config if client wiring is still missing.",
@@ -81,8 +81,8 @@ export function buildNextActions(context: NextActionContext): ActionOption[] {
         value: "init",
       });
       options.push({
-        label: "Scan workspace (doctor) - Scan the workspace for missing, stale, or weak context artifacts.",
-        value: "doctor",
+        label: "Scan workspace (scan) - Scan the workspace for missing, stale, or weak context artifacts.",
+        value: "scan",
       });
       options.push({
         label: "Get prompt (prompt) - Generate the next maintenance handoff prompt.",
@@ -104,16 +104,16 @@ export function getNextActionGuidance(context: NextActionContext): NextActionGui
   switch (context.completedCommand) {
     case "init":
       order = context.initCreatedConfigs
-        ? "Recommended order from here: 1. prompt to continue with an agent, 2. doctor if you want a full workspace report."
-        : "Recommended order from here: 1. doctor to verify the current workspace, 2. prompt to hand off the follow-up work.";
+        ? "Recommended order from here: 1. prompt to continue with an agent, 2. scan if you want a full workspace report."
+        : "Recommended order from here: 1. scan to verify the current workspace, 2. prompt to hand off the follow-up work.";
       break;
-    case "doctor":
+    case "scan":
       order =
         "Recommended order from here: 1. prompt to act on the scan, 2. init only if MCP config still needs setup.";
       break;
     case "prompt":
       order =
-        "Recommended order from here: 1. doctor to rescan after changes, 2. init only if client config is still missing.";
+        "Recommended order from here: 1. scan to rescan after changes, 2. init only if client config is still missing.";
       break;
   }
 

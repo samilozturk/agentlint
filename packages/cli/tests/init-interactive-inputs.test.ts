@@ -336,7 +336,7 @@ describe("main menu — exit option", () => {
         );
 
         // Navigate to Exit option (last item in menu)
-        // Menu order: init (1st), doctor (2nd), prompt (3rd), exit (4th)
+        // Menu order: init (1st), scan (2nd), prompt (3rd), exit (4th)
         await sleep(100);
         pressArrowDown(session.stdin);
         await sleep(50);

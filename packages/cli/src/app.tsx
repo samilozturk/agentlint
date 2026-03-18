@@ -4,7 +4,7 @@ import { Banner, Divider } from "./ui/components.js";
 import { MainMenu, type MenuCommand } from "./ui/main-menu.js";
 import { NextAction, type NextActionContext, type NextActionChoice } from "./ui/next-action.js";
 import { InitWizard, type ClientInstallResult } from "./commands/init.js";
-import { DoctorApp, type DoctorResult } from "./commands/doctor.js";
+import { ScanApp, type ScanResult } from "./commands/scan.js";
 import { PromptApp, type PromptResult } from "./commands/prompt.js";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ export interface InitCommandOptions {
   withRules?: boolean;
 }
 
-export interface DoctorCommandOptions {
+export interface ScanCommandOptions {
   saveReport?: boolean;
 }
 
@@ -30,7 +30,7 @@ export interface AppProps {
   /** Options for the initial command (consumed once, then cleared) */
   commandOptions?: {
     init?: InitCommandOptions;
-    doctor?: DoctorCommandOptions;
+    scan?: ScanCommandOptions;
   };
 }
 
@@ -59,11 +59,11 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
     return {};
   }, [commandOptions]);
 
-  /** Return doctor options — uses commandOptions.doctor on the first call, then {} */
-  const getDoctorOptions = useCallback((): DoctorCommandOptions => {
-    if (!initialOptionsConsumed.current && commandOptions?.doctor) {
+  /** Return scan options — uses commandOptions.scan on the first call, then {} */
+  const getScanOptions = useCallback((): ScanCommandOptions => {
+    if (!initialOptionsConsumed.current && commandOptions?.scan) {
       initialOptionsConsumed.current = true;
-      return commandOptions.doctor;
+      return commandOptions.scan;
     }
     return {};
   }, [commandOptions]);
@@ -95,11 +95,11 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
     });
   }, []);
 
-  const handleDoctorComplete = useCallback((_result: DoctorResult) => {
+  const handleScanComplete = useCallback((_result: ScanResult) => {
     setScreen({
       type: "next-action",
       context: {
-        completedCommand: "doctor",
+        completedCommand: "scan",
       },
     });
   }, []);
@@ -150,11 +150,11 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
         />
       )}
 
-      {screen.type === "command" && screen.command === "doctor" && (
-        <DoctorApp
-          onComplete={handleDoctorComplete}
+      {screen.type === "command" && screen.command === "scan" && (
+        <ScanApp
+          onComplete={handleScanComplete}
           showBanner={false}
-          saveReport={getDoctorOptions().saveReport}
+          saveReport={getScanOptions().saveReport}
         />
       )}
 

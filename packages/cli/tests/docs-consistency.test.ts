@@ -30,7 +30,7 @@ function formatScopes(client: (typeof CLIENT_REGISTRY)[number]): string {
 describe("CLI README consistency", () => {
   it("documents the current command surface", () => {
     expect(cliReadme).toContain("`agent-lint init`");
-    expect(cliReadme).toContain("`agent-lint doctor`");
+    expect(cliReadme).toContain("`agent-lint scan`");
     expect(cliReadme).toContain("`agent-lint prompt`");
     expect(cliReadme).toContain("missing types, incomplete files, stale, conflicting, and weak findings");
     expect(cliReadme).toContain("broad-scan or targeted-maintenance");
@@ -75,7 +75,7 @@ describe("CLI README consistency", () => {
     }
   });
 
-  it("documents the grouped doctor and prompt behavior in the root README", () => {
+  it("documents the grouped scan and prompt behavior in the root README", () => {
     expect(rootReadme).toContain("missing types, incomplete files, stale references, conflicting guidance, and weak-but-present");
     expect(rootReadme).toContain("broad workspace scan or a targeted maintenance handoff");
     expect(rootReadme).toContain("local change signals");
@@ -86,7 +86,6 @@ describe("public docs surface", () => {
   it("does not mention removed CLI or legacy MCP commands", () => {
     const removedPatterns = [
       /\bagent-lint analyze\b/,
-      /\bagent-lint scan\b/,
       /\banalyze_artifact\b/,
       /\banalyze_workspace_artifacts\b/,
       /\banalyze_context_bundle\b/,

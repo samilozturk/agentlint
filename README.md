@@ -10,7 +10,7 @@ Agent Lint helps coding agents maintain the files that shape how they work: `AGE
 
 [CLI on npm](https://www.npmjs.com/package/@agent-lint/cli) | [MCP on npm](https://www.npmjs.com/package/@agent-lint/mcp) | [GitHub](https://github.com/samilozturk/agentlint) | [GitLab](https://gitlab.com/bsamilozturk/agentlint)
 
-![Agent Lint doctor demo](docs/screenshots/demo-doctor.svg)
+![Agent Lint scan demo](docs/screenshots/demo-scan.svg)
 
 ## The Problem
 
@@ -26,7 +26,7 @@ Without a standard, agent context files drift fast:
 Agent Lint gives your coding agent a repeatable workflow:
 
 - set up MCP config with `agent-lint init`
-- scan the workspace with `agent-lint doctor`
+- scan the workspace with `agent-lint scan`
 - paste a ready-made prompt with `agent-lint prompt`
 - score any context artifact with `agent-lint score`
 - use 5 MCP tools and 3 MCP resources to keep context artifacts aligned with the codebase
@@ -71,7 +71,7 @@ This opens an interactive session where you can run the core Agent Lint commands
 ### Core commands
 
 * `init` — set up MCP config and optionally install maintenance rules
-* `doctor` — scan the workspace and generate a context maintenance report
+* `scan` — scan the workspace and generate a context maintenance report
 * `prompt` — print a ready-to-paste prompt for your IDE chat
 * `score <file>` — score a context artifact against 12 quality dimensions
 
@@ -93,8 +93,8 @@ npx -y @agent-lint/mcp
 Once Agent Lint is connected, most coding agents can infer when to use it from a natural language prompt.
 
 ```text
-agent-lint init  ->  agent-lint doctor  ->  agent-lint prompt
-connect MCP          scan workspace         hand off into IDE chat
+agent-lint init  ->  agent-lint scan  ->  agent-lint prompt
+connect MCP          scan workspace       hand off into IDE chat
 ```
 
 Try prompts like:
@@ -121,7 +121,7 @@ By default, Agent Lint anchors your context in the industry-standard `AGENTS.md`
 | Command | Purpose |
 | --- | --- |
 | `agent-lint init` | Set up Agent Lint MCP config and optionally install maintenance rules |
-| `agent-lint doctor` | Scan the workspace and generate a context maintenance report grouped into missing types, incomplete files, stale, conflicting, and weak findings |
+| `agent-lint scan` | Scan the workspace and generate a context maintenance report grouped into missing types, incomplete files, stale, conflicting, and weak findings |
 | `agent-lint prompt` | Print a ready-to-paste IDE prompt that chooses a broad workspace scan or a targeted maintenance handoff using current workspace findings and local change signals when available |
 | `agent-lint score <file>` | Score a context artifact against 12 quality dimensions and print targeted improvement suggestions; artifact type is auto-detected from the filename or set with `--type` |
 

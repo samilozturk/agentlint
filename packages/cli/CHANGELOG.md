@@ -26,7 +26,7 @@
 
 ### Patch Changes
 
-- 8a4cc93: Improve `doctor` and `prompt` maintenance guidance with grouped artifact findings, targeted handoff selection, and updated CLI documentation.
+- 8a4cc93: Improve `scan` and `prompt` maintenance guidance with grouped artifact findings, targeted handoff selection, and updated CLI documentation.
 
 ## 0.5.1
 
@@ -46,13 +46,13 @@
 
 ### Patch Changes
 
-- 5db9d58: Make doctor report persistence opt-in with `--save-report`, simplify prompt flow, and align the TUI next-step behavior with the new CLI flow.
+- 5db9d58: Make scan report persistence opt-in with `--save-report`, simplify prompt flow, and align the TUI next-step behavior with the new CLI flow.
 
 ## 0.4.4
 
 ### Patch Changes
 
-- a4047fa: Fix doctor workspace discovery and report persistence regressions, and align cross-platform fixture coverage for CLI and MCP outputs.
+- a4047fa: Fix scan workspace discovery and report persistence regressions, and align cross-platform fixture coverage for CLI and MCP outputs.
 
 ## [0.4.3]
 
@@ -82,7 +82,7 @@
 
 ### Added
 
-- Interactive `agent-lint` TUI for `init`, `doctor`, and `prompt`
+- Interactive `agent-lint` TUI for `init`, `scan`, and `prompt`
 - IDE-aware MCP config setup across supported clients
 - Workspace report generation and prompt handoff workflow
 

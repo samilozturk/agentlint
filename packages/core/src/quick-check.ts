@@ -104,11 +104,11 @@ const PATH_SIGNALS: readonly SignalRule[] = [
   },
   {
     test: (p) =>
-      /packages\/(cli\/src\/commands\/clients\.ts|cli\/src\/commands\/maintenance-writer\.ts|cli\/src\/commands\/doctor\.tsx|cli\/src\/commands\/prompt\.tsx|mcp\/src\/catalog\.ts|mcp\/src\/server\.ts|core\/src\/maintenance-snippet\.ts|core\/src\/plan-builder\.ts|core\/src\/workspace-discovery\.ts|core\/src\/quick-check\.ts)$/i.test(p),
+      /packages\/(cli\/src\/commands\/clients\.ts|cli\/src\/commands\/maintenance-writer\.ts|cli\/src\/commands\/scan\.tsx|cli\/src\/commands\/prompt\.tsx|mcp\/src\/catalog\.ts|mcp\/src\/server\.ts|core\/src\/maintenance-snippet\.ts|core\/src\/plan-builder\.ts|core\/src\/workspace-discovery\.ts|core\/src\/quick-check\.ts)$/i.test(p),
     trigger: "Agent Lint public maintenance surface changed",
     affectedArtifacts: ["agents", "rules", "plans"],
     action:
-      "Review root guidance, managed maintenance artifacts, doctor/prompt wording, and public docs/tests together so clients, prompts, and instructions stay aligned.",
+      "Review root guidance, managed maintenance artifacts, scan/prompt wording, and public docs/tests together so clients, prompts, and instructions stay aligned.",
   },
   {
     test: (p) => isDirectoryLikePath(p),

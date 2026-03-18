@@ -38,7 +38,7 @@ describe("Bare invocation routing", () => {
     expect(stderr).toBe("");
     expect(stdout).toContain("Usage:");
     expect(stdout).toContain("init");
-    expect(stdout).toContain("doctor");
+    expect(stdout).toContain("scan");
     expect(stdout).toContain("prompt");
     expect(combined).not.toContain("Raw mode is not supported");
   });
@@ -69,11 +69,11 @@ describe("Interactive TTY flow", () => {
     try {
       await waitFor(() => session.getStdout().toUpperCase().includes("WHAT WOULD YOU LIKE TO DO?"));
       await waitFor(() => session.getStdout().includes("Start here if you are unsure:"));
-      expect(session.getStdout()).toContain("1. init -> 2. doctor -> 3. prompt");
+      expect(session.getStdout()).toContain("1. init -> 2. scan -> 3. prompt");
       expect(session.getStdout()).toContain(
         "Set up MCP config (init) - Install or refresh MCP config and managed maintenance rules.",
       );
-      expect(session.getStdout()).not.toContain("doctor - Scan the workspace for missing, stale");
+      expect(session.getStdout()).not.toContain("scan - Scan the workspace for missing, stale");
 
       await sleep(100);
       pressEnter(session.stdin);
@@ -118,13 +118,13 @@ describe("Standalone mode (backward compat after index.tsx refactor)", () => {
     expect(out.trim()).toMatch(/^\d+\.\d+\.\d+/);
   }, 15_000);
 
-  it("doctor --stdout still works", () => {
-    const out = run(["doctor", "--stdout"]);
+  it("scan --stdout still works", () => {
+    const out = run(["scan", "--stdout"]);
     expect(out).toContain("# Workspace Autofix Plan");
   }, 15_000);
 
-  it("doctor --json still works", () => {
-    const out = run(["doctor", "--json"]);
+  it("scan --json still works", () => {
+    const out = run(["scan", "--json"]);
     const parsed = JSON.parse(out) as { rootPath: string };
     expect(parsed.rootPath).toBeTruthy();
   }, 15_000);
@@ -137,14 +137,14 @@ describe("Standalone mode (backward compat after index.tsx refactor)", () => {
   it("--help shows available commands", () => {
     const out = run(["--help"]);
     expect(out).toContain("init");
-    expect(out).toContain("doctor");
+    expect(out).toContain("scan");
     expect(out).toContain("prompt");
   }, 15_000);
 
   it("help subcommand still works", () => {
     const out = run(["help"]);
     expect(out).toContain("init");
-    expect(out).toContain("doctor");
+    expect(out).toContain("scan");
     expect(out).toContain("prompt");
   }, 15_000);
 
@@ -170,13 +170,13 @@ describe("Standalone mode (backward compat after index.tsx refactor)", () => {
 // ── App with initialCommand (standalone TUI routing) ─────────────────────
 
 describe("App with initialCommand", () => {
-  it("skips MainMenu and goes directly to doctor, then shows NextAction", async () => {
+  it("skips MainMenu and goes directly to scan, then shows NextAction", async () => {
     const originalCwd = process.cwd();
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-initial-cmd-"));
     process.chdir(tmpDir);
 
     const session = renderInTTY(
-      React.createElement(App, { initialCommand: "doctor" }),
+      React.createElement(App, { initialCommand: "scan" }),
     );
 
     try {
@@ -184,7 +184,7 @@ describe("App with initialCommand", () => {
       await sleep(200);
       expect(session.getStdout().toUpperCase()).not.toContain("WHAT WOULD YOU LIKE TO DO?");
 
-      // Doctor should run and complete
+      // Scan should run and complete
       await waitFor(
         () => session.getStdout().toUpperCase().includes("DISCOVERED ARTIFACTS"),
         { timeoutMs: 10_000 },
@@ -209,17 +209,17 @@ describe("App with initialCommand", () => {
     }
   }, 15_000);
 
-  it("can chain from doctor to prompt via NextAction", async () => {
+  it("can chain from scan to prompt via NextAction", async () => {
     const originalCwd = process.cwd();
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-chain-"));
     process.chdir(tmpDir);
 
     const session = renderInTTY(
-      React.createElement(App, { initialCommand: "doctor" }),
+      React.createElement(App, { initialCommand: "scan" }),
     );
 
     try {
-      // Wait for doctor to complete
+      // Wait for scan to complete
       await waitFor(
         () => session.getStdout().toUpperCase().includes("DISCOVERED ARTIFACTS"),
         { timeoutMs: 10_000 },
@@ -229,7 +229,7 @@ describe("App with initialCommand", () => {
       pressEnter(session.stdin);
       await waitFor(() => session.getStdout().toUpperCase().includes("WHAT'S NEXT?"));
 
-      // First option should be prompt (recommended after doctor with report)
+      // First option should be prompt (recommended after scan with report)
       // Press Enter to select it
       await sleep(100);
       pressEnter(session.stdin);
@@ -253,11 +253,11 @@ describe("App with initialCommand", () => {
     process.chdir(tmpDir);
 
     const session = renderInTTY(
-      React.createElement(App, { initialCommand: "doctor" }),
+      React.createElement(App, { initialCommand: "scan" }),
     );
 
     try {
-      // Wait for doctor to complete
+      // Wait for scan to complete
       await waitFor(
         () => session.getStdout().toUpperCase().includes("DISCOVERED ARTIFACTS"),
         { timeoutMs: 10_000 },
@@ -291,7 +291,7 @@ describe("App with initialCommand", () => {
     process.chdir(tmpDir);
 
     const session = renderInTTY(
-      React.createElement(App, { initialCommand: "doctor" }),
+      React.createElement(App, { initialCommand: "scan" }),
     );
 
     try {

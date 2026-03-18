@@ -25,8 +25,8 @@ function runCli(args: string[], cwd?: string) {
 }
 
 describe("CLI output modes", () => {
-  it("doctor --stdout prints canonical artifact report for the fixture workspace", () => {
-    const out = run(["doctor", "--stdout"], FIXTURE_WORKSPACE).replace(/\\/g, "/");
+  it("scan --stdout prints canonical artifact report for the fixture workspace", () => {
+    const out = run(["scan", "--stdout"], FIXTURE_WORKSPACE).replace(/\\/g, "/");
 
     expect(out).toContain("# Workspace Autofix Plan");
     expect(out).toContain("## Context summary");
@@ -35,8 +35,8 @@ describe("CLI output modes", () => {
     expect(out).not.toContain(".agentlint-report.md");
   });
 
-  it("doctor --json returns only canonical discovered artifacts", () => {
-    const out = run(["doctor", "--json"], FIXTURE_WORKSPACE);
+  it("scan --json returns only canonical discovered artifacts", () => {
+    const out = run(["scan", "--json"], FIXTURE_WORKSPACE);
     const parsed = JSON.parse(out) as {
       discovered: Array<{ relativePath: string }>;
       missing: unknown[];
@@ -57,13 +57,13 @@ describe("CLI output modes", () => {
     expect(parsed.summary.recommendedPromptMode).toBe("targeted-maintenance");
   });
 
-  it("doctor --save-report writes a non-empty report file", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-"));
+  it("scan --save-report writes a non-empty report file", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-scan-"));
 
     try {
       fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
 
-      const result = runCli(["doctor", "--save-report"], tmpDir);
+      const result = runCli(["scan", "--save-report"], tmpDir);
       const reportPath = path.join(tmpDir, ".agentlint-report.md");
 
       expect(result.status).toBe(0);
@@ -75,13 +75,13 @@ describe("CLI output modes", () => {
     }
   });
 
-  it("doctor without --save-report does not write a report file", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-no-report-"));
+  it("scan without --save-report does not write a report file", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-scan-no-report-"));
 
     try {
       fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
 
-      const result = runCli(["doctor"], tmpDir);
+      const result = runCli(["scan"], tmpDir);
       const reportPath = path.join(tmpDir, ".agentlint-report.md");
 
       expect(result.status).toBe(0);

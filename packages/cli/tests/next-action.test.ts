@@ -13,23 +13,23 @@ describe("buildNextActions", () => {
     const options = buildNextActions(context);
     expect(options[0].value).toBe("prompt");
     expect(options[0].label).toContain("recommended");
-    expect(options[1].value).toBe("doctor");
+    expect(options[1].value).toBe("scan");
   });
 
-  it("recommends doctor after init when all configs existed", () => {
+  it("recommends scan after init when all configs existed", () => {
     const context: NextActionContext = {
       completedCommand: "init",
       initCreatedConfigs: false,
     };
     const options = buildNextActions(context);
-    expect(options[0].value).toBe("doctor");
+    expect(options[0].value).toBe("scan");
     expect(options[0].label).toContain("recommended");
     expect(options[1].value).toBe("prompt");
   });
 
-  it("recommends prompt after doctor", () => {
+  it("recommends prompt after scan", () => {
     const context: NextActionContext = {
-      completedCommand: "doctor",
+      completedCommand: "scan",
     };
     const options = buildNextActions(context);
     expect(options[0].value).toBe("prompt");
@@ -37,12 +37,12 @@ describe("buildNextActions", () => {
     expect(options[1].value).toBe("init");
   });
 
-  it("recommends doctor after prompt", () => {
+  it("recommends scan after prompt", () => {
     const context: NextActionContext = {
       completedCommand: "prompt",
     };
     const options = buildNextActions(context);
-    expect(options[0].value).toBe("doctor");
+    expect(options[0].value).toBe("scan");
     expect(options[0].label).toContain("recommended");
     expect(options[1].value).toBe("init");
   });
@@ -51,7 +51,7 @@ describe("buildNextActions", () => {
     const contexts: NextActionContext[] = [
       { completedCommand: "init", initCreatedConfigs: true },
       { completedCommand: "init", initCreatedConfigs: false },
-      { completedCommand: "doctor" },
+      { completedCommand: "scan" },
       { completedCommand: "prompt" },
     ];
 
@@ -68,7 +68,7 @@ describe("buildNextActions", () => {
   it("returns at least 4 options for every context", () => {
     const contexts: NextActionContext[] = [
       { completedCommand: "init", initCreatedConfigs: true },
-      { completedCommand: "doctor" },
+      { completedCommand: "scan" },
       { completedCommand: "prompt" },
     ];
 
@@ -85,15 +85,15 @@ describe("buildNextActions", () => {
     const options = buildNextActions(context);
     const values = options.map((option) => option.value);
     expect(values).toContain("init");
-    expect(values).toContain("doctor");
+    expect(values).toContain("scan");
     expect(values).toContain("prompt");
     expect(values).toContain("menu");
     expect(values).toContain("exit");
   });
 
-  it("explains the recommended sequence after doctor", () => {
-    const guidance = getNextActionGuidance({ completedCommand: "doctor" });
-    const options = buildNextActions({ completedCommand: "doctor" });
+  it("explains the recommended sequence after scan", () => {
+    const guidance = getNextActionGuidance({ completedCommand: "scan" });
+    const options = buildNextActions({ completedCommand: "scan" });
 
     expect(guidance.order).toContain("1. prompt");
     expect(guidance.order).toContain("2. init");
@@ -103,7 +103,7 @@ describe("buildNextActions", () => {
   it("keeps navigation options short while action labels carry descriptions", () => {
     const options = buildNextActions({ completedCommand: "prompt" });
 
-    expect(options.find((item) => item.value === "doctor")?.label).toContain("Rescan the workspace");
+    expect(options.find((item) => item.value === "scan")?.label).toContain("Rescan the workspace");
     expect(options.find((item) => item.value === "menu")?.label).toBe("Back to menu");
     expect(options.find((item) => item.value === "exit")?.label).toBe("Exit");
   });

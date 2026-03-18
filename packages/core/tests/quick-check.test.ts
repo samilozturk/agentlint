@@ -48,9 +48,9 @@ describe("quick-check", () => {
     expect(result.signals.some((s) => s.trigger === "Root context baseline changed")).toBe(true);
   });
 
-  it("detects doctor, prompt, and core planning files as public maintenance surface changes", () => {
+  it("detects scan, prompt, and core planning files as public maintenance surface changes", () => {
     const result = runQuickCheck([
-      "packages/cli/src/commands/doctor.tsx",
+      "packages/cli/src/commands/scan.tsx",
       "packages/cli/src/commands/prompt.tsx",
       "packages/core/src/plan-builder.ts",
       "packages/core/src/workspace-discovery.ts",

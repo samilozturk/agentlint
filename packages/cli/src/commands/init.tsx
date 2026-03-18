@@ -571,7 +571,7 @@ function ResultsView({
 
       {!embedded && (
         <NextStep>
-          {`Run ${"`"}agent-lint doctor${"`"} to scan your workspace.`}
+          {`Run ${"`"}agent-lint scan${"`"} to scan your workspace.`}
         </NextStep>
       )}
     </>

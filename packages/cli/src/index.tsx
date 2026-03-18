@@ -10,7 +10,7 @@ import { render } from "ink";
 import React from "react";
 import { Command } from "commander";
 import { runInitCommand } from "./commands/init.js";
-import { runDoctorCommand } from "./commands/doctor.js";
+import { runScanCommand } from "./commands/scan.js";
 import { runPromptCommand } from "./commands/prompt.js";
 import { runScoreCommand } from "./commands/score.js";
 import { redirectLogsToStderr } from "./utils.js";
@@ -34,7 +34,7 @@ function resolveEntryMode(argv: string[], stdinIsTTY: boolean): EntryMode {
 }
 
 const NON_INTERACTIVE_FLAGS = new Set(["--stdout", "--json", "--help", "-h"]);
-const TUI_COMMANDS = new Set<string>(["init", "doctor", "prompt"]);
+const TUI_COMMANDS = new Set<string>(["init", "scan", "prompt"]);
 
 interface ParsedTuiCommand {
   command: MenuCommand;
@@ -65,14 +65,14 @@ export function parseTuiCommand(argv: string[]): ParsedTuiCommand | null {
     if (initOpts.yes || initOpts.all || initOpts.withRules) {
       appProps.commandOptions = { init: initOpts };
     }
-  } else if (command === "doctor") {
-    const doctorOpts: { saveReport?: boolean } = {};
+  } else if (command === "scan") {
+    const scanOpts: { saveReport?: boolean } = {};
     for (const flag of rest) {
-      if (flag === "--save-report") doctorOpts.saveReport = true;
+      if (flag === "--save-report") scanOpts.saveReport = true;
       else return null;
     }
-    if (doctorOpts.saveReport) {
-      appProps.commandOptions = { doctor: doctorOpts };
+    if (scanOpts.saveReport) {
+      appProps.commandOptions = { scan: scanOpts };
     }
   } else if (rest.length > 0) {
     return null;
@@ -102,13 +102,13 @@ function createProgram(): Command {
     });
 
   program
-    .command("doctor")
+    .command("scan")
     .description("Scan the workspace and generate a context maintenance report")
     .option("--stdout", "Print report to stdout instead of TUI")
     .option("--json", "Output discovery results as JSON")
     .option("--save-report", "Save report to .agentlint-report.md")
     .action((options: { stdout?: boolean; json?: boolean; saveReport?: boolean }) => {
-      runDoctorCommand(options);
+      runScanCommand(options);
     });
 
   program

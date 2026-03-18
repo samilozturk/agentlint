@@ -1,7 +1,7 @@
-# Agent Lint — doctor command demo
-# Records: agent-lint doctor scanning workspace for context artifacts
+# Agent Lint — scan command demo
+# Records: agent-lint scan scanning workspace for context artifacts
 
-Output docs/screenshots/demo-doctor.gif
+Output docs/screenshots/demo-scan.gif
 
 Set Shell "powershell"
 Set FontSize 15
@@ -13,7 +13,7 @@ Set PlaybackSpeed 0.8
 Set TypingSpeed 60ms
 Set Padding 16
 
-Type "node packages/cli/dist/index.js doctor"
+Type "node packages/cli/dist/index.js scan"
 Sleep 400ms
 Enter
 Sleep 3s

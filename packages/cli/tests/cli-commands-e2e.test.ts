@@ -1,5 +1,5 @@
 /**
- * CLI command e2e tests — focus on 'score' command and additional init/doctor scenarios
+ * CLI command e2e tests — focus on 'score' command and additional init/scan scenarios
  * not already covered by cli-stdout.test.ts.
  */
 import { execFileSync, spawnSync } from "node:child_process";
@@ -130,16 +130,16 @@ describe("init --all flag", () => {
   }, 30_000);
 });
 
-// ── doctor --json structure ───────────────────────────────────────────────
+// ── scan --json structure ────────────────────────────────────────────────
 
-describe("doctor --json output structure", () => {
+describe("scan --json output structure", () => {
   it("includes rootPath, discovered, missing, and summary fields", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-json-"));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-scan-json-"));
 
     try {
       fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
 
-      const out = run(["doctor", "--json"], tmpDir);
+      const out = run(["scan", "--json"], tmpDir);
       const parsed = JSON.parse(out) as {
         rootPath: string;
         discovered: unknown[];
@@ -163,12 +163,12 @@ describe("doctor --json output structure", () => {
   }, 15_000);
 
   it("discovered artifacts include relativePath field", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-doctor-json-paths-"));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-scan-json-paths-"));
 
     try {
       fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# AGENTS\n");
 
-      const out = run(["doctor", "--json"], tmpDir);
+      const out = run(["scan", "--json"], tmpDir);
       const parsed = JSON.parse(out) as {
         discovered: Array<{ relativePath: string }>;
       };

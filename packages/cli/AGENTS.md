@@ -11,7 +11,7 @@
 
 - Do not special-case one client without updating docs and tests.
 - Do not break the generic maintenance fallback that appends to `AGENTS.md` or `CLAUDE.md`.
-- Do not write repository files outside explicit CLI outputs such as client config, maintenance rules, or the doctor report.
+- Do not write repository files outside explicit CLI outputs such as client config, maintenance rules, or the scan report.
 
 ## Repository Evidence
 
@@ -19,7 +19,7 @@
 - `src/commands/clients.ts`: supported client registry and config path rules.
 - `src/commands/config-writer.ts`: JSON and TOML merge behavior.
 - `src/commands/maintenance-writer.ts`: maintenance snippet install behavior and backups.
-- `src/commands/doctor.tsx` and `src/commands/prompt.tsx`: user-facing report and prompt output.
+- `src/commands/scan.tsx` and `src/commands/prompt.tsx`: user-facing report and prompt output.
 
 ## Clarification Gate
 
@@ -36,7 +36,7 @@
 ## Repo Map
 
 - `src/index.tsx` and `src/app.tsx`: CLI entry and app shell.
-- `src/commands/`: init, doctor, prompt, client registry, and file writers.
+- `src/commands/`: init, scan, prompt, client registry, and file writers.
 - `src/ui/`: Ink components and theme.
 - `tests/`: docs consistency, init flow, maintenance writer, clients, and TTY behavior.
 
@@ -45,7 +45,7 @@
 - When client support changes, update `clients.ts`, config merge logic, package README tables, and tests in the same change.
 - Keep maintenance installs idempotent: Cursor and Windsurf replace managed files, generic clients append to `AGENTS.md` or `CLAUDE.md`.
 - Preserve backup behavior before replacing or appending to existing files.
-- Keep doctor and prompt output stable unless docs and tests are intentionally updated.
+- Keep scan and prompt output stable unless docs and tests are intentionally updated.
 
 ## When Stuck
 

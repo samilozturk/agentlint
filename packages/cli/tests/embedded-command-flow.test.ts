@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DoctorApp } from "../src/commands/doctor.js";
+import { ScanApp } from "../src/commands/scan.js";
 import { InitWizard } from "../src/commands/init.js";
 import { PromptApp } from "../src/commands/prompt.js";
 import { pressEnter, renderInTTY, sleep, waitFor } from "./tty-test-utils.js";
@@ -38,11 +38,11 @@ describe("Embedded command flows", () => {
     vi.restoreAllMocks();
   });
 
-  it("waits for Enter before completing doctor in embedded mode", async () => {
+  it("waits for Enter before completing scan in embedded mode", async () => {
     await withTempCwd(async () => {
       const onComplete = vi.fn();
       const session = renderInTTY(
-        React.createElement(DoctorApp, { onComplete, showBanner: false }),
+        React.createElement(ScanApp, { onComplete, showBanner: false }),
       );
 
       try {
@@ -65,13 +65,13 @@ describe("Embedded command flows", () => {
     });
   });
 
-  it("does not render missing artifact entries in the doctor TUI", async () => {
+  it("does not render missing artifact entries in the scan TUI", async () => {
     await withTempCwd(async () => {
       fs.writeFileSync(path.join(process.cwd(), "AGENTS.md"), "# AGENTS\n");
 
       const onComplete = vi.fn();
       const session = renderInTTY(
-        React.createElement(DoctorApp, { onComplete, showBanner: false }),
+        React.createElement(ScanApp, { onComplete, showBanner: false }),
       );
 
       try {

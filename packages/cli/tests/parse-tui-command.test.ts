@@ -11,11 +11,11 @@ describe("parseTuiCommand", () => {
     });
   });
 
-  it("parses bare 'doctor' as a TUI command", () => {
-    const result = parseTuiCommand(["doctor"]);
+  it("parses bare 'scan' as a TUI command", () => {
+    const result = parseTuiCommand(["scan"]);
     expect(result).toEqual({
-      command: "doctor",
-      appProps: { initialCommand: "doctor" },
+      command: "scan",
+      appProps: { initialCommand: "scan" },
     });
   });
 
@@ -84,15 +84,15 @@ describe("parseTuiCommand", () => {
     });
   });
 
-  // ── Doctor with flags ───────────────────────────────────────────────────
+  // ── Scan with flags ────────────────────────────────────────────────────
 
-  it("parses 'doctor --save-report' with command options", () => {
-    const result = parseTuiCommand(["doctor", "--save-report"]);
+  it("parses 'scan --save-report' with command options", () => {
+    const result = parseTuiCommand(["scan", "--save-report"]);
     expect(result).toEqual({
-      command: "doctor",
+      command: "scan",
       appProps: {
-        initialCommand: "doctor",
-        commandOptions: { doctor: { saveReport: true } },
+        initialCommand: "scan",
+        commandOptions: { scan: { saveReport: true } },
       },
     });
   });
@@ -103,12 +103,12 @@ describe("parseTuiCommand", () => {
     expect(parseTuiCommand(["init", "--stdout"])).toBeNull();
   });
 
-  it("returns null for 'doctor --stdout'", () => {
-    expect(parseTuiCommand(["doctor", "--stdout"])).toBeNull();
+  it("returns null for 'scan --stdout'", () => {
+    expect(parseTuiCommand(["scan", "--stdout"])).toBeNull();
   });
 
-  it("returns null for 'doctor --json'", () => {
-    expect(parseTuiCommand(["doctor", "--json"])).toBeNull();
+  it("returns null for 'scan --json'", () => {
+    expect(parseTuiCommand(["scan", "--json"])).toBeNull();
   });
 
   it("returns null for 'prompt --stdout'", () => {
@@ -119,8 +119,8 @@ describe("parseTuiCommand", () => {
     expect(parseTuiCommand(["init", "--help"])).toBeNull();
   });
 
-  it("returns null for 'doctor -h'", () => {
-    expect(parseTuiCommand(["doctor", "-h"])).toBeNull();
+  it("returns null for 'scan -h'", () => {
+    expect(parseTuiCommand(["scan", "-h"])).toBeNull();
   });
 
   // ── Unknown commands/flags bail to Commander.js ────────────────────────
@@ -141,8 +141,8 @@ describe("parseTuiCommand", () => {
     expect(parseTuiCommand([])).toBeNull();
   });
 
-  it("returns null for 'doctor' with unknown flag", () => {
-    expect(parseTuiCommand(["doctor", "--unknown"])).toBeNull();
+  it("returns null for 'scan' with unknown flag", () => {
+    expect(parseTuiCommand(["scan", "--unknown"])).toBeNull();
   });
 
   it("returns null for 'prompt' with unknown flag", () => {

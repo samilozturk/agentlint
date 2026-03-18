@@ -3,7 +3,7 @@
 ## Scope and Goals
 
 - Add low-risk, deterministic heuristics that improve context-artifact maintenance without changing Agent Lint's product identity.
-- Strengthen `packages/core/src/workspace-discovery.ts`, `packages/core/src/quick-check.ts`, `packages/cli/src/commands/doctor.tsx`, and `packages/cli/src/commands/prompt.tsx` before considering any new public surface.
+- Strengthen `packages/core/src/workspace-discovery.ts`, `packages/core/src/quick-check.ts`, `packages/cli/src/commands/scan.tsx`, and `packages/cli/src/commands/prompt.tsx` before considering any new public surface.
 - Keep the monorepo boundary intact: `shared <- core <- mcp` and `shared <- core <- cli`.
 - Keep the MCP server read-only and stateless.
 - Update docs and tests together whenever user-visible behavior changes.
@@ -21,7 +21,7 @@
 
 - Discovery and required-section checking already exist in `packages/core/src/workspace-discovery.ts`.
 - Structural trigger detection already exists in `packages/core/src/quick-check.ts`.
-- The current CLI surface remains `init`, `doctor`, and `prompt`.
+- The current CLI surface remains `init`, `scan`, and `prompt`.
 - Public docs are protected by docs-consistency tests in `packages/cli/tests/docs-consistency.test.ts` and `packages/mcp/tests/docs-consistency.test.ts`.
 - Root scripts in `package.json`, `CONTRIBUTING.md`, and `PUBLISH.md` remain the source of truth for verification commands.
 - `agentlint-example/` is a separate project and must be consulted only for inspiration:
@@ -36,7 +36,7 @@
 
 - Heuristic drift: new checks may create false positives if they are based on loose keyword matching instead of artifact context.
 - Product drift: too many rule ideas can turn Agent Lint into a generic linter rather than a maintenance engine.
-- Docs drift: CLI or doctor wording changes can desynchronize README and package README content.
+- Docs drift: CLI or scan wording changes can desynchronize README and package README content.
 - Boundary drift: CLI convenience work can accidentally push logic out of `core`.
 - This work depends on:
   - `packages/shared` contracts and artifact type modeling
@@ -171,7 +171,7 @@
 
 - [ ] Every new heuristic is fully local and repo-evidence-based.
 - [ ] No heuristic requires network access, semantic scoring, or hidden runtime state.
-- [ ] `doctor` can consume richer findings without any new command being added.
+- [ ] `scan` can consume richer findings without any new command being added.
 - [ ] At least six new deterministic findings are covered by tests.
 
 ### Definition of Done
@@ -180,7 +180,7 @@
 - [ ] All Phase 1 heuristics are protected by targeted tests.
 - [ ] Any user-visible wording change is documented and test-aligned.
 
-## Phase 2: Operational Doctor And Prompt Output
+## Phase 2: Operational Scan And Prompt Output
 
 ### Goal
 
@@ -188,12 +188,12 @@
 
 ### Implementation Checklist
 
-- [ ] Update `doctor` output to group findings into:
+- [ ] Update `scan` output to group findings into:
   - missing
   - stale
   - conflicting
   - weak-but-present
-- [ ] Add remediation ordering to `doctor` output:
+- [ ] Add remediation ordering to `scan` output:
   - security or hygiene first
   - drift second
   - quality improvements third
@@ -205,9 +205,9 @@
 
 ### Phase 2 Feature Backlog
 
-- [ ] Severity-grouped `doctor` output.
+- [ ] Severity-grouped `scan` output.
 - [ ] Context-aware `prompt` handoff.
-- [ ] Optional `doctor` filtering by artifact type.
+- [ ] Optional `scan` filtering by artifact type.
 - [ ] Stronger next-step messaging tied to actual findings.
 
 ### `agentlint-example/` Inspiration Notes
@@ -221,7 +221,7 @@
 
 ### Tests and Controls
 
-- [ ] Update CLI flow tests covering grouped `doctor` output.
+- [ ] Update CLI flow tests covering grouped `scan` output.
 - [ ] Extend `packages/cli/tests/next-action.test.ts` for remediation ordering.
 - [ ] Extend `packages/cli/tests/interactive-mode.test.ts` if filtering is introduced.
 - [ ] Update `packages/cli/tests/docs-consistency.test.ts` if README wording changes.
@@ -230,13 +230,13 @@
 ### Acceptance Criteria
 
 - [ ] `prompt` no longer returns the same fixed handoff text in all cases.
-- [ ] `doctor` output makes ordering and maintenance priority clear.
+- [ ] `scan` output makes ordering and maintenance priority clear.
 - [ ] No new command is added unless the existing surface cannot safely hold the behavior.
 - [ ] Root README and package README text remain aligned with the actual user flow.
 
 ### Definition of Done
 
-- [ ] A user can run `doctor` and understand what to fix first.
+- [ ] A user can run `scan` and understand what to fix first.
 - [ ] A user can run `prompt` and get a handoff that reflects current workspace state.
 - [ ] All user-facing text changes are docs-consistency protected.
 

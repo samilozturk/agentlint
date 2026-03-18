@@ -16,7 +16,7 @@
 # Current-State Assumptions
 
 - Public MCP surface remains four tools and three resources.
-- Public CLI surface remains `init`, `doctor`, and `prompt`.
+- Public CLI surface remains `init`, `scan`, and `prompt`.
 - Supported clients remain the current `CLIENT_REGISTRY`: Claude Code, Codex, Cursor, OpenCode, Windsurf, Claude Desktop, VS Code, Kilo Code, Cline, Roo Code, Kiro, and Zed.
 - Claude-family clients prefer `CLAUDE.md`; all other clients prefer `AGENTS.md` as the generic context-file fallback.
 - Root `AGENTS.md` stays primary; package/client files may add narrower constraints without replacing the root baseline.
