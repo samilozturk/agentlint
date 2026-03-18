@@ -86,7 +86,6 @@ describe("public docs surface", () => {
   it("does not mention removed CLI or legacy MCP commands", () => {
     const removedPatterns = [
       /\bagent-lint analyze\b/,
-      /\bagent-lint score\b/,
       /\bagent-lint scan\b/,
       /\banalyze_artifact\b/,
       /\banalyze_workspace_artifacts\b/,

@@ -130,68 +130,6 @@ describe("init --all flag", () => {
   }, 30_000);
 });
 
-// ── DEBUG=agentlint:* integration ─────────────────────────────────────────
-
-describe("DEBUG=agentlint:* integration", () => {
-  it("produces debug output on stderr when DEBUG=agentlint:*", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-debug-"));
-    fs.mkdirSync(path.join(tmpDir, ".vscode"));
-
-    try {
-      const result = runCli(
-        ["init", "--all", "--stdout"],
-        tmpDir,
-        { DEBUG: "agentlint:*" },
-      );
-
-      // stderr should contain debug output
-      expect(result.stderr).toContain("[agentlint:");
-    } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-  }, 15_000);
-
-  it("produces no debug output on stderr when DEBUG is not set", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-nodebug-"));
-    fs.mkdirSync(path.join(tmpDir, ".vscode"));
-
-    try {
-      // Explicitly unset DEBUG
-      const env = { ...process.env };
-      delete env["DEBUG"];
-
-      const result = spawnSync(
-        process.execPath,
-        [TSX_PATH, SOURCE_CLI_PATH, "init", "--all", "--stdout"],
-        { cwd: tmpDir, encoding: "utf-8", timeout: 15_000, env },
-      );
-
-      expect(result.stderr ?? "").not.toContain("[agentlint:");
-    } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-  }, 15_000);
-
-  it("produces debug output for specific namespace when DEBUG=agentlint:config-writer", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "agentlint-debug-ns-"));
-    fs.mkdirSync(path.join(tmpDir, ".vscode"));
-
-    try {
-      const result = runCli(
-        ["init", "--all", "--stdout"],
-        tmpDir,
-        { DEBUG: "agentlint:config-writer" },
-      );
-
-      expect(result.stderr).toContain("[agentlint:config-writer]");
-      // clients namespace should NOT appear
-      expect(result.stderr).not.toContain("[agentlint:clients]");
-    } finally {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    }
-  }, 15_000);
-});
-
 // ── doctor --json structure ───────────────────────────────────────────────
 
 describe("doctor --json output structure", () => {

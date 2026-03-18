@@ -233,7 +233,7 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
       return;
     }
 
-    expect(tools).toHaveLength(4);
+    expect(tools).toHaveLength(5);
 
     const toolNames = tools
       .map((tool) => (typeof tool === "object" && tool !== null ? (tool as { name?: unknown }).name : null))
@@ -243,6 +243,7 @@ describeMcpStdio("MCP stdio server integration", { timeout: 30_000 }, () => {
     expect(toolNames).toContain("agentlint_plan_workspace_autofix");
     expect(toolNames).toContain("agentlint_quick_check");
     expect(toolNames).toContain("agentlint_emit_maintenance_snippet");
+    expect(toolNames).toContain("agentlint_score_artifact");
   });
 
   it("calls agentlint_get_guidelines successfully", async () => {
