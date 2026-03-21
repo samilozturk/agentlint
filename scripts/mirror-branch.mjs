@@ -64,7 +64,7 @@ function main() {
     }
   }
 
-  execFileSync("git", ["push", remoteName, `HEAD:${remoteRef}`], {
+  execFileSync("git", ["push", "--force", remoteName, `HEAD:${remoteRef}`], {
     stdio: "inherit",
   });
 }
