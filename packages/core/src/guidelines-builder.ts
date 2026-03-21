@@ -188,6 +188,56 @@ function buildSkillSpecificGuidance(): string {
   ].join("\n");
 }
 
+const WORKFLOW_DISCIPLINE_TYPES: ReadonlySet<ArtifactType> = new Set([
+  "agents",
+  "workflows",
+  "plans",
+]);
+
+function buildWorkflowDisciplineGuidance(): string {
+  return [
+    "## Workflow discipline",
+    "",
+    "Include guidance on how agents should approach tasks, not just what artifacts look like.",
+    "",
+    "### 1. Plan-first default",
+    "",
+    "- Enter plan mode for any non-trivial task (3+ steps or architectural decisions).",
+    "- If execution hits a blocker, stop and re-plan immediately — do not push through a failing approach.",
+    "- Use plan mode for verification steps, not only for building.",
+    "",
+    "### 2. Subagent strategy",
+    "",
+    "- Offload research, exploration, and parallel analysis to subagents to keep the main context window clean.",
+    "- One focused task per subagent for predictable results.",
+    "- For complex problems, prefer more subagents over longer single-agent sessions.",
+    "",
+    "### 3. Self-improvement loop",
+    "",
+    "- After any correction, capture the pattern in a lessons file (e.g. `tasks/lessons.md`).",
+    "- Write rules that prevent the same mistake from recurring.",
+    "- Review accumulated lessons at session start for the active project.",
+    "",
+    "### 4. Verification before done",
+    "",
+    "- Never mark a task complete without proving it works: run tests, check logs, diff behavior.",
+    "- Ask: *Would a staff engineer approve this?*",
+    "- When relevant, diff behavior between the base branch and your changes.",
+    "",
+    "### 5. Demand elegance (balanced)",
+    "",
+    "- For non-trivial changes, pause and ask whether a more elegant solution exists.",
+    "- If a fix feels hacky, step back and implement the clean solution with full context.",
+    "- Skip this for simple, obvious fixes — do not over-engineer.",
+    "",
+    "### 6. Autonomous problem solving",
+    "",
+    "- When given a bug report, resolve it end-to-end without requiring hand-holding.",
+    "- Point at logs, errors, and failing tests — then fix them.",
+    "- Fix failing CI tests without being told how.",
+  ].join("\n");
+}
+
 function buildGuardrailsBlock(): string {
   return [
     "## Guardrails",
@@ -252,6 +302,9 @@ export function buildGuidelines(
     "",
     ...(type === "skills"
       ? ["---", "", buildSkillSpecificGuidance(), ""]
+      : []),
+    ...(WORKFLOW_DISCIPLINE_TYPES.has(type)
+      ? ["---", "", buildWorkflowDisciplineGuidance(), ""]
       : []),
     "---",
     "",
