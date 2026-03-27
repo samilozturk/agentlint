@@ -2,11 +2,13 @@ import { execFileSync } from "node:child_process";
 import process from "node:process";
 
 function git(args, options = {}) {
-  return execFileSync("git", args, {
+  const result = execFileSync("git", args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
     ...options,
-  }).trim();
+  });
+
+  return typeof result === "string" ? result.trim() : "";
 }
 
 function githubRemoteUrl() {
