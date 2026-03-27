@@ -14,7 +14,7 @@ describe("getReleaseStatusSkipReason", () => {
   it("does not skip normal merge requests", () => {
     const reason = getReleaseStatusSkipReason({
       CI_PIPELINE_SOURCE: "merge_request_event",
-      CI_MERGE_REQUEST_SOURCE_BRANCH_NAME: "feature/fix-doctor",
+      CI_MERGE_REQUEST_SOURCE_BRANCH_NAME: "feature/fix-scan",
     });
 
     expect(reason).toBeNull();

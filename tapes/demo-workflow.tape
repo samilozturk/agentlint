@@ -1,5 +1,5 @@
-# Agent Lint — full workflow demo (hero GIF)
-# Records: init → doctor → prompt in sequence
+# Agent Lint full workflow demo (hero GIF)
+# Records: init -> scan -> prompt in sequence
 
 Output docs/screenshots/demo-workflow.gif
 
@@ -14,7 +14,7 @@ Set TypingSpeed 55ms
 Set Padding 16
 Set LoopOffset 60%
 
-# Step 1 — init
+# Step 1 - init
 Type "node packages/cli/dist/index.js init"
 Sleep 400ms
 Enter
@@ -24,8 +24,8 @@ Sleep 3s
 Ctrl+L
 Sleep 500ms
 
-# Step 2 — doctor
-Type "node packages/cli/dist/index.js doctor"
+# Step 2 - scan
+Type "node packages/cli/dist/index.js scan"
 Sleep 400ms
 Enter
 Sleep 3s
@@ -34,7 +34,7 @@ Sleep 3s
 Ctrl+L
 Sleep 500ms
 
-# Step 3 — prompt
+# Step 3 - prompt
 Type "node packages/cli/dist/index.js prompt"
 Sleep 400ms
 Enter
