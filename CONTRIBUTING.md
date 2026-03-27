@@ -63,6 +63,7 @@ Dependency flow:
 - Any change to MCP tools or resources must update the public READMEs and the docs consistency tests.
 - Package versions, changelogs, tags, and publish workflows must stay aligned.
 - GitHub is the public home. GitLab CI is the authoritative publish path. Do not reintroduce dual publish automation.
+- Do not merge code directly on GitHub `main`. GitLab mirrors `main` back to GitHub and may rewrite GitHub history with `--force-with-lease` to restore parity.
 - Package versions and package changelogs are generated from Changesets through the GitLab release MR flow. Do not edit release versions by hand.
 
 ## Commit and PR Style

@@ -21,6 +21,8 @@ GitHub stays public-facing for docs and issues. GitLab CI is the control plane t
 
 Manual version edits and manual tag creation are no longer the normal path.
 
+GitLab is the source of truth for `main`. Do not merge code directly on GitHub `main`; the mirror job uses `--force-with-lease` to restore GitHub to the exact GitLab history when they diverge.
+
 ## Local Verification
 
 Before opening a merge request:
@@ -98,6 +100,7 @@ Current CI auth behavior:
 - install, build, typecheck, lint, test, and pack dry-runs
 - validate package-scoped tags after they are mirrored back from GitLab
 - never publish to npm
+- do not become an alternate merge path for `main`
 
 ### GitLab CI
 
