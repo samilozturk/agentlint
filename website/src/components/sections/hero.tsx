@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Copy, Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/hooks/use-copy";
-import { FadeUp, FadeIn } from "@/components/motion";
 
 const BANNER_AGENT = [
   " █████╗  ██████╗ ███████╗███╗   ██╗████████╗",
@@ -82,7 +81,7 @@ export function HeroSection() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--color-brand-700)_0%,_transparent_70%)] opacity-[0.07]" />
 
       <div className="relative mx-auto max-w-5xl text-center">
-        <FadeIn className="mb-8 flex justify-center">
+        <div className="anim-fade-in mb-8 flex justify-center" style={{ animationDelay: "0ms" }}>
           <pre
             className="hidden select-none bg-linear-to-r from-brand-900 via-brand-600 to-brand-100 bg-clip-text text-[0.35rem] leading-[1.15] text-transparent sm:block sm:text-[0.5rem] md:text-[0.6rem] lg:text-[0.7rem]"
           >
@@ -92,25 +91,25 @@ export function HeroSection() {
               </div>
             ))}
           </pre>
-        </FadeIn>
+        </div>
 
-        <FadeUp delay={0.2}>
+        <div className="anim-fade-up" style={{ animationDelay: "150ms" }}>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
           <span className="bg-linear-to-r from-brand-700 via-brand-500 to-brand-200 bg-clip-text text-transparent">
             ESLint
           </span>{" "}
           for your coding agents.
         </h1>
-        </FadeUp>
+        </div>
 
-        <FadeUp delay={0.3}>
+        <div className="anim-fade-up" style={{ animationDelay: "250ms" }}>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground sm:text-xl">
           Keep AGENTS.md, rules, skills, workflows, and plans structured, current,
           and codebase-aware.
         </p>
-        </FadeUp>
+        </div>
 
-        <FadeUp delay={0.4}>
+        <div className="anim-fade-up" style={{ animationDelay: "350ms" }}>
         <div className="mx-auto mt-8 flex max-w-md items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-3 font-mono text-sm shadow-lg">
           <span className="text-muted-foreground">$</span>
           <span className="flex-1 text-left text-foreground">{INSTALL_CMD}</span>
@@ -125,9 +124,9 @@ export function HeroSection() {
             )}
           </button>
         </div>
-        </FadeUp>
+        </div>
 
-        <FadeUp delay={0.5}>
+        <div className="anim-fade-up" style={{ animationDelay: "450ms" }}>
         <div className="mt-4 flex h-8 items-center justify-center">
           <TypingAnimation />
         </div>
@@ -149,7 +148,7 @@ export function HeroSection() {
             </Button>
           </a>
         </div>
-        </FadeUp>
+        </div>
       </div>
     </section>
   );

@@ -105,3 +105,22 @@
     scroll-behavior: smooth;
   }
 }
+
+/* GPU-accelerated CSS animations for initial page load (compositor thread) */
+@keyframes css-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes css-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in {
+  opacity: 0;
+  animation: css-fade-in 0.5s ease-out forwards;
+}
+.anim-fade-up {
+  opacity: 0;
+  animation: css-fade-up 0.5s ease-out forwards;
+}
