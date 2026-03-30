@@ -1,4 +1,4 @@
-import type { ArtifactType, McpClient } from "@agent-lint/shared";
+import type { ArtifactType, McpClientId } from "@agent-lint/shared";
 import {
   buildArtifactSpecMarkdown,
   buildArtifactPathHintsMarkdown,
@@ -32,7 +32,7 @@ const SHARED_DONT_LIST = [
   "Do not create overly long documents that exceed practical context limits.",
 ];
 
-function buildClientHints(client: McpClient): string[] {
+function buildClientHints(client: McpClientId): string[] {
   const lines: string[] = ["## Client-specific notes"];
 
   if (client === "cursor") {
@@ -272,7 +272,7 @@ function buildTemplateSkeleton(type: ArtifactType): string {
 
 export function buildGuidelines(
   type: ArtifactType,
-  client: McpClient = "generic",
+  client: McpClientId = "generic",
 ): string {
   const pack = getPromptPack(type);
   const spec = buildArtifactSpecMarkdown(type);

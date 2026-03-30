@@ -30,7 +30,7 @@ export interface ScopeConfig {
   absolute: boolean;
 }
 
-export interface McpClient {
+export interface McpClientDefinition {
   id: ClientId;
   name: string;
   configFormat: ConfigFormat;
@@ -64,7 +64,7 @@ function stdioEntry(): Record<string, unknown> {
 }
 
 /** Returns just the server entry (without rootKey wrapper) for merge operations */
-export function buildServerEntry(client: McpClient): Record<string, unknown> {
+export function buildServerEntry(client: McpClientDefinition): Record<string, unknown> {
   switch (client.id) {
     case "vscode":
       return { type: "stdio", ...stdioEntry() };
@@ -139,7 +139,7 @@ function vscodeExtensionsPath(): string {
 
 // ── Client Registry ────────────────────────────────────────────────────
 
-export const CLIENT_REGISTRY: McpClient[] = [
+export const CLIENT_REGISTRY: McpClientDefinition[] = [
   {
     id: "claude-code",
     name: "Claude Code",
@@ -381,12 +381,12 @@ function whichSync(binary: string): boolean {
 }
 
 export interface DetectedClient {
-  client: McpClient;
+  client: McpClientDefinition;
   /** How it was detected */
   detectedBy: "binary" | "directory" | "extension" | "config-exists";
 }
 
-function getWorkspaceDetectionPaths(client: McpClient, cwd: string): string[] {
+function getWorkspaceDetectionPaths(client: McpClientDefinition, cwd: string): string[] {
   return [
     ...client.detectDirs.map((dir) => path.join(cwd, dir)),
     ...(client.detectPaths ?? []).map((entry) => path.join(cwd, entry)),
@@ -486,7 +486,7 @@ export function getDefaultSelectedClientIds(detected: DetectedClient[], cwd: str
 /**
  * Resolve the absolute config file path for a client + scope combination.
  */
-export function resolveConfigPath(client: McpClient, scope: Scope, cwd: string): string | null {
+export function resolveConfigPath(client: McpClientDefinition, scope: Scope, cwd: string): string | null {
   const scopeConfig = client.scopes[scope];
   if (!scopeConfig) return null;
 
@@ -499,7 +499,7 @@ export function resolveConfigPath(client: McpClient, scope: Scope, cwd: string):
 /**
  * Get available scopes for a client.
  */
-export function getAvailableScopes(client: McpClient): Scope[] {
+export function getAvailableScopes(client: McpClientDefinition): Scope[] {
   const scopes: Scope[] = [];
   if (client.scopes.workspace) scopes.push("workspace");
   if (client.scopes.global) scopes.push("global");

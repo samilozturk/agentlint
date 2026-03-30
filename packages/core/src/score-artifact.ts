@@ -707,13 +707,16 @@ function scoreMaintainability(body: string, headings: string[]): DimensionScore 
     suggestions.push("Remove all TODO, TBD, placeholder, and [insert…] text before finalizing.");
   }
 
-  const hasStaleYear = /\b(201[0-9]|202[0-3])\b/.test(body);
+  const currentYear = new Date().getUTCFullYear();
+  const staleYearThreshold = currentYear - 2;
+  const years = body.match(/\b(19|20)\d{2}\b/g) ?? [];
+  const hasStaleYear = years.some((value) => Number.parseInt(value, 10) <= staleYearThreshold);
   if (!hasStaleYear) {
     score += 2;
     signals.push("✓ no potentially stale hardcoded years");
   } else {
-    signals.push("~ hardcoded year found (may become stale)");
-    suggestions.push("Avoid hardcoded years; use relative dates or omit them.");
+    signals.push(`~ hardcoded year older than ${staleYearThreshold} found (may be stale)`);
+    suggestions.push("Avoid hardcoded years older than two years; use relative dates or omit them.");
   }
 
   const inlineProsePaths = (body.match(/[./\\][A-Za-z0-9_/-]+\.[a-z]{1,6}/g) ?? []).length;

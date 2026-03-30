@@ -10,8 +10,8 @@ import { describe, expect, it } from "vitest";
 
 describe("schemas", () => {
   describe("MCP_TOOL_NAMES", () => {
-    it("has exactly 4 tools", () => {
-      expect(MCP_TOOL_NAMES).toHaveLength(4);
+    it("has exactly 5 tools", () => {
+      expect(MCP_TOOL_NAMES).toHaveLength(5);
     });
 
     it("all names start with agentlint_ prefix", () => {

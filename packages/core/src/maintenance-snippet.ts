@@ -1,4 +1,4 @@
-import type { McpClient } from "@agent-lint/shared";
+import type { McpClientId } from "@agent-lint/shared";
 
 export type MaintenanceSnippetResult = {
   snippet: string;
@@ -267,7 +267,7 @@ function buildMarkdownOutput(options: {
 }
 
 export function buildMaintenanceSnippet(
-  client: McpClient = "generic",
+  client: McpClientId = "generic",
 ): MaintenanceSnippetResult {
   switch (client) {
     case "cursor":

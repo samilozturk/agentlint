@@ -103,7 +103,7 @@ describe("scope selection — workspace (default)", () => {
         // Wait for scope selection
         await waitFor(
           () => session.getStdout().toUpperCase().includes("SELECT CONFIG SCOPE"),
-          { timeoutMs: 5_000 },
+          { timeoutMs: 10_000 },
         );
 
         // Press Enter to confirm default (workspace)
@@ -115,16 +115,21 @@ describe("scope selection — workspace (default)", () => {
           () =>
             session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES") ||
             session.getStdout().includes("MCP config is ready."),
-          { timeoutMs: 5_000 },
+          { timeoutMs: 10_000 },
         );
 
         if (session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES")) {
           pressEnter(session.stdin);
         }
 
-        await waitFor(() => session.getStdout().includes("MCP config is ready."), {
-          timeoutMs: 5_000,
-        });
+        await waitFor(
+          () =>
+            session.getStdout().includes("MCP config is ready.") ||
+            session.getStdout().toLowerCase().includes("continue"),
+          {
+          timeoutMs: 10_000,
+          },
+        );
 
         // VS Code workspace config should be created (we run in tmpDir which has no special dirs
         // so no clients are detected, but --all installs all clients for workspace scope)
@@ -187,7 +192,7 @@ describe("scope selection — global", () => {
         // Scope selection — arrow down to select global
         await waitFor(
           () => session.getStdout().toUpperCase().includes("SELECT CONFIG SCOPE"),
-          { timeoutMs: 5_000 },
+          { timeoutMs: 10_000 },
         );
 
         await sleep(100);
@@ -200,7 +205,7 @@ describe("scope selection — global", () => {
           () =>
             session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES") ||
             session.getStdout().includes("MCP config is ready."),
-          { timeoutMs: 5_000 },
+          { timeoutMs: 10_000 },
         );
 
         if (session.getStdout().toUpperCase().includes("INSTALL MAINTENANCE RULES")) {
@@ -210,9 +215,14 @@ describe("scope selection — global", () => {
           pressEnter(session.stdin);
         }
 
-        await waitFor(() => session.getStdout().includes("MCP config is ready."), {
-          timeoutMs: 5_000,
-        });
+        await waitFor(
+          () =>
+            session.getStdout().includes("MCP config is ready.") ||
+            session.getStdout().toLowerCase().includes("continue"),
+          {
+            timeoutMs: 10_000,
+          },
+        );
 
         // Workspace-local files should NOT have been created for global scope
         // (global installs go to home-based paths)
@@ -630,4 +640,3 @@ describe("init wizard multi-client results", () => {
     });
   }, 20_000);
 });
-

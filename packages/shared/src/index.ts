@@ -34,6 +34,7 @@ export {
 } from "./schemas.js";
 export type {
   McpToolName,
+  McpClientId,
   McpClient,
   GetGuidelinesInput,
   PlanWorkspaceAutofixInput,

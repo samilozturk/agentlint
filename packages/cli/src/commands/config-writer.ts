@@ -1,15 +1,15 @@
 import fs from "node:fs";
-import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { isDeepStrictEqual } from "node:util";
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 import {
-  type McpClient,
+  type McpClientDefinition,
   type Scope,
   resolveConfigPath,
   buildServerEntry,
   MCP_SERVER_NAME,
 } from "./clients.js";
+import { createBackup, ensureDir } from "./fs-utils.js";
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -23,19 +23,6 @@ export type InstallResult =
   | { status: "no-scope"; message: string };
 
 // ── Helpers ────────────────────────────────────────────────────────────
-
-function ensureDir(filePath: string): void {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
-function createBackup(filePath: string): void {
-  if (fs.existsSync(filePath)) {
-    fs.copyFileSync(filePath, `${filePath}.bak`);
-  }
-}
 
 function hasMatchingEntry(existing: unknown, expected: Record<string, unknown>): boolean {
   return isDeepStrictEqual(existing, expected);
@@ -165,7 +152,7 @@ function mergeTomlConfig(
 
 // ── CLI-based Install ──────────────────────────────────────────────────
 
-function installViaCli(client: McpClient, scope: Scope): InstallResult {
+function installViaCli(client: McpClientDefinition, scope: Scope): InstallResult {
   if (!client.cliCommand) {
     return { status: "error", message: `No CLI command defined for ${client.name}` };
   }
@@ -195,7 +182,7 @@ function installViaCli(client: McpClient, scope: Scope): InstallResult {
  * Prefers CLI command when available, falls back to file merge.
  */
 export function installClient(
-  client: McpClient,
+  client: McpClientDefinition,
   scope: Scope,
   cwd: string,
   preferCli: boolean = false,
