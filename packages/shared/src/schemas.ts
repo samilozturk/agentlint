@@ -9,6 +9,7 @@ export const MCP_TOOL_NAMES = [
   "agentlint_plan_workspace_autofix",
   "agentlint_quick_check",
   "agentlint_emit_maintenance_snippet",
+  "agentlint_score_artifact",
 ] as const;
 
 export type McpToolName = (typeof MCP_TOOL_NAMES)[number];
@@ -24,7 +25,8 @@ export const mcpClientValues = [
   "generic",
 ] as const;
 
-export type McpClient = (typeof mcpClientValues)[number];
+export type McpClientId = (typeof mcpClientValues)[number];
+export type McpClient = McpClientId;
 
 export const mcpClientSchema = z
   .enum(mcpClientValues)

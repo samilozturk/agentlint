@@ -6,7 +6,7 @@ import {
   buildServerEntry,
   CLIENT_REGISTRY,
   detectInstalledClients,
-  type McpClient,
+  type McpClientDefinition,
   type ClientId,
   getDefaultSelectedClientIds,
   getAvailableScopes,
@@ -16,8 +16,8 @@ import { getClientPickerOptions } from "../src/commands/init.js";
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/** Create a minimal McpClient stub for a given client id */
-function stubClient(id: ClientId, overrides?: Partial<McpClient>): McpClient {
+/** Create a minimal McpClientDefinition stub for a given client id */
+function stubClient(id: ClientId, overrides?: Partial<McpClientDefinition>): McpClientDefinition {
   return {
     id,
     name: id,

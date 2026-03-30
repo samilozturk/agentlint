@@ -46,14 +46,15 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
       : { type: "menu" },
   );
 
-  // Track whether the initial commandOptions have been consumed.
+  // Track whether initial options have been consumed per command.
   // Once consumed, subsequent navigations to the same command use default options.
-  const initialOptionsConsumed = useRef(false);
+  const initOptionsConsumed = useRef(false);
+  const scanOptionsConsumed = useRef(false);
 
   /** Return init options — uses commandOptions.init on the first call, then {} */
   const getInitOptions = useCallback((): InitCommandOptions => {
-    if (!initialOptionsConsumed.current && commandOptions?.init) {
-      initialOptionsConsumed.current = true;
+    if (!initOptionsConsumed.current && commandOptions?.init) {
+      initOptionsConsumed.current = true;
       return commandOptions.init;
     }
     return {};
@@ -61,8 +62,8 @@ export function App({ initialCommand, commandOptions }: AppProps): React.ReactNo
 
   /** Return scan options — uses commandOptions.scan on the first call, then {} */
   const getScanOptions = useCallback((): ScanCommandOptions => {
-    if (!initialOptionsConsumed.current && commandOptions?.scan) {
-      initialOptionsConsumed.current = true;
+    if (!scanOptionsConsumed.current && commandOptions?.scan) {
+      scanOptionsConsumed.current = true;
       return commandOptions.scan;
     }
     return {};

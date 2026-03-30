@@ -14,7 +14,7 @@ import {
 } from "../ui/components.js";
 import { colors } from "../ui/theme.js";
 import {
-  type McpClient,
+  type McpClientDefinition,
   type ClientId,
   type Scope,
   type DetectedClient,
@@ -39,14 +39,14 @@ type WizardStep =
   | "done";
 
 interface ClientPickerOption {
-  client: McpClient;
+  client: McpClientDefinition;
   value: ClientId;
   detected: boolean;
   globalOnly: boolean;
 }
 
 export interface ClientInstallResult {
-  client: McpClient;
+  client: McpClientDefinition;
   scope: Scope;
   configResult: InstallResult;
   maintenanceResult?: MaintenanceInstallResult;
@@ -96,11 +96,11 @@ function formatMaintenance(result: MaintenanceInstallResult | undefined): string
   return "Unknown maintenance rule result";
 }
 
-function shouldPreferCliInstall(client: McpClient): boolean {
+function shouldPreferCliInstall(client: McpClientDefinition): boolean {
   return client.id === "claude-code";
 }
 
-function printConfigResult(client: McpClient, result: InstallResult): void {
+function printConfigResult(client: McpClientDefinition, result: InstallResult): void {
   switch (result.status) {
     case "created":
       process.stdout.write(`[created] ${result.configPath} (${client.name})\n`);
@@ -124,7 +124,7 @@ function printConfigResult(client: McpClient, result: InstallResult): void {
   }
 }
 
-function printMaintenanceResult(client: McpClient, result: MaintenanceInstallResult): void {
+function printMaintenanceResult(client: McpClientDefinition, result: MaintenanceInstallResult): void {
   switch (result.status) {
     case "created":
       process.stdout.write(`[rule created] ${result.targetPath} (${client.name})\n`);
@@ -181,7 +181,7 @@ function runStdoutInit(options: { yes?: boolean; all?: boolean; withRules?: bool
   }
 }
 
-export function getCommonScopes(clients: McpClient[]): Scope[] {
+export function getCommonScopes(clients: McpClientDefinition[]): Scope[] {
   if (clients.length === 0) {
     return [];
   }
@@ -191,7 +191,7 @@ export function getCommonScopes(clients: McpClient[]): Scope[] {
     clients.every((client) => client.scopes[scope]));
 }
 
-function getScopeChoices(clients: McpClient[]): Scope[] {
+function getScopeChoices(clients: McpClientDefinition[]): Scope[] {
   if (clients.length === 0) {
     return [];
   }

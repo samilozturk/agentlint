@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { buildMaintenanceSnippet, type MaintenanceSnippetResult } from "@agent-lint/core";
-import type { McpClient } from "./clients.js";
+import type { McpClientDefinition } from "./clients.js";
+import { createBackup, ensureDir } from "./fs-utils.js";
 
 type SupportedSnippetClient =
   | "cursor"
@@ -41,20 +42,7 @@ const LEGACY_HEADING_SNIPPET = [
 
 const LEGACY_BULLET_ONLY_SNIPPET = LEGACY_BULLET_RULES.map((rule) => `- ${rule}`).join("\n");
 
-function ensureDir(filePath: string): void {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
-function createBackup(filePath: string): void {
-  if (fs.existsSync(filePath)) {
-    fs.copyFileSync(filePath, `${filePath}.bak`);
-  }
-}
-
-function resolveSnippetClient(client: McpClient): SupportedSnippetClient {
+function resolveSnippetClient(client: McpClientDefinition): SupportedSnippetClient {
   switch (client.id) {
     case "cursor":
       return "cursor";
@@ -70,13 +58,13 @@ function resolveSnippetClient(client: McpClient): SupportedSnippetClient {
   }
 }
 
-function resolveGenericTargetPath(client: McpClient, cwd: string): string {
+function resolveGenericTargetPath(client: McpClientDefinition, cwd: string): string {
   const fileName = client.id === "claude-desktop" ? "CLAUDE.md" : "AGENTS.md";
   return path.join(cwd, fileName);
 }
 
 function resolveTarget(
-  client: McpClient,
+  client: McpClientDefinition,
   cwd: string,
 ): { snippet: MaintenanceSnippetResult; targetPath: string; writeMode: WriteMode } {
   const snippetClient = resolveSnippetClient(client);
@@ -165,7 +153,7 @@ function appendSnippet(existing: string, snippet: string, lineEnding: string): s
   return `${existing}${separator}${renderSnippet(snippet, lineEnding)}`;
 }
 
-export function installMaintenanceRule(client: McpClient, cwd: string): MaintenanceInstallResult {
+export function installMaintenanceRule(client: McpClientDefinition, cwd: string): MaintenanceInstallResult {
   const { snippet, targetPath, writeMode } = resolveTarget(client, cwd);
 
   try {
