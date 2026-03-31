@@ -7,6 +7,10 @@ function normalizeSnippet(input: string): string {
   return input.replace(/\r\n/g, "\n").replace(/(?:\n)+$/u, "");
 }
 
+function readFixture(relativePath: string): string {
+  return readFileSync(new URL(`./fixtures/${relativePath}`, import.meta.url), "utf-8");
+}
+
 describe("maintenance-snippet", () => {
   it("returns the expected target paths", () => {
     expect(buildMaintenanceSnippet("cursor").targetPath).toBe(".cursor/rules/agentlint-maintenance.mdc");
@@ -48,22 +52,16 @@ describe("maintenance-snippet", () => {
     }
   });
 
-  it("keeps the dedicated Cursor artifact in parity with the generated snippet", () => {
+  it("keeps the dedicated Cursor fixture in parity with the generated snippet", () => {
     const generated = buildMaintenanceSnippet("cursor").snippet;
-    const checkedIn = readFileSync(
-      new URL("../../../.cursor/rules/agentlint-maintenance.mdc", import.meta.url),
-      "utf-8",
-    );
+    const checkedIn = readFixture("cursor-agentlint-maintenance.mdc");
 
     expect(normalizeSnippet(generated)).toBe(normalizeSnippet(checkedIn));
   });
 
-  it("keeps the dedicated Windsurf artifact in parity with the generated snippet", () => {
+  it("keeps the dedicated Windsurf fixture in parity with the generated snippet", () => {
     const generated = buildMaintenanceSnippet("windsurf").snippet;
-    const checkedIn = readFileSync(
-      new URL("../../../.windsurf/rules/agentlint-maintenance.md", import.meta.url),
-      "utf-8",
-    );
+    const checkedIn = readFixture("windsurf-agentlint-maintenance.md");
 
     expect(normalizeSnippet(generated)).toBe(normalizeSnippet(checkedIn));
   });
