@@ -40,6 +40,9 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: website
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          VITE_GA_DEBUG: "false"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
