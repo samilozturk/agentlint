@@ -8,28 +8,28 @@ const DEMOS = [
     label: "Scan",
     description:
       "Discover all context artifacts in your workspace — AGENTS.md, rules, skills, workflows, and plans — with a single command.",
-    image: "screenshots/demo-scan.png",
+    image: "screenshots/demo-scan.svg",
   },
   {
     id: "init",
     label: "Init",
     description:
       "Set up MCP config for all supported IDE clients. Detects existing configs and only writes what's missing.",
-    image: "screenshots/demo-init.png",
+    image: "screenshots/demo-init.svg",
   },
   {
     id: "prompt",
     label: "Prompt",
     description:
       "Generate a ready-to-paste prompt for your IDE chat. Uses workspace findings and local change signals.",
-    image: "screenshots/demo-prompt.png",
+    image: "screenshots/demo-prompt.svg",
   },
   {
     id: "help",
     label: "Help",
     description:
       "Quick access to all CLI commands and options at a glance.",
-    image: "screenshots/demo-help.png",
+    image: "screenshots/demo-help.svg",
   },
 ] as const;
 
@@ -56,7 +56,7 @@ export function DemoSection() {
             ))}
           </TabsList>
 
-          {DEMOS.map((demo) => (
+          {DEMOS.map((demo, index) => (
             <TabsContent key={demo.id} value={demo.id}>
               <p className="mb-6 text-center text-sm text-muted-foreground">
                 {demo.description}
@@ -66,7 +66,8 @@ export function DemoSection() {
                   src={`${import.meta.env.BASE_URL}${demo.image}`}
                   alt={`Agent Lint ${demo.label} command demo`}
                   className="w-full rounded-b-lg"
-                  loading="lazy"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
                 />
               </TerminalFrame>
             </TabsContent>

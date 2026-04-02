@@ -24,7 +24,7 @@ const STEPS = [
 
 export function WorkflowSection() {
   return (
-    <section className="px-4 py-20 sm:px-6" id="workflow">
+    <section className="section-offscreen px-4 py-20 sm:px-6" id="workflow">
       <div className="mx-auto max-w-5xl">
         <FadeUp>
         <h2 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-4xl">

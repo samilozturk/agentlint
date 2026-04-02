@@ -1,7 +1,4 @@
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/500.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/inter/700.css";
+import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +14,7 @@ import { GuaranteesSection } from "@/components/sections/guarantees";
 import { QuickstartSection } from "@/components/sections/quickstart";
 import { Footer } from "@/components/footer";
 import { SectionDivider } from "@/components/section-divider";
+import { StudioBackground } from "@/components/studio-background";
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -24,6 +22,7 @@ export default function App() {
   return (
     <TooltipProvider>
       <div className="min-h-screen">
+        <StudioBackground />
         <Navbar theme={theme} onToggleTheme={toggleTheme} />
         <main>
           <HeroSection />

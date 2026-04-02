@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
   --radius: 0.625rem;
   --radius-sm: calc(var(--radius) * 0.6);
@@ -123,4 +123,40 @@
 .anim-fade-up {
   opacity: 0;
   animation: css-fade-up 0.5s ease-out forwards;
+}
+
+/* Studio lighting ambient animations */
+@keyframes studio-breathe {
+  0%, 100% { opacity: var(--studio-base-opacity); transform: translate(-50%, 0) scale(1); }
+  50% { opacity: var(--studio-peak-opacity); transform: translate(-50%, 0) scale(1.05); }
+}
+@keyframes studio-drift-left {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(2%) translateY(-1%); }
+}
+@keyframes studio-drift-right {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-2%) translateY(1%); }
+}
+
+.studio-key-light {
+  --studio-base-opacity: 0.07;
+  --studio-peak-opacity: 0.10;
+  animation: studio-breathe 8s ease-in-out infinite;
+}
+.dark .studio-key-light {
+  --studio-base-opacity: 0.12;
+  --studio-peak-opacity: 0.16;
+}
+.studio-fill-left {
+  animation: studio-drift-left 12s ease-in-out infinite;
+}
+.studio-fill-right {
+  animation: studio-drift-right 10s ease-in-out infinite;
+}
+
+/* Defer rendering of below-fold sections to reduce initial paint cost */
+.section-offscreen {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
 }

@@ -22,7 +22,7 @@ const GUARANTEES = [
 
 export function GuaranteesSection() {
   return (
-    <section className="px-4 py-20 sm:px-6" id="guarantees">
+    <section className="section-offscreen px-4 py-20 sm:px-6" id="guarantees">
       <div className="mx-auto max-w-5xl">
         <FadeUp>
         <h2 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-4xl">

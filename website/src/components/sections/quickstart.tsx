@@ -43,7 +43,7 @@ function CopyButton({ text }: { text: string }) {
 
 export function QuickstartSection() {
   return (
-    <section className="px-4 py-20 sm:px-6" id="quickstart">
+    <section className="section-offscreen px-4 py-20 sm:px-6" id="quickstart">
       <div className="mx-auto max-w-4xl">
         <FadeUp>
         <h2 className="mb-4 text-center text-3xl font-bold tracking-tight sm:text-4xl">

@@ -19,7 +19,7 @@ const CLIENTS = [
 
 export function ClientsSection() {
   return (
-    <section className="px-4 py-20 sm:px-6" id="clients">
+    <section className="section-offscreen px-4 py-20 sm:px-6" id="clients">
       <div className="mx-auto max-w-4xl text-center">
         <FadeUp>
         <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">

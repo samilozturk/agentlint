@@ -18,6 +18,10 @@
       content="Keep AGENTS.md, rules, skills, workflows, and plans structured, current, and codebase-aware."
     />
     <meta property="og:type" content="website" />
+    <!-- Prevent layout shift from font loading -->
+    <meta name="color-scheme" content="light dark" />
+    <!-- Preload LCP image (demo-scan, first visible tab) before JS is parsed -->
+    <link rel="preload" as="image" href="/agentlint/screenshots/demo-scan.svg" />
   </head>
   <body>
     <script>
