@@ -14,10 +14,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'motion': ['framer-motion'],
-          'icons': ['lucide-react'],
+        manualChunks(id) {
+          if (id.includes('/react/') || id.includes('/react-dom/')) return 'react-vendor';
+          if (id.includes('/framer-motion/')) return 'motion';
+          if (id.includes('/lucide-react/')) return 'icons';
         },
       },
     },
