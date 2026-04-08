@@ -29,7 +29,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <a href="#" className="flex items-center gap-2 font-mono text-lg font-bold">
-          <span className="bg-linear-to-r from-brand-700 via-brand-500 to-brand-100 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-brand-700 via-brand-500 to-brand-100 bg-clip-text text-transparent antialiased">
             AGENT LINT
           </span>
         </a>
